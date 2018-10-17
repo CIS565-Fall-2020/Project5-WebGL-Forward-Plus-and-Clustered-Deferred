@@ -1,4 +1,4 @@
-WebGL Clustered Deferred and Forward+ Shading - Instructions
+WebGL Clustered and Forward+ Shading - Instructions
 ==========================================================
 
 **This is due Thursday 10/26**
@@ -27,19 +27,19 @@ In this project, you are given code for:
 - Loading glTF models
 - Camera control
 - Simple forward renderer
-- Partial implementation and setup for Clustered Deferred and Forward+ shading
+- Partial implementation and setup for Clustered and Forward+ shading
 - Many helpful helpers
 
 ## Required Tasks
 
 **Before doing performance analysis**, you must disable debug mode by changing `DEBUG` to false in `src/init.js`. Keep it enabled when developing - it helps find WebGL errors *much* more easily.
 
-**Clustered Forward+**
+**Forward+**
   - Build a data structure to keep track of how many lights are in each cluster and what their indices are
   - Render the scene using only the lights that overlap a given cluster
 
-**Clustered Deferred**
-  - Reuse clustering logic from Clustered Forward+
+**Clustered**
+  - Reuse clustering logic from Forward+
   - Store vertex attributes in g-buffer
   - Read g-buffer in a shader to produce final output
 
@@ -63,7 +63,7 @@ In this project, you are given code for:
 
 ## Performance & Analysis
 
-Compare your implementations of Clustered Forward+ and Clustered Deferred shading and analyze their differences.
+Compare your implementations of Forward+ and Clustered shading and analyze their differences.
   - Is one of them faster?
   - Is one of them better at certain types of workloads?
   - What are the benefits and tradeoffs of using one over the other?
@@ -95,7 +95,7 @@ For each performance feature (required or extra), please provide:
 
 Initialization happens in `src/init.js`. You don't need to worry about this; it is mostly initializing the gl context, debug modes, extensions, etc.
 
-`src/main.js` is configuration for the renderers. It sets up the gui for switching renderers and initializes the scene and render loop. The only important thing here are the arguments for `ClusteredForwardPlusRenderer` and `ClusteredDeferredRenderer`. These constructors take the number of x, y, and z slices to split the frustum into.
+`src/main.js` is configuration for the renderers. It sets up the gui for switching renderers and initializes the scene and render loop. The only important thing here are the arguments for `ForwardPlusRenderer` and `ClusteredRenderer`. These constructors take the number of x, y, and z slices to split the frustum into.
 
 `src/scene.js` handles loading a .gltf scene and initializes the lights. Here, you can modify the number of lights, their positions, and how they move around. Also, take a look at the `draw` function. This handles binding the vertex attributes, which are hardcoded to `a_position`, `a_normal`, and `a_uv`, as well as the color and normal maps to targets `gl.TEXTURE0` and `gl.TEXTURE1`.
 
@@ -115,17 +115,17 @@ Now go look inside `src/shaders/forward.frag.glsl.js`. Here, there is a simple l
 **Getting Started**
 Here's a few tips to get you started.
 
-1. Complete `updateClusters` in `src/renderers/clustered.js`. This should update the cluster `TextureBuffer` with a mapping from cluster index to light count and light list (indices).
+1. Complete `updateClusters` in `src/renderers/base.js`. This should update the cluster `TextureBuffer` with a mapping from cluster index to light count and light list (indices).
 
-2. Update `src/shaders/clusteredForward.frag.glsl.js` to
+2. Update `src/shaders/forwardPlus.frag.glsl.js` to
   - Determine the cluster for a fragment
   - Read in the lights in that cluster from the populated data
   - Do shading for just those lights
-  - You may find it necessary to bind additional uniforms in `src/renderers/clusteredForwardPlus.js`
+  - You may find it necessary to bind additional uniforms in `src/renderers/forwardPlus.js`
 
 3. Update `src/shaders/deferredToTexture.frag.glsl` to write desired data to the g-buffer
 4. Update `src/deferred.frag.glsl` to read values from the g-buffer and perform simple forward rendering. (Right now it just outputs the screen xy coordinate)
-5. Update it to use clustered shading. You should be able to reuse lots of stuff from Clustered Forward+ for this. You will also likely need to update shader inputs in `src/renderers/clusteredDeferred.js`
+5. Update it to use clustered shading. You should be able to reuse lots of stuff from Forward+ for this. You will also likely need to update shader inputs in `src/renderers/clustered.js`
 
 ## README
 
