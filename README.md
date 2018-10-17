@@ -1,4 +1,4 @@
-WebGL Clustered Deferred and Forward+ Shading
+WebGL Clustered and Forward+ Shading
 ======================
 
 **University of Pennsylvania, CIS 565: GPU Programming and Architecture, Project 5**

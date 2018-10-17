@@ -2,12 +2,12 @@ import { gl } from '../init';
 import { mat4, vec4, vec3 } from 'gl-matrix';
 import { loadShaderProgram } from '../utils';
 import { NUM_LIGHTS } from '../scene';
-import vsSource from '../shaders/clusteredForward.vert.glsl';
-import fsSource from '../shaders/clusteredForward.frag.glsl.js';
+import vsSource from '../shaders/forwardPlus.vert.glsl';
+import fsSource from '../shaders/forwardPlus.frag.glsl.js';
 import TextureBuffer from './textureBuffer';
-import ClusteredRenderer from './clustered';
+import BaseRenderer from './base';
 
-export default class ClusteredForwardPlusRenderer extends ClusteredRenderer {
+export default class ForwardPlusRenderer extends BaseRenderer {
   constructor(xSlices, ySlices, zSlices) {
     super(xSlices, ySlices, zSlices);
 
