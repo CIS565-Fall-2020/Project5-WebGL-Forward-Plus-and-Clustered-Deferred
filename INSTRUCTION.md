@@ -155,9 +155,12 @@ Since this assignment is in WebGL, you can make your project easily viewable by 
 
 Once you are done with the assignment, create a new branch:
 
-`git branch gh-pages`
+```
+git branch gh-pages
+git checkout gh-pages
+```
 
-Run `npm run build` and commit the compiled files
+Run `npm run build` and commit the compiled files in `build/` on the `gh-pages` branch.
 
 Push the branch to GitHub:
 
