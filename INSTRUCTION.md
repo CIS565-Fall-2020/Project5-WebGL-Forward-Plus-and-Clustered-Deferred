@@ -20,6 +20,10 @@ This project requires a WebGL-capable browser with support for several extension
 
 Google Chrome seems to work best on all platforms. If you have problems running the starter code, use Chrome or Chromium, and make sure you have updated your browser and video drivers.
 
+`npm start` launches a script that continuously rebuilds your code when you make changes and serves it for access via your web browser.
+On some linux systems, you may see warnings like `Error: ENOSPC: System limit for number of file watchers reached`, which may prevent automatic rebuilding from working properly.
+You may be able to resolve this by following the instructions here: https://code.visualstudio.com/docs/setup/linux#_visual-studio-code-is-unable-to-watch-for-file-changes-in-this-large-workspace-error-enospc
+
 ## Requirements
 **Ask on the mailing list for any clarifications**
 
@@ -95,7 +99,18 @@ For each performance feature (required or extra), please provide:
 
 Initialization happens in `src/init.js`. You don't need to worry about this; it is mostly initializing the gl context, debug modes, extensions, etc.
 
-`src/main.js` is configuration for the renderers. It sets up the gui for switching renderers and initializes the scene and render loop. The only important thing here are the arguments for `ForwardPlusRenderer` and `ClusteredRenderer`. These constructors take the number of x, y, and z slices to split the frustum into.
+`src/main.js` is configuration for the renderers. It sets up the gui for switching renderers and initializes the scene and render loop. The most important things here are the arguments for `ForwardPlusRenderer` and `ClusteredRenderer`. These constructors take the number of x, y, and z slices to split the frustum into.
+
+We have also provided a `Wireframe` helper class for debugging.
+It lets you draw arbitrary colored line segments in the scene, which may be 
+helpful for visualizing things like frustum clusters.
+For example, on app startup you could populate the `Wireframe` with lines for
+the clusters based on the initial camera view, and then you can pan around the
+scene to inspect the clusters.
+We've provided an example in `src/main.js` for drawing lines on top of everything in the scene, but you can also draw them so that they depth test properly with the rest of the scene.
+Feel free to modify this class as you see fit.
+**Before doing performance analysis**, be sure to disable wireframe drawing,
+especially if you have made significant modifications that may impact performance.
 
 `src/scene.js` handles loading a .gltf scene and initializes the lights. Here, you can modify the number of lights, their positions, and how they move around. Also, take a look at the `draw` function. This handles binding the vertex attributes, which are hardcoded to `a_position`, `a_normal`, and `a_uv`, as well as the color and normal maps to targets `gl.TEXTURE0` and `gl.TEXTURE1`.
 
