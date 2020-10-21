@@ -1,7 +1,7 @@
-WebGL Clustered and Forward+ Shading - Instructions
+WebGL Forward+ and Clustered Deferred Shading - Instructions
 ==========================================================
 
-**This is due Thursday 10/26**
+**This is due Wednesday 10/28**
 
 ## Running the code
 
@@ -27,7 +27,7 @@ In this project, you are given code for:
 - Loading glTF models
 - Camera control
 - Simple forward renderer
-- Partial implementation and setup for Clustered and Forward+ shading
+- Partial implementation and setup for Forward+ and Deferred shading using 3D light clusters.
 - Many helpful helpers
 
 ## Required Tasks
@@ -38,7 +38,7 @@ In this project, you are given code for:
   - Build a data structure to keep track of how many lights are in each cluster and what their indices are
   - Render the scene using only the lights that overlap a given cluster
 
-**Clustered**
+**Clustered Deferred**
   - Reuse clustering logic from Forward+
   - Store vertex attributes in g-buffer
   - Read g-buffer in a shader to produce final output
@@ -63,7 +63,7 @@ In this project, you are given code for:
 
 ## Performance & Analysis
 
-Compare your implementations of Forward+ and Clustered shading and analyze their differences.
+Compare your implementations of Forward+ and Clustered Deferred shading and analyze their differences.
   - Is one of them faster?
   - Is one of them better at certain types of workloads?
   - What are the benefits and tradeoffs of using one over the other?
@@ -102,7 +102,7 @@ Initialization happens in `src/init.js`. You don't need to worry about this; it 
 **Simple Forward Shading Pipeline**
 There is a simple forward shading pipeline as an example for how everything works. Check out `src/forward.js`.
 
-The constructor for the renderer initializes a `TextureBuffer` to store the lights. This isn't totally necessary for a forward renderer, but you'll need this to do clustered shading. What we're trying to do here is upload to a shader all the positions of our lights. However, we unfortunately can't upload arbitrary data to the GPU with WebGL so we have to pack it as a texture. This is set up for you.
+The constructor for the renderer initializes a `TextureBuffer` to store the lights. This isn't totally necessary for a forward renderer, but you'll need this to implement light clusters. What we're trying to do here is upload to a shader all the positions of our lights. However, we unfortunately can't upload arbitrary data to the GPU with WebGL so we have to pack it as a texture. This is set up for you.
 
 The constructor for `TextureBuffer` takes two arguments, the number of elements, and the size of each element (in floats). It will allocate a floating point texture of dimension `numElements x ceil(elementSize / 4)`. This is because we pack every 4 adjacent values into a single pixel.
 
@@ -125,7 +125,7 @@ Here's a few tips to get you started.
 
 3. Update `src/shaders/deferredToTexture.frag.glsl` to write desired data to the g-buffer
 4. Update `src/deferred.frag.glsl` to read values from the g-buffer and perform simple forward rendering. (Right now it just outputs the screen xy coordinate)
-5. Update it to use clustered shading. You should be able to reuse lots of stuff from Forward+ for this. You will also likely need to update shader inputs in `src/renderers/clustered.js`
+5. Update it to use clustered shading. You should be able to reuse lots of stuff from Forward+ for this. You will also likely need to update shader inputs in `src/renderers/clusteredDeferred.js`
 
 ## README
 

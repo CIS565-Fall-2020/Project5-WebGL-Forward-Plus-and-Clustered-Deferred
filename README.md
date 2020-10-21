@@ -1,4 +1,4 @@
-WebGL Clustered and Forward+ Shading
+WebGL Forward+ and Clustered Deferred Shading
 ======================
 
 **University of Pennsylvania, CIS 565: GPU Programming and Architecture, Project 5**
@@ -9,7 +9,7 @@ WebGL Clustered and Forward+ Shading
 
 ### Live Online
 
-[![](img/thumb.png)](http://TODO.github.io/Project5B-WebGL-Deferred-Shading)
+[![](img/thumb.png)](http://TODO.github.io/Project5-WebGL-Forward-Plus-and-Clustered-Deferred)
 
 ### Demo Video/GIF
 

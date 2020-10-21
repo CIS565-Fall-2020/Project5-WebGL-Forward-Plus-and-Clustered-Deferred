@@ -1,12 +1,12 @@
 import { makeRenderLoop, camera, cameraControls, gui, gl } from './init';
 import ForwardRenderer from './renderers/forward';
 import ForwardPlusRenderer from './renderers/forwardPlus';
-import ClusteredRenderer from './renderers/clustered';
+import ClusteredDeferredRenderer from './renderers/clusteredDeferred';
 import Scene from './scene';
 
 const FORWARD = 'Forward';
 const FORWARD_PLUS = 'Forward+';
-const CLUSTERED = 'Clustered';
+const CLUSTERED = 'Clustered Deferred';
 
 const params = {
   renderer: FORWARD_PLUS,
@@ -24,7 +24,7 @@ function setRenderer(renderer) {
       params._renderer = new ForwardPlusRenderer(15, 15, 15);
       break;
     case CLUSTERED:
-      params._renderer = new ClusteredRenderer(15, 15, 15);
+      params._renderer = new ClusteredDeferredRenderer(15, 15, 15);
       break;
   }
 }

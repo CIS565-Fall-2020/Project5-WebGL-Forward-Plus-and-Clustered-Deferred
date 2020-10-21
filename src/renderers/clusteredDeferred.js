@@ -11,7 +11,7 @@ import BaseRenderer from './base';
 
 export const NUM_GBUFFERS = 4;
 
-export default class ClusteredRenderer extends BaseRenderer {
+export default class ClusteredDeferredRenderer extends BaseRenderer {
   constructor(xSlices, ySlices, zSlices) {
     super(xSlices, ySlices, zSlices);
     
