@@ -8,6 +8,9 @@ import Wireframe from './wireframe';
 const FORWARD = 'Forward';
 const FORWARD_PLUS = 'Forward+';
 const CLUSTERED = 'Clustered Deferred';
+// Jack12 add debug view
+const NORMAL = 'Normal';
+const ALBEDO = 'Albedo';
 
 const params = {
   renderer: FORWARD_PLUS,
@@ -30,7 +33,7 @@ function setRenderer(renderer) {
   }
 }
 
-gui.add(params, 'renderer', [FORWARD, FORWARD_PLUS, CLUSTERED]).onChange(setRenderer);
+gui.add(params, 'renderer', [FORWARD, FORWARD_PLUS, CLUSTERED, NORMAL, ALBEDO]).onChange(setRenderer);
 
 const scene = new Scene();
 scene.loadGLTF('models/sponza/sponza.gltf');
