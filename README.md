@@ -1,11 +1,17 @@
 WebGL Forward+ and Clustered Deferred Shading
 ======================
 
-**University of Pennsylvania, CIS 565: GPU Programming and Architecture, Project 5**
-
-* (TODO) YOUR NAME HERE
-* Tested on: (TODO) **Google Chrome 222.2** on
-  Windows 22, i7-2222 @ 2.22GHz 22GB, GTX 222 222MB (Moore 2222 Lab)
+* **University of Pennsylvania, CIS 565: GPU Programming and Architecture, Project 5*
+  
+  * Ling Xie
+    * [LinkedIn](https://www.linkedin.com/in/ling-xie-94b939182/), 
+    * [personal website](https://jack12xl.netlify.app).
+  * Tested on: 
+    * Windows 10, Intel(R) Xeon(R) CPU E5-2650 v4 @ 2.20GHz 2.20GHz ( two processors) 
+    * 64.0 GB memory
+    * NVIDIA TITAN XP GP102
+  
+  Thanks to [FLARE LAB](http://faculty.sist.shanghaitech.edu.cn/faculty/liuxp/flare/index.html) for this ferocious monster.
 
 ### Live Online
 
@@ -17,11 +23,21 @@ WebGL Forward+ and Clustered Deferred Shading
 
 ### (TODO: Your README)
 
-*DO NOT* leave the README to the last minute! It is a crucial part of the
-project, and we will not be able to grade you without a good README.
 
-This assignment has a considerable amount of performance analysis compared
-to implementation work. Complete the implementation early to leave time!
+
+#### Light Culling
+
+From [this](http://www.aortiz.me/2018/12/21/CG.html#tiled-shading--forward):
+
+```c++
+//Light culling
+for cluster in clusterArray
+   for light in scene
+      if lightIncluster(cluster, light)
+          cluster += light
+```
+
+
 
 
 ### Credits
