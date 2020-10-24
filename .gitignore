@@ -93,3 +93,6 @@ lerna-debug.log
 # System Files
 .DS_Store
 Thumbs.db
+
+#Jack12
+/package-lock.json
