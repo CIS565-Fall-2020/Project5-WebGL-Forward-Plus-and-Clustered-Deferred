@@ -2,6 +2,9 @@ import { makeRenderLoop, camera, cameraControls, gui, gl } from './init';
 import ForwardRenderer from './renderers/forward';
 import ForwardPlusRenderer from './renderers/forwardPlus';
 import ClusteredDeferredRenderer from './renderers/clusteredDeferred';
+// Jack12 add normal renderer
+import NormalRenderer from './renderers/debugNormal';
+
 import Scene from './scene';
 import Wireframe from './wireframe';
 
@@ -29,6 +32,9 @@ function setRenderer(renderer) {
       break;
     case CLUSTERED:
       params._renderer = new ClusteredDeferredRenderer(15, 15, 15);
+      break;
+    case NORMAL:
+      params._renderer = new NormalRenderer();
       break;
   }
 }
