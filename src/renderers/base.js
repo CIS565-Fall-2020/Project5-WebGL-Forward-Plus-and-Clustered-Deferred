@@ -7,6 +7,7 @@ export const MAX_LIGHTS_PER_CLUSTER = 100;
 export default class BaseRenderer {
   constructor(xSlices, ySlices, zSlices) {
     // Create a texture to store cluster data. Each cluster stores the number of lights followed by the light indices
+    // the reason why for adding one is for the num_of_light stored at that slice
     this._clusterTexture = new TextureBuffer(xSlices * ySlices * zSlices, MAX_LIGHTS_PER_CLUSTER + 1);
     this._xSlices = xSlices;
     this._ySlices = ySlices;
@@ -99,20 +100,21 @@ export default class BaseRenderer {
           for (let x = x_min; x < x_max; x++){
             let i = x + y * this._xSlices + z * this._xSlices * this._ySlices;
             //Computes the starting buffer index to the current count
-            let cur_light_idx = this._clusterTexture.bufferIndex[this._clusterTexture.bufferIndex(i, 0)];
-            let cur_count = this._clusterTexture.buffer[cur_light_idx];
-            
+            // store the num of light at the very beginning 
+            let cluster_start_idx = this._clusterTexture.bufferIndex(i, 0) + 0;
+            let cur_count = this._clusterTexture.buffer[cluster_start_idx];
+            // ++ when < 
             if (cur_count < MAX_LIGHTS_PER_CLUSTER){
               cur_count ++;
               
               // from texturebuffer.js, a pixel(a unit in texutre) contains 4 floats
               let component = Math.floor(cur_count / 4);
-              let index = this._clusterTexture.bufferIndex(i, component);
+              let rgba_index = this._clusterTexture.bufferIndex(i, component);
 
-              let offset = cur_count % 4;
+              let rgba_offset = cur_count % 4;
 
-              this._clusterTexture.buffer[index + offset] = lid;
-              this._clusterTexture.buffer[cur_light_idx] = cur_count;
+              this._clusterTexture.buffer[rgba_index + rgba_offset] = lid;
+              this._clusterTexture.buffer[cluster_start_idx] = cur_count;
             }
 
           }
