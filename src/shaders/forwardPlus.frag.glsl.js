@@ -8,6 +8,10 @@ export default function(params) {
   uniform sampler2D u_colmap;
   uniform sampler2D u_normap;
   uniform sampler2D u_lightbuffer;
+  
+  uniform mat4 u_viewMatrix;
+  uniform vec2 u_nearFarPlane;
+  uniform vec2 u_canvasSize;
 
   // TODO: Read this buffer to determine the lights influencing a cluster
   uniform sampler2D u_clusterbuffer;
@@ -81,8 +85,28 @@ export default function(params) {
 
     vec3 fragColor = vec3(0.0);
 
-    for (int i = 0; i < ${params.numLights}; ++i) {
-      Light light = UnpackLight(i);
+    float xSlices = float(${params.xSlices});
+    float ySlices = float(${params.ySlices});
+    float zSlices = float(${params.zSlices});
+    int nClusters = ${params.xSlices} * ${params.ySlices} * ${params.zSlices};
+    int clusterHeight = int(ceil(float(${params.numLights} + 1) / 4.0));
+
+    vec4 vpos = u_viewMatrix * vec4(v_position, 1.0);
+
+    int x = int(gl_FragCoord.x * xSlices / u_canvasSize.x);
+    int y = int(gl_FragCoord.y * ySlices / u_canvasSize.y);
+    int z = int((-vpos.z - u_nearFarPlane.x) / (u_nearFarPlane.y - u_nearFarPlane.x) * zSlices);
+
+    int clusterId = x + y * ${params.xSlices} + z * ${params.xSlices} * ${params.ySlices};
+    
+    int lightCount = int(ExtractFloat(u_clusterbuffer, nClusters, clusterHeight, clusterId, 0));
+
+    for (int i = 1; i <= ${params.numLights}; ++i) {
+      if (i > lightCount) {
+        break;
+      }
+      int lightId = int(ExtractFloat(u_clusterbuffer, nClusters, clusterHeight, clusterId, i));
+      Light light = UnpackLight(lightId);
       float lightDistance = distance(light.position, v_position);
       vec3 L = (light.position - v_position) / lightDistance;
 
@@ -94,6 +118,9 @@ export default function(params) {
 
     const vec3 ambientLight = vec3(0.025);
     fragColor += albedo * ambientLight;
+
+    float li = float(lightCount) * 0.02;
+    //fragColor = vec3(li, li, li);
 
     gl_FragColor = vec4(fragColor, 1.0);
   }
