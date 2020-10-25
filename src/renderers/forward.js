@@ -6,9 +6,11 @@ import vsSource from '../shaders/forward.vert.glsl';
 import fsSource from '../shaders/forward.frag.glsl.js';
 import TextureBuffer from './textureBuffer';
 
+
 export default class ForwardRenderer {
   constructor() {
     // Create a texture to store light data
+    // NUM_LIGHTS elements with an element size that is 8
     this._lightTexture = new TextureBuffer(NUM_LIGHTS, 8);
 
     // Initialize a shader program. The fragment shader source is compiled based on the number of lights

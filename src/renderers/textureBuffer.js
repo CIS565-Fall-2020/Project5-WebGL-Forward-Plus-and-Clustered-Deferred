@@ -34,7 +34,7 @@ export default class TextureBuffer {
   }
 
   /**
-   * Computes the starting buffer index to a particular item.
+   * Computes the starting buffer index to a particular item. Each buffer represents a pixel.
    * @param {*} index The index of the item
    * @param {*} component The ith float of an element is located in the (i/4)th pixel
    */
