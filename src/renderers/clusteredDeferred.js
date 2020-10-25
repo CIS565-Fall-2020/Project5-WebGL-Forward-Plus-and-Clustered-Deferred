@@ -6,16 +6,21 @@ import toTextureVert from '../shaders/deferredToTexture.vert.glsl';
 import toTextureFrag from '../shaders/deferredToTexture.frag.glsl';
 import QuadVertSource from '../shaders/quad.vert.glsl';
 import fsSource from '../shaders/deferred.frag.glsl.js';
+import bloomFrag from '../shaders/bloom_effect.frag.glsl.js'
 import TextureBuffer from './textureBuffer';
 import BaseRenderer from './base';
+import { MAX_LIGHTS_PER_CLUSTER } from './base';
 
-export const NUM_GBUFFERS = 4;
+export const NUM_GBUFFERS = 2;
 
 export default class ClusteredDeferredRenderer extends BaseRenderer {
   constructor(xSlices, ySlices, zSlices) {
     super(xSlices, ySlices, zSlices);
     
     this.setupDrawBuffers(canvas.width, canvas.height);
+
+    // Post-Processing:
+    this.setupResultRenderBuffers(canvas.width, canvas.height);
     
     // Create a texture to store light data
     this._lightTexture = new TextureBuffer(NUM_LIGHTS, 8);
@@ -28,14 +33,46 @@ export default class ClusteredDeferredRenderer extends BaseRenderer {
     this._progShade = loadShaderProgram(QuadVertSource, fsSource({
       numLights: NUM_LIGHTS,
       numGBuffers: NUM_GBUFFERS,
+      maxLightsInCluster: MAX_LIGHTS_PER_CLUSTER,
     }), {
-      uniforms: ['u_gbuffers[0]', 'u_gbuffers[1]', 'u_gbuffers[2]', 'u_gbuffers[3]'],
+      uniforms: ['u_gbuffers[0]', 'u_gbuffers[1]', 'u_lightbuffer', 'u_clusterbuffer',
+                 'u_x_slices_num', 'u_y_slices_num', 'u_z_slices_num', 'u_inv_view_mat', 'u_max_light_cluster',
+                 'u_canvas_height', 'u_canvas_width', 'u_cam_near', 'u_cam_far', 'u_cam_pos', 'u_inv_view_proj_mat'],
+      attribs: ['a_uv'],
+    });
+
+    this._progBloom = loadShaderProgram(QuadVertSource, bloomFrag({
+      kernelDim: 5
+    }), {
+      uniforms: ['u_RenderedTexture', 'u_canvas_height', 'u_canvas_width'],
       attribs: ['a_uv'],
     });
 
     this._projectionMatrix = mat4.create();
     this._viewMatrix = mat4.create();
     this._viewProjectionMatrix = mat4.create();
+  }
+
+  setupResultRenderBuffers(width, height){
+    this._width = width;
+    this._height = height;
+    this._result_fbo = gl.createFramebuffer();
+
+    // Create, bind, and store "color" target textures for the FBO
+    this._result_rendered_buffer = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, this._result_rendered_buffer);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, width, height, 0, gl.RGBA, gl.FLOAT, null);
+    gl.bindTexture(gl.TEXTURE_2D, null);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, this._result_fbo);
+    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, this._result_rendered_buffer, 0);
+    if (gl.checkFramebufferStatus(gl.FRAMEBUFFER) != gl.FRAMEBUFFER_COMPLETE) {
+      throw "Framebuffer incomplete";
+    }
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
   }
 
   setupDrawBuffers(width, height) {
@@ -145,7 +182,9 @@ export default class ClusteredDeferredRenderer extends BaseRenderer {
     this.updateClusters(camera, this._viewMatrix, scene);
 
     // Bind the default null framebuffer which is the screen
-    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    // Post-processing:
+    gl.bindFramebuffer(gl.FRAMEBUFFER, this._result_fbo);
+    // gl.bindFramebuffer(gl.FRAMEBUFFER, null);
 
     // Clear the frame
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
@@ -154,15 +193,60 @@ export default class ClusteredDeferredRenderer extends BaseRenderer {
     gl.useProgram(this._progShade.glShaderProgram);
 
     // TODO: Bind any other shader inputs
+    // Set the light texture as a uniform input to the shader
+    gl.activeTexture(gl.TEXTURE2);
+    gl.bindTexture(gl.TEXTURE_2D, this._lightTexture.glTexture);
+    gl.uniform1i(this._progShade.u_lightbuffer, 2);
+
+    // Set the cluster texture as a uniform input to the shader
+    gl.activeTexture(gl.TEXTURE3);
+    gl.bindTexture(gl.TEXTURE_2D, this._clusterTexture.glTexture);
+    gl.uniform1i(this._progShade.u_clusterbuffer, 3);
+
+    gl.uniform1i(this._progShade.u_x_slices_num, this._xSlices);
+    gl.uniform1i(this._progShade.u_y_slices_num, this._ySlices);
+    gl.uniform1i(this._progShade.u_z_slices_num, this._zSlices);
+    gl.uniform1i(this._progShade.u_max_light_cluster, MAX_LIGHTS_PER_CLUSTER);
+    gl.uniform1f(this._progShade.u_canvas_height, canvas.height);
+    gl.uniform1f(this._progShade.u_canvas_width, canvas.width);
+    gl.uniformMatrix4fv(this._progShade.u_inv_view_mat, false, this._viewMatrix);
+    gl.uniform1f(this._progShade.u_cam_near, camera.near);
+    gl.uniform1f(this._progShade.u_cam_far, camera.far);
+    gl.uniform3f(this._progShade.u_cam_pos, camera.position.x, camera.position.y, camera.position.y);
+    // let inv_vp_mat = mat4.create();
+    // mat4.invert(inv_vp_mat, this._viewProjectionMatrix);
+    // gl.uniformMatrix4fv(this._progShade.u_inv_view_proj_mat, false, inv_vp_mat);
 
     // Bind g-buffers
-    const firstGBufferBinding = 0; // You may have to change this if you use other texture slots
+    
+    const firstGBufferBinding = 4; // You may have to change this if you use other texture slots
+    let used_binding_buffers_num = firstGBufferBinding;
     for (let i = 0; i < NUM_GBUFFERS; i++) {
       gl.activeTexture(gl[`TEXTURE${i + firstGBufferBinding}`]);
       gl.bindTexture(gl.TEXTURE_2D, this._gbuffers[i]);
       gl.uniform1i(this._progShade[`u_gbuffers[${i}]`], i + firstGBufferBinding);
+      used_binding_buffers_num++;
     }
 
     renderFullscreenQuad(this._progShade);
+  
+    // Draw Bloom Effect post-process:
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+
+    // Clear the frame
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+    // Use the shader program to copy to the draw buffers
+    gl.useProgram(this._progBloom.glShaderProgram);
+
+    gl.activeTexture(gl[`TEXTURE${used_binding_buffers_num}`]);
+    gl.bindTexture(gl.TEXTURE_2D, this._result_rendered_buffer);
+    gl.uniform1i(this._progBloom.u_RenderedTexture, used_binding_buffers_num);
+    gl.uniform1f(this._progBloom.u_canvas_height, canvas.height);
+    gl.uniform1f(this._progBloom.u_canvas_width, canvas.width);
+
+    renderFullscreenQuad(this._progBloom);
+    
+    
   }
 };

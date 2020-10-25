@@ -11,6 +11,15 @@ export default function(params) {
 
   // TODO: Read this buffer to determine the lights influencing a cluster
   uniform sampler2D u_clusterbuffer;
+  uniform int u_x_slices_num;
+  uniform int u_y_slices_num;
+  uniform int u_z_slices_num;
+  uniform mat4 u_inv_view_mat;
+  uniform int u_max_light_cluster;
+  uniform float u_canvas_height;
+  uniform float u_canvas_width;
+  uniform float u_cam_near;
+  uniform float u_cam_far;
 
   varying vec3 v_position;
   varying vec3 v_normal;
@@ -63,6 +72,12 @@ export default function(params) {
     return light;
   }
 
+  int UnpackClusterBuffer(int cluster_idx, int inner_idx, int clusters_num){
+    float u = float(cluster_idx + 1) / float(clusters_num + 1);
+    int cluster_texture_dim = int(ceil(float(u_max_light_cluster + 1) / 4.0));
+    return int(ExtractFloat(u_clusterbuffer, clusters_num, cluster_texture_dim, cluster_idx, inner_idx));
+  }
+
   // Cubic approximation of gaussian curve so we falloff to exactly 0 at the light radius
   float cubicGaussian(float h) {
     if (h < 1.0) {
@@ -81,8 +96,23 @@ export default function(params) {
 
     vec3 fragColor = vec3(0.0);
 
-    for (int i = 0; i < ${params.numLights}; ++i) {
-      Light light = UnpackLight(i);
+    // Reconstruct the cluster index for this fragment
+    vec4 camera_space_pos = u_inv_view_mat * vec4(v_position.xyz, 1.0);
+
+    int x_slice_idx = int(float(u_x_slices_num) * gl_FragCoord.x / u_canvas_width);
+    int y_slice_idx = int(float(u_y_slices_num) * gl_FragCoord.y / u_canvas_height);
+    int z_slice_idx = int(float(u_z_slices_num) * (-camera_space_pos.z - u_cam_near) / (u_cam_far - u_cam_near));
+
+    int curr_frag_cluster_idx = x_slice_idx + u_x_slices_num * y_slice_idx + z_slice_idx * u_x_slices_num * u_y_slices_num;
+    int clusters_num = u_x_slices_num * u_y_slices_num * u_z_slices_num;
+    int curr_cluster_lights_num = UnpackClusterBuffer(curr_frag_cluster_idx, 0, clusters_num);
+
+    for (int i = 0; i < ${params.maxLightsInCluster}; ++i) {
+      if(i >= curr_cluster_lights_num){
+        break;
+      }
+      int light_idx = UnpackClusterBuffer(curr_frag_cluster_idx, i + 1, clusters_num);
+      Light light = UnpackLight(light_idx);
       float lightDistance = distance(light.position, v_position);
       vec3 L = (light.position - v_position) / lightDistance;
 
