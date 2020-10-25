@@ -18,7 +18,8 @@ export default class ForwardPlusRenderer extends BaseRenderer {
       numLights: NUM_LIGHTS,
     }), {
       uniforms: ['u_viewProjectionMatrix', 'u_colmap', 'u_normap', 'u_lightbuffer', 'u_clusterbuffer',
-    'u_xSlice', 'u_ySlice', 'u_zSlice', 'u_xRange', 'u_yRange', 'u_zRange', 'u_DEBUG', 'u_view_pos'
+    'u_xSlice', 'u_ySlice', 'u_zSlice', 'u_xRange', 'u_yRange', 'u_zRange', 'u_DEBUG', 'u_view_pos',
+    'u_projectionMatrix'
     ],
       attribs: ['a_position', 'a_normal', 'a_uv'],
     });
@@ -67,9 +68,16 @@ export default class ForwardPlusRenderer extends BaseRenderer {
     // Upload the camera matrix
     gl.uniformMatrix4fv(this._shaderProgram.u_viewProjectionMatrix, false, this._viewProjectionMatrix);
     // Jack12 add other variable
+    gl.uniformMatrix4fv(this._shaderProgram.u_projectionMatrix, false, this._viewProjectionMatrix);
+    
     gl.uniform1i(this._shaderProgram.u_DEBUG, 1);
+    // stupid three.js, why not trigger warning when I access 
+    // with camera.position[0]
     gl.uniform3f(this._shaderProgram.u_view_pos, camera.position.x, camera.position.y, camera.position.z);
-
+    
+    gl.uniform1f(this._shaderProgram.u_xSlice, this._xSlices);
+    gl.uniform1f(this._shaderProgram.u_ySlice, this._ySlices);
+    gl.uniform1f(this._shaderProgram.u_zSlice, this._zSlices);
     // Set the light texture as a uniform input to the shader
     gl.activeTexture(gl.TEXTURE2);
     gl.bindTexture(gl.TEXTURE_2D, this._lightTexture.glTexture);

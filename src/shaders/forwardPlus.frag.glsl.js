@@ -12,6 +12,8 @@ export default function(params) {
   // TODO: Read this buffer to determine the lights influencing a cluster
   uniform sampler2D u_clusterbuffer;
   // Jack12
+  uniform mat4 u_projectionMatrix;
+
   uniform int u_DEBUG;
   uniform vec3 u_view_pos;
 
@@ -98,7 +100,7 @@ export default function(params) {
     vec3 fragColor = vec3(0.0);
 
     // specular constant
-    float k_s = 0.75,shiness = 4.0;
+    float k_s = 0.75,shiness = 64.0;
 
     // ${params.numLights} 憨憨webGL
     for (int i = 0; i < ${params.numLights}; ++i) {
@@ -123,7 +125,7 @@ export default function(params) {
       float specularTerm = max(dot(V, R), 0.0);
       float i_s = pow(specularTerm, shiness);
       
-      fragColor +=  i_s * light.color * vec3(lightIntensity);
+      fragColor +=  k_s * i_s * light.color * vec3(lightIntensity);
     }
 
     const vec3 ambientLight = vec3(0.025);
