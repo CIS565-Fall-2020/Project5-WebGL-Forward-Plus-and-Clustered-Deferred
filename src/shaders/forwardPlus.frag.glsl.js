@@ -15,6 +15,8 @@ export default function(params) {
   uniform mat4 u_projectionMatrix;
 
   uniform int u_DEBUG;
+  uniform int u_maxLights;
+
   uniform float u_xSlice;
   uniform float u_ySlice;
   uniform float u_zSlice; 
@@ -138,15 +140,53 @@ export default function(params) {
       return tmp_frag_color;
   }
 
-  vec3 NaiveShader(vec3 albedo, vec3 normap, vec3 normal){
+  vec3 NaiveShader(
+    vec3 albedo, vec3 normap, vec3 normal,
+    float k_s, float shiness
+  ){
     vec3 fragColor = vec3(0.0);
-    // specular constant
-    float k_s = 0.75,shiness = 64.0;
-
-    // ${params.numLights} 憨憨webGL
+    
     for (int i = 0; i < ${params.numLights}; ++i) {
       
       Light light = UnpackLight(i);
+      fragColor += shaderLight(albedo, normap, normal, light, shiness, k_s);
+    }
+
+    const vec3 ambientLight = vec3(0.025);
+    fragColor += albedo * ambientLight;
+
+    return fragColor;
+  }
+
+  vec3 ClusterShader(
+    vec3 cluster_idx,
+    vec3 albedo, vec3 normap, vec3 normal,
+    float k_s, float shiness
+  ){
+    vec3 fragColor = vec3(0.0);
+    int idx = int(cluster_idx.x + 
+              cluster_idx.y * u_xSlice + 
+              cluster_idx.z * u_xSlice * u_ySlice);
+
+    int total_slice = int(u_xSlice * u_ySlice * u_zSlice);
+    float clusterBufferIdx = float(idx + 1) / float(total_slice + 1);
+    int numLights = int(texture2D(u_clusterbuffer, vec2(clusterBufferIdx, 0))[0]);
+    // 
+    
+    int clusterSize = int(floor( (float(u_maxLights) + 1.0) / 4.0 + 1.0));
+    // ${params.numLights} can loop over un-constant variables, WebGL属实憨憨
+    for (int i = 0; i < ${params.numLights}; ++i) {
+      if (i >= numLights){
+        //break;
+      }
+      int l_idx = int(ExtractFloat(
+        u_clusterbuffer,
+        total_slice,
+        clusterSize,
+        idx,
+        i + 1
+      ));
+      Light light = UnpackLight(l_idx);
       fragColor += shaderLight(albedo, normap, normal, light, shiness, k_s);
     }
 
@@ -165,8 +205,11 @@ export default function(params) {
 
     vec3 cluster_idx = p2ClusterIdx(v_projection_position);
 
+    // specular constant
+    float k_s = 0.75,shiness = 64.0;
     vec3 fragColor = vec3(0.0);
-    fragColor = NaiveShader(albedo, normap, normal);
+    //fragColor = NaiveShader(albedo, normap, normal, k_s, shiness);
+    fragColor = ClusterShader(cluster_idx, albedo, normap, normal, k_s, shiness);
 
     const vec3 ambientLight = vec3(0.025);
     fragColor += albedo * ambientLight;

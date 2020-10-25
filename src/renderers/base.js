@@ -67,13 +67,13 @@ export default class BaseRenderer {
 
       //for each light,calculate its influence range
       var x_min, x_max, y_min, y_max, z_min, z_max;
-      x_min = lght_sphr.center[0] - lght_sphr.radius;
-      x_max = lght_sphr.center[0] + lght_sphr.radius;
-      y_min = lght_sphr.center[1] - lght_sphr.radius;
-      y_max = lght_sphr.center[1] + lght_sphr.radius;
+      x_min = lght_sphr.center.x - lght_sphr.radius;
+      x_max = lght_sphr.center.x + lght_sphr.radius;
+      y_min = lght_sphr.center.y - lght_sphr.radius;
+      y_max = lght_sphr.center.y + lght_sphr.radius;
       // z : minus
-      z_min = lght_sphr.center[2] - lght_sphr.radius;
-      z_max = lght_sphr.center[2] + lght_sphr.radius;
+      z_min = lght_sphr.center.z - lght_sphr.radius;
+      z_max = lght_sphr.center.z + lght_sphr.radius;
 
       // for screen, the center is in middle
       x_min = Math.floor( (x_min + screen_width / 2) / screen_width *  this._xSlices);
@@ -82,10 +82,10 @@ export default class BaseRenderer {
       y_min = Math.floor( (y_min + screen_height / 2) / screen_height *  this._ySlices);
       y_max = Math.ceil( (y_max + screen_height / 2) / screen_height *  this._ySlices);
 
-      z_min = ( -z_max - camera.near ) / screen_depth * this._zSlices;
-      z_max = ( -z_min - camera.near ) / screen_depth * this._zSlices;
+      z_min = Math.floor( ( -z_max - camera.near ) / screen_depth * this._zSlices );
+      z_max = Math.ceil( ( -z_min - camera.near ) / screen_depth * this._zSlices );
       // clamp
-
+      //debugger;
       x_min = clamp(x_min, 0, this._xSlices - 1);
       x_max = clamp(x_max, 0, this._xSlices - 1);
       
@@ -94,10 +94,11 @@ export default class BaseRenderer {
 
       z_min = clamp(z_min, 0, this._zSlices - 1);
       z_max = clamp(z_max, 0, this._zSlices - 1);
-
-      for (let z = z_min; z < z_max; z++){
-        for (let y = y_min; y < y_max; y++){
-          for (let x = x_min; x < x_max; x++){
+      
+      //debugger;
+      for (let z = z_min; z <= z_max; z++){
+        for (let y = y_min; y <= y_max; y++){
+          for (let x = x_min; x <= x_max; x++){
             let i = x + y * this._xSlices + z * this._xSlices * this._ySlices;
             //Computes the starting buffer index to the current count
             // store the num of light at the very beginning 
@@ -112,9 +113,10 @@ export default class BaseRenderer {
               let rgba_index = this._clusterTexture.bufferIndex(i, component);
 
               let rgba_offset = cur_count % 4;
-
+              
               this._clusterTexture.buffer[rgba_index + rgba_offset] = lid;
               this._clusterTexture.buffer[cluster_start_idx] = cur_count;
+              //debugger;
             }
 
           }
@@ -122,8 +124,9 @@ export default class BaseRenderer {
       }
       
     }
-
+    //debugger;
     this._clusterTexture.update();
+    
   }
 
 
@@ -140,5 +143,5 @@ function get3DsliceIdxFromSphr(sphr, width, height){
 
 function getClusterFrustum(){
     // probably never could not be finished
-    
+
 }

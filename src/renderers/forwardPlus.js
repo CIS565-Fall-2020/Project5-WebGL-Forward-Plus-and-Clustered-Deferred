@@ -18,7 +18,7 @@ export default class ForwardPlusRenderer extends BaseRenderer {
       numLights: NUM_LIGHTS,
     }), {
       uniforms: ['u_viewProjectionMatrix', 'u_colmap', 'u_normap', 'u_lightbuffer', 'u_clusterbuffer',
-    'u_xSlice', 'u_ySlice', 'u_zSlice', 'u_xRange', 'u_yRange', 'u_zRange', 'u_DEBUG', 'u_view_pos',
+    'u_xSlice', 'u_ySlice', 'u_zSlice', 'u_maxLights','u_DEBUG', 'u_view_pos',
     'u_projectionMatrix'
     ],
       attribs: ['a_position', 'a_normal', 'a_uv'],
@@ -71,6 +71,7 @@ export default class ForwardPlusRenderer extends BaseRenderer {
     gl.uniformMatrix4fv(this._shaderProgram.u_projectionMatrix, false, this._viewProjectionMatrix);
     
     gl.uniform1i(this._shaderProgram.u_DEBUG, 0);
+    gl.uniform1i(this._shaderProgram.u_maxLights, NUM_LIGHTS);
     // stupid three.js, why not trigger warning when I access 
     // with camera.position[0]
     gl.uniform3f(this._shaderProgram.u_view_pos, camera.position.x, camera.position.y, camera.position.z);
