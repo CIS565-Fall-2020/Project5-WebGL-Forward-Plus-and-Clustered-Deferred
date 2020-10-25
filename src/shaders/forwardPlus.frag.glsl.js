@@ -13,6 +13,7 @@ export default function(params) {
   uniform sampler2D u_clusterbuffer;
   // Jack12
   uniform int u_DEBUG;
+  uniform vec3 u_view_pos;
 
   varying vec3 v_position;
   varying vec3 v_normal;
@@ -84,13 +85,22 @@ export default function(params) {
     return o;
   }
 
+  vec3 myreflect(vec3 n, vec3 l){
+    vec3 l_x = l - dot(l, n);
+    return l - 2.0 * l_x;
+  }
+
   void main() {
     vec3 albedo = texture2D(u_colmap, v_uv).rgb;
     vec3 normap = texture2D(u_normap, v_uv).xyz;
     vec3 normal = applyNormalMap(v_normal, normap);
 
     vec3 fragColor = vec3(0.0);
-  // ${params.numLights} 憨憨webGL
+
+    // specular constant
+    float k_s = 0.75,shiness = 4.0;
+
+    // ${params.numLights} 憨憨webGL
     for (int i = 0; i < ${params.numLights}; ++i) {
       
       Light light = UnpackLight(i);
@@ -102,13 +112,24 @@ export default function(params) {
 
       fragColor += albedo * lambertTerm * light.color * vec3(lightIntensity);
 
-      // BLinn Phong
+      // Phong Specular
+      vec3 V = normalize( u_view_pos - v_position );
+      vec3 H = normalize( L + V );
+      vec3 R = normalize(myreflect(normal, light.position - v_position));
+      // intensity of specular
+      // blinn phong
+      //float specularTerm = max(dot(H, normal), 0.0);
+      // vanilla phong
+      float specularTerm = max(dot(V, R), 0.0);
+      float i_s = pow(specularTerm, shiness);
       
+      fragColor +=  i_s * light.color * vec3(lightIntensity);
     }
 
     const vec3 ambientLight = vec3(0.025);
     fragColor += albedo * ambientLight;
-
+    //fragColor += 5.0 * normalize( u_view_pos - v_position );
+    //vec3 debug = ( normalize(u_view_pos - v_position) + 1.0 ) / 2.0 ;
     gl_FragColor = vec4(fragColor, 1.0);
   }
   `;

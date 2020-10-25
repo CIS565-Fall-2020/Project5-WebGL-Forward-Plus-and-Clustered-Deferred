@@ -18,7 +18,7 @@ export default class ForwardPlusRenderer extends BaseRenderer {
       numLights: NUM_LIGHTS,
     }), {
       uniforms: ['u_viewProjectionMatrix', 'u_colmap', 'u_normap', 'u_lightbuffer', 'u_clusterbuffer',
-    'u_xSlice', 'u_ySlice', 'u_zSlice', 'u_xRange', 'u_yRange', 'u_zRange', 'u_DEBUG'
+    'u_xSlice', 'u_ySlice', 'u_zSlice', 'u_xRange', 'u_yRange', 'u_zRange', 'u_DEBUG', 'u_view_pos'
     ],
       attribs: ['a_position', 'a_normal', 'a_uv'],
     });
@@ -68,6 +68,7 @@ export default class ForwardPlusRenderer extends BaseRenderer {
     gl.uniformMatrix4fv(this._shaderProgram.u_viewProjectionMatrix, false, this._viewProjectionMatrix);
     // Jack12 add other variable
     gl.uniform1i(this._shaderProgram.u_DEBUG, 1);
+    gl.uniform3f(this._shaderProgram.u_view_pos, camera.position.x, camera.position.y, camera.position.z);
 
     // Set the light texture as a uniform input to the shader
     gl.activeTexture(gl.TEXTURE2);
