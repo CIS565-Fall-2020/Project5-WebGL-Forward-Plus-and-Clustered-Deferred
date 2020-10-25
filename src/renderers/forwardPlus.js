@@ -37,8 +37,8 @@ export default class ForwardPlusRenderer extends BaseRenderer {
     mat4.copy(this._projectionMatrix, camera.projectionMatrix.elements);
     mat4.multiply(this._viewProjectionMatrix, this._projectionMatrix, this._viewMatrix);
 
-    // // Update cluster texture which maps from cluster index to light list
-     this.updateClusters(camera, this._viewMatrix, scene);
+    // Update cluster texture which maps from cluster index to light list
+    this.updateClusters(camera, this._viewMatrix, scene);
     
     // Update the buffer used to populate the texture packed with light data
     for (let i = 0; i < NUM_LIGHTS; ++i) {

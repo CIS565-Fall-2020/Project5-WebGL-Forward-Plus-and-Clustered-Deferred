@@ -116,9 +116,11 @@ export default class BaseRenderer {
             let idx = x + y * this._xSlices + z * this._xSlices * this._ySlices;
             var count = this._clusterTexture.buffer[this._clusterTexture.bufferIndex(idx, 0)];
 
-            count++;
-            this._clusterTexture.buffer[this._clusterTexture.bufferIndex(idx, Math.floor(count / 4)) + count % 4] = i;
-            this._clusterTexture.buffer[this._clusterTexture.bufferIndex(idx, 0)] = count;
+            if (count < MAX_LIGHTS_PER_CLUSTER) {
+              count++;
+              this._clusterTexture.buffer[this._clusterTexture.bufferIndex(idx, Math.floor(count / 4)) + count % 4] = i;
+              this._clusterTexture.buffer[this._clusterTexture.bufferIndex(idx, 0)] = count;
+            }
           }
         }
       }
