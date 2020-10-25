@@ -109,22 +109,19 @@ export default function(params) {
     return floor(proj_p / size_per_slice);
   }
 
-  vec3 shader(vec3 albedo, vec3 normap, vec3 normal){
-    vec3 fragColor = vec3(0.0);
-    // specular constant
-    float k_s = 0.75,shiness = 64.0;
+  vec3 shaderLight(
+    vec3 albedo, vec3 normap, vec3 normal, 
+    Light light, float shiness, float k_s 
+    ){
+      vec3 tmp_frag_color = vec3(0.0);
 
-    // ${params.numLights} 憨憨webGL
-    for (int i = 0; i < ${params.numLights}; ++i) {
-      
-      Light light = UnpackLight(i);
       float lightDistance = distance(light.position, v_position);
       vec3 L = (light.position - v_position) / lightDistance;
 
       float lightIntensity = cubicGaussian(2.0 * lightDistance / light.radius);
       float lambertTerm = max(dot(L, normal), 0.0);
 
-      fragColor += albedo * lambertTerm * light.color * vec3(lightIntensity);
+      tmp_frag_color += albedo * lambertTerm * light.color * vec3(lightIntensity);
 
       // Phong Specular
       vec3 V = normalize( u_view_pos - v_position );
@@ -136,8 +133,21 @@ export default function(params) {
       // vanilla phong
       float specularTerm = max(dot(V, R), 0.0);
       float i_s = pow(specularTerm, shiness);
+
+      tmp_frag_color +=  k_s * i_s * light.color * vec3(lightIntensity);
+      return tmp_frag_color;
+  }
+
+  vec3 NaiveShader(vec3 albedo, vec3 normap, vec3 normal){
+    vec3 fragColor = vec3(0.0);
+    // specular constant
+    float k_s = 0.75,shiness = 64.0;
+
+    // ${params.numLights} 憨憨webGL
+    for (int i = 0; i < ${params.numLights}; ++i) {
       
-      fragColor +=  k_s * i_s * light.color * vec3(lightIntensity);
+      Light light = UnpackLight(i);
+      fragColor += shaderLight(albedo, normap, normal, light, shiness, k_s);
     }
 
     const vec3 ambientLight = vec3(0.025);
@@ -145,6 +155,8 @@ export default function(params) {
 
     return fragColor;
   }
+
+  
 
   void main() {
     vec3 albedo = texture2D(u_colmap, v_uv).rgb;
@@ -154,8 +166,7 @@ export default function(params) {
     vec3 cluster_idx = p2ClusterIdx(v_projection_position);
 
     vec3 fragColor = vec3(0.0);
-    
-    fragColor = shader(albedo, normap, normal);
+    fragColor = NaiveShader(albedo, normap, normal);
 
     const vec3 ambientLight = vec3(0.025);
     fragColor += albedo * ambientLight;
