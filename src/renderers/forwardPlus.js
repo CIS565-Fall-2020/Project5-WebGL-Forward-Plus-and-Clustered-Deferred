@@ -70,7 +70,7 @@ export default class ForwardPlusRenderer extends BaseRenderer {
     // Jack12 add other variable
     gl.uniformMatrix4fv(this._shaderProgram.u_projectionMatrix, false, this._viewProjectionMatrix);
     
-    gl.uniform1i(this._shaderProgram.u_DEBUG, 1);
+    gl.uniform1i(this._shaderProgram.u_DEBUG, 0);
     // stupid three.js, why not trigger warning when I access 
     // with camera.position[0]
     gl.uniform3f(this._shaderProgram.u_view_pos, camera.position.x, camera.position.y, camera.position.z);

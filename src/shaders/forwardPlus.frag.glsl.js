@@ -15,11 +15,16 @@ export default function(params) {
   uniform mat4 u_projectionMatrix;
 
   uniform int u_DEBUG;
+  uniform float u_xSlice;
+  uniform float u_ySlice;
+  uniform float u_zSlice; 
+
   uniform vec3 u_view_pos;
 
   varying vec3 v_position;
   varying vec3 v_normal;
   varying vec2 v_uv;
+  varying vec3 v_projection_position;
 
   vec3 applyNormalMap(vec3 geomnor, vec3 normap) {
     normap = normap * 2.0 - 1.0;
@@ -92,13 +97,20 @@ export default function(params) {
     return l - 2.0 * l_x;
   }
 
-  void main() {
-    vec3 albedo = texture2D(u_colmap, v_uv).rgb;
-    vec3 normap = texture2D(u_normap, v_uv).xyz;
-    vec3 normal = applyNormalMap(v_normal, normap);
+  vec3 p2ClusterIdx(vec3 proj_p){
+    // get correspoinding cluster idx from projection
+    // space position
 
+    // NDC space is [-1, 1]
+    // clamp to [0, 2] and mess with slice 
+    proj_p += vec3(1.0);
+    vec3 size_per_slice =vec3(2.0) / vec3( u_xSlice, u_ySlice, u_zSlice);
+    
+    return floor(proj_p / size_per_slice);
+  }
+
+  vec3 shader(vec3 albedo, vec3 normap, vec3 normal){
     vec3 fragColor = vec3(0.0);
-
     // specular constant
     float k_s = 0.75,shiness = 64.0;
 
@@ -130,9 +142,31 @@ export default function(params) {
 
     const vec3 ambientLight = vec3(0.025);
     fragColor += albedo * ambientLight;
-    //fragColor += 5.0 * normalize( u_view_pos - v_position );
+
+    return fragColor;
+  }
+
+  void main() {
+    vec3 albedo = texture2D(u_colmap, v_uv).rgb;
+    vec3 normap = texture2D(u_normap, v_uv).xyz;
+    vec3 normal = applyNormalMap(v_normal, normap);
+
+    vec3 cluster_idx = p2ClusterIdx(v_projection_position);
+
+    vec3 fragColor = vec3(0.0);
+    
+    fragColor = shader(albedo, normap, normal);
+
+    const vec3 ambientLight = vec3(0.025);
+    fragColor += albedo * ambientLight;
     //vec3 debug = ( normalize(u_view_pos - v_position) + 1.0 ) / 2.0 ;
-    gl_FragColor = vec4(fragColor, 1.0);
+    if (u_DEBUG == 1){
+      vec3 slice_vec = vec3(u_xSlice, u_ySlice, u_zSlice) + vec3(1.0);
+      gl_FragColor = vec4((cluster_idx + vec3(1.0) ) / slice_vec , 1.0);
+    } else {
+      gl_FragColor = vec4(fragColor, 1.0);
+    }
+    
   }
   `;
 }
