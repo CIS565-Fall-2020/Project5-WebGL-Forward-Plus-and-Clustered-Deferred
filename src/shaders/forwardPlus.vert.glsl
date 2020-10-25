@@ -1,15 +1,15 @@
-#version 100
+#version 310 es
 precision highp float;
 
 uniform mat4 u_viewProjectionMatrix;
 
-attribute vec3 a_position;
-attribute vec3 a_normal;
-attribute vec2 a_uv;
+in vec3 a_position;
+in vec3 a_normal;
+in vec2 a_uv;
 
-varying vec3 v_position;
-varying vec3 v_normal;
-varying vec2 v_uv;
+out vec3 v_position;
+out vec3 v_normal;
+out vec2 v_uv;
 
 void main() {
     gl_Position = u_viewProjectionMatrix * vec4(a_position, 1.0);

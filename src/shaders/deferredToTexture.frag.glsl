@@ -1,13 +1,17 @@
-#version 100
-#extension GL_EXT_draw_buffers: enable
+#version 310 es
 precision highp float;
 
 uniform sampler2D u_colmap;
 uniform sampler2D u_normap;
 
-varying vec3 v_position;
-varying vec3 v_normal;
-varying vec2 v_uv;
+in vec3 v_position;
+in vec3 v_normal;
+in vec2 v_uv;
+
+layout (location = 0) out vec3 fragNormal;
+layout (location = 1) out vec3 fragAlbedo;
+layout (location = 2) out vec3 fragStuff;
+layout (location = 3) out vec3 fragStuff2;
 
 vec3 applyNormalMap(vec3 geomnor, vec3 normap) {
     normap = normap * 2.0 - 1.0;
@@ -18,12 +22,8 @@ vec3 applyNormalMap(vec3 geomnor, vec3 normap) {
 }
 
 void main() {
-    vec3 norm = applyNormalMap(v_normal, vec3(texture2D(u_normap, v_uv)));
-    vec3 col = vec3(texture2D(u_colmap, v_uv));
-
-    // TODO: populate your g buffer
-    // gl_FragData[0] = ??
-    // gl_FragData[1] = ??
-    // gl_FragData[2] = ??
-    // gl_FragData[3] = ??
+    fragNormal = applyNormalMap(v_normal, vec3(texture(u_normap, v_uv)));
+    fragAlbedo = vec3(texture(u_colmap, v_uv));
+    fragStuff = vec3(v_position);
+    fragStuff2 = vec3(1.0f);
 }
