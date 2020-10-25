@@ -17,7 +17,9 @@ export default class ForwardPlusRenderer extends BaseRenderer {
     this._shaderProgram = loadShaderProgram(vsSource, fsSource({
       numLights: NUM_LIGHTS,
     }), {
-      uniforms: ['u_viewProjectionMatrix', 'u_colmap', 'u_normap', 'u_lightbuffer', 'u_clusterbuffer'],
+      uniforms: ['u_viewProjectionMatrix', 'u_colmap', 'u_normap', 'u_lightbuffer', 'u_clusterbuffer',
+    'u_xSlice', 'u_ySlice', 'u_zSlice', 'u_xRange', 'u_yRange', 'u_zRange', 'u_DEBUG'
+    ],
       attribs: ['a_position', 'a_normal', 'a_uv'],
     });
 
@@ -64,6 +66,8 @@ export default class ForwardPlusRenderer extends BaseRenderer {
 
     // Upload the camera matrix
     gl.uniformMatrix4fv(this._shaderProgram.u_viewProjectionMatrix, false, this._viewProjectionMatrix);
+    // Jack12 add other variable
+    gl.uniform1i(this._shaderProgram.u_DEBUG, 1);
 
     // Set the light texture as a uniform input to the shader
     gl.activeTexture(gl.TEXTURE2);

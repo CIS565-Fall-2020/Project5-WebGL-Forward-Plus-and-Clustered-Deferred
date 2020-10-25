@@ -12,6 +12,7 @@ varying vec3 v_normal;
 varying vec2 v_uv;
 
 void main() {
+    // no model matrix: because it's already in model space
     gl_Position = u_viewProjectionMatrix * vec4(a_position, 1.0);
     v_position = a_position;
     v_normal = a_normal;

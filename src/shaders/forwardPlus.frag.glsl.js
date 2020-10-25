@@ -11,6 +11,8 @@ export default function(params) {
 
   // TODO: Read this buffer to determine the lights influencing a cluster
   uniform sampler2D u_clusterbuffer;
+  // Jack12
+  uniform int u_DEBUG;
 
   varying vec3 v_position;
   varying vec3 v_normal;
@@ -74,14 +76,23 @@ export default function(params) {
     }
   }
 
+  vec3 position2CluterIdx(vec3 p ){
+    // p is in model space
+    vec3 o = vec3(0.0);
+
+
+    return o;
+  }
+
   void main() {
     vec3 albedo = texture2D(u_colmap, v_uv).rgb;
     vec3 normap = texture2D(u_normap, v_uv).xyz;
     vec3 normal = applyNormalMap(v_normal, normap);
 
     vec3 fragColor = vec3(0.0);
-
+  // ${params.numLights} 憨憨webGL
     for (int i = 0; i < ${params.numLights}; ++i) {
+      
       Light light = UnpackLight(i);
       float lightDistance = distance(light.position, v_position);
       vec3 L = (light.position - v_position) / lightDistance;
@@ -90,6 +101,9 @@ export default function(params) {
       float lambertTerm = max(dot(L, normal), 0.0);
 
       fragColor += albedo * lambertTerm * light.color * vec3(lightIntensity);
+
+      // BLinn Phong
+      
     }
 
     const vec3 ambientLight = vec3(0.025);
