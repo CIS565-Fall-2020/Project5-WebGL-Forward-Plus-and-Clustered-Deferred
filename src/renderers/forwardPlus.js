@@ -89,8 +89,8 @@ export default class ForwardPlusRenderer extends BaseRenderer {
     gl.bindTexture(gl.TEXTURE_2D, this._clusterTexture.glTexture);
     gl.uniform1i(this._shaderProgram.u_clusterbuffer, 3);
 
+    this._wireFramer.render(camera);
     // TODO: Bind any other shader inputs
-
     // Draw the scene. This function takes the shader program so that the model's textures can be bound to the right inputs
     scene.draw(this._shaderProgram);
   }

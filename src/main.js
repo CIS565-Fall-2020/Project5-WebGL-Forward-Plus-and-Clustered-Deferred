@@ -28,7 +28,7 @@ function setRenderer(renderer) {
       params._renderer = new ForwardRenderer();
       break;
     case FORWARD_PLUS:
-      params._renderer = new ForwardPlusRenderer(15, 15, 15);
+      params._renderer = new ForwardPlusRenderer(2, 2, 2);
       break;
     case CLUSTERED:
       params._renderer = new ClusteredDeferredRenderer(15, 15, 15);
@@ -63,7 +63,6 @@ gl.enable(gl.DEPTH_TEST);
 function render() {
   scene.update();  
   params._renderer.render(camera, scene);
-
   // LOOK: Render wireframe "in front" of everything else.
   // If you would like the wireframe to render behind and in front
   // of objects based on relative depths in the scene, comment out /

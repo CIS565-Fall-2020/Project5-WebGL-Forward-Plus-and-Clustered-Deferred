@@ -2,6 +2,7 @@ import TextureBuffer from './textureBuffer';
 import {Sphere, Frustum, Vector3, Matrix4, Vector4, Plane} from 'three';
 import Scene, { NUM_LIGHTS } from '../scene';
 import { vec3 ,vec4 } from 'gl-matrix';
+import Wireframe from '../wireframe';
 export const MAX_LIGHTS_PER_CLUSTER = 100;
 
 export default class BaseRenderer {
@@ -12,6 +13,7 @@ export default class BaseRenderer {
     this._xSlices = xSlices;
     this._ySlices = ySlices;
     this._zSlices = zSlices;
+    this._wireFramer = new Wireframe();
   }
 
   updateClusters(camera, viewMatrix, scene) {
@@ -41,12 +43,21 @@ export default class BaseRenderer {
     var inverseProjectionMatrix = new Matrix4();
     inverseProjectionMatrix.getInverse(camera.projectionMatrix);
     
+    var inverseViewMatrix = new Matrix4();
+    inverseViewMatrix.copy(camera.matrixWorldInverse);
+
+    var inverseProjectionViewMatrix = new Matrix4();
+    inverseProjectionViewMatrix.multiplyMatrices(
+      inverseProjectionMatrix,
+      inverseViewMatrix);
+
     // store the light sphere in an array 
     var sphr_arr = []
     for (let lid = 0; lid < NUM_LIGHTS; lid ++){
       sphr_arr[lid] = get_view_Sphere(scene, lid, viewMatrix);
     }
     var offset = new Vector3(-1.0, -1.0, -1.0, 0.0);
+    
     function get_frustum_plane(ndc_m, ndc_n){
       ndc_n.applyMatrix4(transProjectionMatrix);
       ndc_m.multiply(cluster_NDC_size);
@@ -57,6 +68,11 @@ export default class BaseRenderer {
       n.normalize();
       return new Plane(n, ndc_m.lengthSq());
     }
+
+    function debug_visualize(ndc_p){
+
+    }
+
     // for each frustum, traverse each light
     for (let z = 0; z < this._zSlices; ++z) {
       for (let y = 0; y < this._ySlices; ++y) {
@@ -64,7 +80,7 @@ export default class BaseRenderer {
           // get the frustum
           var n, m; // n : normal, m: middle point of face of cluster(grid) 
           //n = new Vector4(0.0, 0.0, 0.0, 0.0); m = new Vector3();
-          var cur_frstm = new Frustum();
+          
           var P0, P1, P2, P3, P4, P5;
           // z near,
           n = new Vector4(0.0, 0.0, 1.0, 0.0);
@@ -95,7 +111,30 @@ export default class BaseRenderer {
           n = new Vector4(0.0, 1.0, 0.0, 0.0);
           m = new Vector3(x + 0.5, y + 1.0, z + 0.5);
           P5 = get_frustum_plane(m, n);
+          
+          var cur_frstm = new Frustum(P0, P1, P2, P3, P4, P5);
+          // to visualize
+          var left_bottom_near = new Vector3(x, y, z);
+          var right_up_far = new Vector3(x + 1, y + 1, z + 1);
+          
+          left_bottom_near.multiply(cluster_NDC_size);
+          right_up_far.multiply(cluster_NDC_size); 
+          
+          left_bottom_near.add(offset);
+          right_up_far.add(offset);
 
+          left_bottom_near = new Vector4(left_bottom_near.x, left_bottom_near.y, left_bottom_near.z, camera.near);
+          right_up_far = new Vector4(right_up_far.x, right_up_far.y, right_up_far.z, camera.far);
+
+          left_bottom_near.applyMatrix4(inverseProjectionViewMatrix);
+          right_up_far.applyMatrix4(inverseProjectionViewMatrix);
+          
+          var start_pos = [left_bottom_near.x, left_bottom_near.y, left_bottom_near.z];
+          var end_pos = [right_up_far.x, right_up_far.y, right_up_far.z];
+          var segmentColor = [1.0, 0.0, 0.0];
+          this._wireFramer.addLineSegment(start_pos, end_pos, segmentColor);
+          
+          
           for (let lid = 0; lid < NUM_LIGHTS; lid ++){
             let cur_sphr = sphr_arr[lid]
           }
