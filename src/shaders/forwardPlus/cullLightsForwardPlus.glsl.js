@@ -1,5 +1,5 @@
-import frustumUtils from './include/frustum.glsl'
-import lightingUtils from './include/lighting.glsl'
+import frustumUtils from '../include/frustum.glsl'
+import lightingUtils from '../include/lighting.glsl'
 
 export default function(params) {
 	return `#version 310 es
@@ -35,7 +35,7 @@ export default function(params) {
 	${frustumUtils}
 
 	void main() {
-		uvec3 threadId = gl_WorkGroupID * gl_WorkGroupSize + gl_LocalInvocationID;
+		uvec3 threadId = gl_GlobalInvocationID;
 		uint numBlocksX = u_width / u_blockSize;
 		uint numBlocksY = u_height / u_blockSize;
 		if (threadId.x >= numBlocksX || threadId.y >= numBlocksY || threadId.z >= u_numLights) {
@@ -60,7 +60,7 @@ export default function(params) {
 		lightPos.z = -lightPos.z;
 		float lightRadius = lights.lights[threadId.z].radius;
 
-		if (!FrustumSphereIntersectionPossible(frustum, lightPos, lightRadius)) {
+		if (!frustumSphereIntersectionPossible(frustum, lightPos, lightRadius)) {
 			return;
 		}
 

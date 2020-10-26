@@ -1,41 +1,126 @@
-import { gl, canvas } from '../init';
+import { gl, canvas, globalParams } from '../init';
 import { mat4, vec4 } from 'gl-matrix';
-import { loadShaderProgram, renderFullscreenQuad } from '../utils';
+import { addShaderLocations, compileShader, linkShader, loadShaderProgram, renderFullscreenQuad } from '../utils';
 import { NUM_LIGHTS } from '../scene';
-import toTextureVert from '../shaders/deferredToTexture.vert.glsl';
-import toTextureFrag from '../shaders/deferredToTexture.frag.glsl';
-import QuadVertSource from '../shaders/quad.vert.glsl';
-import fsSource from '../shaders/deferred.frag.glsl.js';
 import TextureBuffer from './textureBuffer';
 import BaseRenderer from './base';
 
-export const NUM_GBUFFERS = 4;
+import toTextureVert from '../shaders/clustered/deferredToTexture.vert.glsl';
+import toTextureFrag from '../shaders/clustered/deferredToTexture.frag.glsl';
+import clearClusterDepthCs from '../shaders/clustered/clearClusterDepth.glsl';
+import collectDepthCs from '../shaders/clustered/collectDepth.glsl.js';
+import cullLightCs from '../shaders/clustered/cullLightsClustered.glsl.js'
+import fsSource from '../shaders/clustered/deferred.frag.glsl.js';
+
+import depthDebugFs from '../shaders/clustered/debugVisualizeClusterDepth.frag.glsl.js'
+
+import QuadVertSource from '../shaders/quad.vert.glsl';
+import debugVisualizeClusterDepthFragGlsl from '../shaders/clustered/debugVisualizeClusterDepth.frag.glsl.js';
+
+export const NUM_GBUFFERS = 2;
+
+const EXPECTED_LIGHTS_PER_CLUSTER = 500;
 
 export default class ClusteredDeferredRenderer extends BaseRenderer {
 	constructor(xSlices, ySlices, zSlices) {
 		super(xSlices, ySlices, zSlices);
 
+		this._projectionMatrix = mat4.create();
+		this._viewMatrix = mat4.create();
+		this._viewProjectionMatrix = mat4.create();
+
+		const blockSizeX = Math.trunc(canvas.width / this._xSlices);
+		const blockSizeY = Math.trunc(canvas.height / this._ySlices);
+
+
+		// g buffer pass
 		this.setupDrawBuffers(canvas.width, canvas.height);
 
-		// Create a texture to store light data
-		this._lightTexture = new TextureBuffer(NUM_LIGHTS, 8);
-
-		this._progCopy = loadShaderProgram(toTextureVert, toTextureFrag, {
+		this._gBufferPass = loadShaderProgram(toTextureVert, toTextureFrag, {
 			uniforms: ['u_viewProjectionMatrix', 'u_colmap', 'u_normap'],
 			attribs: ['a_position', 'a_normal', 'a_uv'],
 		});
 
+
+		// cluster depth collection pass
+		this._clusterDepthBuffer = gl.createBuffer();
+		gl.bindBuffer(gl.SHADER_STORAGE_BUFFER, this._clusterDepthBuffer);
+		gl.bufferData(
+			gl.SHADER_STORAGE_BUFFER,
+			this._xSlices * this._ySlices * this._zSlices * 6 * 4,
+			gl.DYNAMIC_COPY
+		);
+
+		this._clearClusterDepthCs = addShaderLocations(
+			{ glShaderProgram: linkShader(compileShader(clearClusterDepthCs(), gl.COMPUTE_SHADER)) },
+			{ uniforms: ['u_totalClusters'] }
+		);
+
+		this._collectDepthCs = addShaderLocations(
+			{
+				glShaderProgram: linkShader(compileShader(collectDepthCs({
+					xSlices: this._xSlices,
+					ySlices: this._ySlices,
+					zSlices: this._zSlices
+				}), gl.COMPUTE_SHADER))
+			},
+			{ uniforms: ['u_cameraNear', 'u_cameraFar', 'u_blockSizeX', 'u_blockSizeY', 'u_depth'] }
+		);
+
+
+		// cull light pass
+		this._lightBuffer = gl.createBuffer();
+
+		this._lightList = gl.createBuffer();
+		gl.bindBuffer(gl.SHADER_STORAGE_BUFFER, this._lightList);
+		gl.bufferData(
+			gl.SHADER_STORAGE_BUFFER,
+			EXPECTED_LIGHTS_PER_CLUSTER * this._xSlices * this._ySlices * this._zSlices * 8,
+			gl.DYNAMIC_COPY
+		);
+
+		this._lightHead = gl.createBuffer();
+
+		this._cullLightShader = addShaderLocations(
+			{
+				glShaderProgram: linkShader(compileShader(cullLightCs({
+					xSlices: this._xSlices,
+					ySlices: this._ySlices,
+					zSlices: this._zSlices
+				}), gl.COMPUTE_SHADER))
+			},
+			{ uniforms: ['u_numLights', 'u_camRight', 'u_camUp', 'u_width', 'u_height', 'u_view'] }
+		);
+
+
+		// final shading pass
 		this._progShade = loadShaderProgram(QuadVertSource, fsSource({
 			numLights: NUM_LIGHTS,
 			numGBuffers: NUM_GBUFFERS,
+			xSlices: this._xSlices,
+			zSlices: this._zSlices
 		}), {
-			uniforms: ['u_gbuffers[0]', 'u_gbuffers[1]', 'u_gbuffers[2]', 'u_gbuffers[3]', 'u_depth'],
+			uniforms: [
+				'u_gbuffers[0]', 'u_gbuffers[1]', 'u_depth',
+				'u_cameraNear', 'u_cameraFar', 'u_cameraRight', 'u_cameraUp', 'u_invView',
+				'u_blockSizeX', 'u_blockSizeY', 'u_debugMode', 'u_debugModeParam'
+			],
 			attribs: ['a_position'],
 		});
 
-		this._projectionMatrix = mat4.create();
-		this._viewMatrix = mat4.create();
-		this._viewProjectionMatrix = mat4.create();
+
+		// debug
+		this._debugDepthShader = loadShaderProgram(
+			QuadVertSource, depthDebugFs({
+				blockSizeX: blockSizeX,
+				blockSizeY: blockSizeY,
+				xSlices: this._xSlices,
+				ySlices: this._ySlices,
+				zSlices: this._zSlices
+			}), {
+				uniforms: ['u_depthLayer']
+			}
+		);
 	}
 
 	setupDrawBuffers(width, height) {
@@ -52,8 +137,8 @@ export default class ClusteredDeferredRenderer extends BaseRenderer {
 		gl.bindTexture(gl.TEXTURE_2D, null);
 
 
-		this._fbo = gl.createFramebuffer();
-		gl.bindFramebuffer(gl.FRAMEBUFFER, this._fbo);
+		this._gBuffer = gl.createFramebuffer();
+		gl.bindFramebuffer(gl.FRAMEBUFFER, this._gBuffer);
 		gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.TEXTURE_2D, this._depthTex, 0);
 
 		// Create, bind, and store "color" target textures for the FBO
@@ -86,10 +171,12 @@ export default class ClusteredDeferredRenderer extends BaseRenderer {
 		this._height = height;
 
 		gl.bindTexture(gl.TEXTURE_2D, this._depthTex);
-		gl.texImage2D(gl.TEXTURE_2D, 0, gl.DEPTH_COMPONENT, width, height, 0, gl.DEPTH_COMPONENT, gl.UNSIGNED_SHORT, null);
+		gl.texImage2D(
+			gl.TEXTURE_2D, 0, gl.DEPTH_COMPONENT24, width, height, 0, gl.DEPTH_COMPONENT, gl.UNSIGNED_INT, null
+		);
 		for (let i = 0; i < NUM_GBUFFERS; i++) {
 			gl.bindTexture(gl.TEXTURE_2D, this._gbuffers[i]);
-			gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, width, height, 0, gl.RGBA, gl.FLOAT, null);
+			gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA32F, width, height, 0, gl.RGBA, gl.FLOAT, null);
 		}
 		gl.bindTexture(gl.TEXTURE_2D, null);
 	}
@@ -99,69 +186,129 @@ export default class ClusteredDeferredRenderer extends BaseRenderer {
 			this.resize(canvas.width, canvas.height);
 		}
 
+		const blockSizeX = Math.trunc(canvas.width / this._xSlices);
+		const blockSizeY = Math.trunc(canvas.height / this._ySlices);
+		const numClusters = this._xSlices * this._ySlices * this._zSlices;
+
+
 		// Update the camera matrices
 		camera.updateMatrixWorld();
 		mat4.invert(this._viewMatrix, camera.matrixWorld.elements);
 		mat4.copy(this._projectionMatrix, camera.projectionMatrix.elements);
 		mat4.multiply(this._viewProjectionMatrix, this._projectionMatrix, this._viewMatrix);
 
-		// Render to the whole screen
+
+		// render g buffer
+		gl.bindFramebuffer(gl.FRAMEBUFFER, this._gBuffer);
 		gl.viewport(0, 0, canvas.width, canvas.height);
-
-		// Bind the framebuffer
-		gl.bindFramebuffer(gl.FRAMEBUFFER, this._fbo);
-
-		// Clear the frame
 		gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-		// Use the shader program to copy to the draw buffers
-		gl.useProgram(this._progCopy.glShaderProgram);
+		gl.useProgram(this._gBufferPass.glShaderProgram);
+		gl.uniformMatrix4fv(this._gBufferPass.u_viewProjectionMatrix, false, this._viewProjectionMatrix);
+		scene.draw(this._gBufferPass);
 
-		// Upload the camera matrix
-		gl.uniformMatrix4fv(this._progCopy.u_viewProjectionMatrix, false, this._viewProjectionMatrix);
 
-		// Draw the scene. This function takes the shader program so that the model's textures can be bound to the right inputs
-		scene.draw(this._progCopy);
+		// clear clusters
+		gl.useProgram(this._clearClusterDepthCs.glShaderProgram);
+		gl.bindBufferBase(gl.SHADER_STORAGE_BUFFER, 0, this._clusterDepthBuffer);
+		gl.uniform1ui(this._clearClusterDepthCs.u_totalClusters, this._xSlices * this._ySlices * this._zSlices);
+		gl.dispatchCompute((numClusters + 63) / 64, 1, 1);
+		gl.memoryBarrier(gl.SHADER_STORAGE_BARRIER_BIT);
 
-		// Update the buffer used to populate the texture packed with light data
-		for (let i = 0; i < NUM_LIGHTS; ++i) {
-			this._lightTexture.buffer[this._lightTexture.bufferIndex(i, 0) + 0] = scene.lights[i].position[0];
-			this._lightTexture.buffer[this._lightTexture.bufferIndex(i, 0) + 1] = scene.lights[i].position[1];
-			this._lightTexture.buffer[this._lightTexture.bufferIndex(i, 0) + 2] = scene.lights[i].position[2];
-			this._lightTexture.buffer[this._lightTexture.bufferIndex(i, 0) + 3] = scene.lights[i].radius;
+		// collect clusters
+		gl.useProgram(this._collectDepthCs.glShaderProgram);
+		gl.bindBufferBase(gl.SHADER_STORAGE_BUFFER, 0, this._clusterDepthBuffer);
+		gl.uniform1f(this._collectDepthCs.u_cameraNear, camera.near);
+		gl.uniform1f(this._collectDepthCs.u_cameraFar, camera.far);
+		gl.uniform1ui(this._collectDepthCs.u_blockSizeX, blockSizeX);
+		gl.uniform1ui(this._collectDepthCs.u_blockSizeY, blockSizeY);
+		// bind texture
+		gl.activeTexture(gl.TEXTURE0);
+		gl.bindTexture(gl.TEXTURE_2D, this._depthTex);
+		gl.uniform1i(this._collectDepthCs.u_depth, 0);
+		// run compute shader
+		gl.dispatchCompute((canvas.width + 7) / 8, (canvas.height + 7) / 8, 1);
+		gl.memoryBarrier(gl.SHADER_STORAGE_BARRIER_BIT);
 
-			this._lightTexture.buffer[this._lightTexture.bufferIndex(i, 1) + 0] = scene.lights[i].color[0];
-			this._lightTexture.buffer[this._lightTexture.bufferIndex(i, 1) + 1] = scene.lights[i].color[1];
-			this._lightTexture.buffer[this._lightTexture.bufferIndex(i, 1) + 2] = scene.lights[i].color[2];
+
+		// cull lights
+		gl.useProgram(this._cullLightShader.glShaderProgram);
+		// gather lights
+		const lightArray = new Float32Array(NUM_LIGHTS * 8);
+		for (let i = 0, base = 0; i < NUM_LIGHTS; ++i, base += 8) {
+			lightArray[base + 0] = scene.lights[i].position[0];
+			lightArray[base + 1] = scene.lights[i].position[1];
+			lightArray[base + 2] = scene.lights[i].position[2];
+			lightArray[base + 3] = scene.lights[i].radius;
+
+			lightArray[base + 4] = scene.lights[i].color[0];
+			lightArray[base + 5] = scene.lights[i].color[1];
+			lightArray[base + 6] = scene.lights[i].color[2];
 		}
-		// Update the light texture
-		this._lightTexture.update();
+		gl.bindBuffer(gl.SHADER_STORAGE_BUFFER, this._lightBuffer);
+		gl.bufferData(gl.SHADER_STORAGE_BUFFER, lightArray, gl.DYNAMIC_DRAW);
+		// reset head
+		const heads = new Int32Array(numClusters + 1);
+		heads.fill(-1);
+		heads[0] = 0;
+		gl.bindBuffer(gl.SHADER_STORAGE_BUFFER, this._lightHead);
+		gl.bufferData(gl.SHADER_STORAGE_BUFFER, heads, gl.DYNAMIC_COPY);
+		// bind buffers
+		gl.bindBufferBase(gl.SHADER_STORAGE_BUFFER, 0, this._clusterDepthBuffer);
+		gl.bindBufferBase(gl.SHADER_STORAGE_BUFFER, 1, this._lightBuffer);
+		gl.bindBufferBase(gl.SHADER_STORAGE_BUFFER, 2, this._lightHead);
+		gl.bindBufferBase(gl.SHADER_STORAGE_BUFFER, 3, this._lightList);
+		// uniforms
+		gl.uniform1ui(this._cullLightShader.u_numLights, NUM_LIGHTS);
+		const camY = Math.tan((Math.PI / 180) * 0.5 * camera.fov) / camera.zoom;
+		const camX = camera.aspect * camY;
+		gl.uniform1f(this._cullLightShader.u_camRight, camX);
+		gl.uniform1f(this._cullLightShader.u_camUp, camY);
+		gl.uniform1ui(this._cullLightShader.u_width, canvas.width);
+		gl.uniform1ui(this._cullLightShader.u_height, canvas.height);
+		gl.uniformMatrix4fv(this._cullLightShader.u_view, false, this._viewMatrix);
+		// run compute shader
+		gl.dispatchCompute((this._xSlices + 7) / 8, (this._ySlices + 7) / 8, (NUM_LIGHTS + 7) / 8);
+		gl.memoryBarrier(gl.SHADER_STORAGE_BARRIER_BIT);
 
-		// Update the clusters for the frame
-		this.updateClusters(camera, this._viewMatrix, scene);
 
 		// Bind the default null framebuffer which is the screen
 		gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-
-		// Clear the frame
 		gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-		// Use this shader program
-		gl.useProgram(this._progShade.glShaderProgram);
-
-		// TODO: Bind any other shader inputs
-
-		// Bind g-buffers
-		gl.activeTexture(gl.TEXTURE0);
-		gl.bindTexture(gl.TEXTURE_2D, this._depthTex);
-		gl.uniform1i(this._progShade.u_depth, 0);
-		const firstGBufferBinding = 1; // You may have to change this if you use other texture slots
-		for (let i = 0; i < NUM_GBUFFERS; i++) {
-			gl.activeTexture(gl[`TEXTURE${i + firstGBufferBinding}`]);
-			gl.bindTexture(gl.TEXTURE_2D, this._gbuffers[i]);
-			gl.uniform1i(this._progShade[`u_gbuffers[${i}]`], i + firstGBufferBinding);
+		if (globalParams.debugMode == 1) {
+			gl.useProgram(this._debugDepthShader.glShaderProgram);
+			gl.bindBufferBase(gl.SHADER_STORAGE_BUFFER, 0, this._clusterDepthBuffer);
+			gl.uniform1f(this._debugDepthShader.u_depthLayer, globalParams.debugModeParam);
+			renderFullscreenQuad(this._debugDepthShader);
+		} else {
+			gl.useProgram(this._progShade.glShaderProgram);
+			// bind g-buffers
+			gl.activeTexture(gl.TEXTURE0);
+			gl.bindTexture(gl.TEXTURE_2D, this._depthTex);
+			gl.uniform1i(this._progShade.u_depth, 0);
+			const firstGBufferBinding = 1;
+			for (let i = 0; i < NUM_GBUFFERS; i++) {
+				gl.activeTexture(gl[`TEXTURE${i + firstGBufferBinding}`]);
+				gl.bindTexture(gl.TEXTURE_2D, this._gbuffers[i]);
+				gl.uniform1i(this._progShade[`u_gbuffers[${i}]`], i + firstGBufferBinding);
+			}
+			// bind buffers
+			gl.bindBufferBase(gl.SHADER_STORAGE_BUFFER, 0, this._lightBuffer);
+			gl.bindBufferBase(gl.SHADER_STORAGE_BUFFER, 1, this._lightHead);
+			gl.bindBufferBase(gl.SHADER_STORAGE_BUFFER, 2, this._lightList);
+			// uniforms
+			gl.uniform1f(this._progShade.u_cameraNear, camera.near);
+			gl.uniform1f(this._progShade.u_cameraFar, camera.far);
+			gl.uniform1f(this._progShade.u_cameraRight, camX);
+			gl.uniform1f(this._progShade.u_cameraUp, camY);
+			gl.uniformMatrix4fv(this._progShade.u_invView, false, camera.matrixWorld.elements);
+			gl.uniform1ui(this._progShade.u_blockSizeX, blockSizeX);
+			gl.uniform1ui(this._progShade.u_blockSizeY, blockSizeY);
+			gl.uniform1i(this._progShade.u_debugMode, globalParams.debugMode);
+			gl.uniform1f(this._progShade.u_debugModeParam, globalParams.debugModeParam);
+			// render
+			renderFullscreenQuad(this._progShade);
 		}
-
-		renderFullscreenQuad(this._progShade);
 	}
 };

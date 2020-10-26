@@ -1,5 +1,4 @@
-import lightingUtils from './include/lighting.glsl'
-import frustumUtils from './include/frustum.glsl'
+import lightingUtils from '../include/lighting.glsl'
 
 export default function(params) {
 	return `#version 310 es
@@ -7,12 +6,6 @@ export default function(params) {
 
 	uniform sampler2D u_colmap;
 	uniform sampler2D u_normap;
-
-	uniform uint u_blockSize;
-	uniform uint u_numBlocksX;
-
-	uniform int u_debugMode;
-	uniform float u_debugModeParam;
 
 	in vec3 v_position;
 	in vec3 v_normal;
@@ -22,17 +15,9 @@ export default function(params) {
 
 	${lightingUtils}
 
-	layout (std430, binding = 0) buffer LightIn {
+	layout (std430, binding = 0) buffer Lights {
 		Light lights[];
 	} lights;
-	layout (std430, binding = 1) buffer LightList {
-		ivec2 node[];
-	} list;
-	layout (std430, binding = 2) buffer LightHead {
-		int head[];
-	} head;
-
-	${frustumUtils}
 
 	void main() {
 		vec3 albedo = texture(u_colmap, v_uv).rgb;
@@ -41,11 +26,8 @@ export default function(params) {
 
 		fragColor = vec4(0.0f, 0.0f, 0.0f, 1.0f);
 
-		uvec2 blockIndex = uvec2(gl_FragCoord.xy) / u_blockSize;
-		uint index = blockIndex.y * u_numBlocksX + blockIndex.x;
-		int count = 0;
-		for (int i = head.head[index + 1u]; i != -1; i = list.node[i].y) {
-			Light light = lights.lights[list.node[i].x];
+		for (int i = 0; i < ${params.numLights}; ++i) {
+			Light light = lights.lights[i];
 			float lightDistance = distance(light.position, v_position);
 			vec3 L = (light.position - v_position) / lightDistance;
 
@@ -53,18 +35,10 @@ export default function(params) {
 			float lambertTerm = max(dot(L, normal), 0.0);
 
 			fragColor.xyz += albedo * lambertTerm * light.color * vec3(lightIntensity);
-			count += 1;
 		}
 
 		const vec3 ambientLight = vec3(0.025);
 		fragColor.xyz += albedo * ambientLight;
-		if (u_debugMode == 2) {
-			fragColor.xyz = mix(
-				vec3(0.0f, 0.0f, 1.0f),
-				vec3(1.0f, 0.0f, 0.0f),
-				float(count) / (u_debugModeParam * 1000.0f + 1.0f)
-			);
-		}
 	}
 	`;
 }

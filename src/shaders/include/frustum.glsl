@@ -20,7 +20,7 @@ float depthSampleToWorld(float depth, float near, float far) {
 	return near * far / (far - depth * (far - near));
 }
 
-bool FrustumSphereIntersectionPossible(Frustum fr, vec3 center, float radius) {
+bool frustumSphereIntersectionPossible(Frustum fr, vec3 center, float radius) {
 	if (center.z + radius < fr.near || center.z - radius > fr.far) {
 		return false;
 	}

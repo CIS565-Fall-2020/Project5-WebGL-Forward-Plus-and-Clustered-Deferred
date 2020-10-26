@@ -2,8 +2,8 @@ import { gl } from '../init';
 import { mat4, vec4 } from 'gl-matrix';
 import { loadShaderProgram } from '../utils';
 import { NUM_LIGHTS } from '../scene';
-import vsSource from '../shaders/forward.vert.glsl';
-import fsSource from '../shaders/forward.frag.glsl.js';
+import vsSource from '../shaders/forward/forward.vert.glsl';
+import fsSource from '../shaders/forward/forward.frag.glsl.js';
 import TextureBuffer from './textureBuffer';
 
 export default class ForwardRenderer {

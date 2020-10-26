@@ -1,4 +1,4 @@
-import frustumUtil from './include/frustum.glsl'
+import frustumUtil from '../include/frustum.glsl'
 
 export default function () {
 	return `#version 310 es

@@ -50,7 +50,7 @@ export const FORWARD_PLUS = 'Forward+';
 export const CLUSTERED = 'Clustered Deferred';
 
 export const globalParams = {
-	renderer: FORWARD_PLUS,
+	renderer: CLUSTERED,
   _renderer: null,
 
 	updateLights: true,

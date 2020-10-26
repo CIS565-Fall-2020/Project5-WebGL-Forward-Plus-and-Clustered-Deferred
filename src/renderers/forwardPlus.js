@@ -2,19 +2,18 @@ import { gl, canvas, abort, globalParams } from '../init';
 import { mat4, vec4, vec3 } from 'gl-matrix';
 import { compileShader, linkShader, addShaderLocations, loadShaderProgram, renderFullscreenQuad } from '../utils';
 import { NUM_LIGHTS } from '../scene';
-
-import depthPrepassVs from "../shaders/depthPrepass.vert.glsl";
-import depthPrepassFs from '../shaders/depthPrepass.frag.glsl';
-import depthPrepassDownsampleFs from '../shaders/depthDownsampleForwardPlus.frag.glsl'
-import cullLightCs from '../shaders/cullLightsForwardPlus.glsl.js'
-import vsSource from '../shaders/forwardPlus.vert.glsl';
-import fsSource from '../shaders/forwardPlus.frag.glsl.js';
-
-import quadVs from '../shaders/quad.vert.glsl';
-import visualizeDepthFs from '../shaders/visualizeDepth.frag.glsl.js';
 import TextureBuffer from './textureBuffer';
 import BaseRenderer from './base';
-import depthDownsampleForwardPlusFragGlsl from '../shaders/depthDownsampleForwardPlus.frag.glsl';
+
+import depthPrepassVs from "../shaders/forwardPlus/depthPrepass.vert.glsl";
+import depthPrepassFs from '../shaders/forwardPlus/depthPrepass.frag.glsl';
+import depthPrepassDownsampleFs from '../shaders/forwardPlus/depthDownsampleForwardPlus.frag.glsl'
+import cullLightCs from '../shaders/forwardPlus/cullLightsForwardPlus.glsl.js'
+import vsSource from '../shaders/forwardPlus/forwardPlus.vert.glsl';
+import fsSource from '../shaders/forwardPlus/forwardPlus.frag.glsl.js';
+import visualizeDepthFs from '../shaders/forwardPlus/visualizeDepth.frag.glsl.js';
+
+import quadVs from '../shaders/quad.vert.glsl';
 
 const EXPECTED_LIGHTS_PER_TILE = 500;
 
@@ -88,13 +87,13 @@ export default class ForwardPlusRenderer extends BaseRenderer {
 		}
 
 		this._depthDownsampleMinProgram = loadShaderProgram(
-			quadVs, depthDownsampleForwardPlusFragGlsl({ op: 'min' }), {
+			quadVs, depthPrepassDownsampleFs({ op: 'min' }), {
 				uniforms: ['u_depth'],
 				attribs: ['a_position']
 			}
 		);
 		this._depthDownsampleMaxProgram = loadShaderProgram(
-			quadVs, depthDownsampleForwardPlusFragGlsl({ op: 'max' }), {
+			quadVs, depthPrepassDownsampleFs({ op: 'max' }), {
 				uniforms: ['u_depth'],
 				attribs: ['a_position']
 			}
