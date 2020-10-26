@@ -67,9 +67,10 @@ function render() {
   // If you would like the wireframe to render behind and in front
   // of objects based on relative depths in the scene, comment out /
   //the gl.disable(gl.DEPTH_TEST) and gl.enable(gl.DEPTH_TEST) lines.
-  // gl.disable(gl.DEPTH_TEST);
+  gl.disable(gl.DEPTH_TEST);
+  params._renderer._wireFramer.render(camera);
   wireframe.render(camera);
-  // gl.enable(gl.DEPTH_TEST);
+  gl.enable(gl.DEPTH_TEST);
 }
 
 makeRenderLoop(render)();

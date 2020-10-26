@@ -36,6 +36,8 @@ export default class BaseRenderer {
     );
     // to recover w component
     var Z_range = camera.far - camera.near;
+    var Z_size = Z_range / this._zSlices;
+
     var transProjectionMatrix = new Matrix4();
     transProjectionMatrix.copy(camera.projectionMatrix);
     transProjectionMatrix.transpose();
@@ -67,10 +69,6 @@ export default class BaseRenderer {
       let n = new Vector3(ndc_n.x, ndc_n.y, ndc_n.z);
       n.normalize();
       return new Plane(n, ndc_m.lengthSq());
-    }
-
-    function debug_visualize(ndc_p){
-
     }
 
     // for each frustum, traverse each light
@@ -123,8 +121,11 @@ export default class BaseRenderer {
           left_bottom_near.add(offset);
           right_up_far.add(offset);
 
-          left_bottom_near = new Vector4(left_bottom_near.x, left_bottom_near.y, left_bottom_near.z, camera.near);
-          right_up_far = new Vector4(right_up_far.x, right_up_far.y, right_up_far.z, camera.far);
+          left_bottom_near = new Vector4(left_bottom_near.x, left_bottom_near.y, left_bottom_near.z);
+          right_up_far = new Vector4(right_up_far.x, right_up_far.y, right_up_far.z);
+
+          left_bottom_near.multiplyScalar(camera.near + z  * Z_size);
+          right_up_far.multiplyScalar(camera.near + (z + 1) * Z_size);
 
           left_bottom_near.applyMatrix4(inverseProjectionViewMatrix);
           right_up_far.applyMatrix4(inverseProjectionViewMatrix);
