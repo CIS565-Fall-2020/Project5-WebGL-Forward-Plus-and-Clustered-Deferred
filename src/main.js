@@ -69,6 +69,7 @@ function render() {
   //the gl.disable(gl.DEPTH_TEST) and gl.enable(gl.DEPTH_TEST) lines.
   gl.disable(gl.DEPTH_TEST);
   params._renderer._wireFramer.render(camera);
+  params._renderer._wireFramer.reset();
   wireframe.render(camera);
   gl.enable(gl.DEPTH_TEST);
 }

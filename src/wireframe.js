@@ -32,6 +32,13 @@ export default class Wireframe {
     this._attributesNeedUpdate = true;
   }
 
+  reset(){
+    this._attributesNeedUpdate = true;
+    this._positions = [];
+    this._colors = [];
+    this._vertexAttributes;
+  }
+
   _updateVertexData() {
     var flatVertices = [];
     for (var i = 0; i < this._positions.length; i++) {
