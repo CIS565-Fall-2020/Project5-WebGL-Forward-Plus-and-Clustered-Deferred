@@ -17,7 +17,7 @@ varying vec3 v_projection_position;
 void main() {
     // no model matrix: because it's already in model space
     gl_Position = u_viewProjectionMatrix * vec4(a_position, 1.0);
-    v_projection_position = vec3(gl_Position) / gl_Position.w;
+    v_projection_position = vec3(gl_Position.xyz) / gl_Position.w;
     v_position = a_position;
     v_normal = a_normal;
     v_uv = a_uv;

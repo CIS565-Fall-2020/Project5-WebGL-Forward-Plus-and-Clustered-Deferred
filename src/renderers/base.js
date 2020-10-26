@@ -1,7 +1,7 @@
 import TextureBuffer from './textureBuffer';
-import {Sphere, Frustum, Vector3} from 'three';
+import {Sphere, Frustum, Vector3, Matrix4, Vector4, Plane} from 'three';
 import Scene, { NUM_LIGHTS } from '../scene';
-import { vec4 } from 'gl-matrix';
+import { vec3 ,vec4 } from 'gl-matrix';
 export const MAX_LIGHTS_PER_CLUSTER = 100;
 
 export default class BaseRenderer {
@@ -27,7 +27,131 @@ export default class BaseRenderer {
       }
     }
 
-    var screen_width = camera.getFilmWidth() * 2;
+    var cluster_NDC_size = new Vector3(
+      2.0 / this._xSlices,
+      2.0 / this._ySlices,
+      2.0 / this._zSlices,
+    );
+    // to recover w component
+    var Z_range = camera.far - camera.near;
+    var transProjectionMatrix = new Matrix4();
+    transProjectionMatrix.copy(camera.projectionMatrix);
+    transProjectionMatrix.transpose();
+
+    var inverseProjectionMatrix = new Matrix4();
+    inverseProjectionMatrix.getInverse(camera.projectionMatrix);
+    
+    // store the light sphere in an array 
+    var sphr_arr = []
+    for (let lid = 0; lid < NUM_LIGHTS; lid ++){
+      sphr_arr[lid] = get_view_Sphere(scene, lid, viewMatrix);
+    }
+    var offset = new Vector3(-1.0, -1.0, -1.0, 0.0);
+    function get_frustum_plane(ndc_m, ndc_n){
+      ndc_n.applyMatrix4(transProjectionMatrix);
+      ndc_m.multiply(cluster_NDC_size);
+      ndc_m.add(offset);
+      // not sure the matrix multiplication is right
+      ndc_m.applyMatrix4(inverseProjectionMatrix);
+      let n = new Vector3(ndc_n.x, ndc_n.y, ndc_n.z);
+      n.normalize();
+      return new Plane(n, ndc_m.lengthSq());
+    }
+    // for each frustum, traverse each light
+    for (let z = 0; z < this._zSlices; ++z) {
+      for (let y = 0; y < this._ySlices; ++y) {
+        for (let x = 0; x < this._xSlices; ++x) {
+          // get the frustum
+          var n, m; // n : normal, m: middle point of face of cluster(grid) 
+          //n = new Vector4(0.0, 0.0, 0.0, 0.0); m = new Vector3();
+          var cur_frstm = new Frustum();
+          var P0, P1, P2, P3, P4, P5;
+          // z near,
+          n = new Vector4(0.0, 0.0, 1.0, 0.0);
+          m = new Vector3(x + 0.5, y + 0.5, z);
+          P0 = get_frustum_plane(m, n);
+          
+          // z far,
+          n = new Vector4(0.0, 0.0, -1.0, 0.0);
+          m = new Vector3(x + 0.5, y + 0.5, z + 1.0);
+          P1 = get_frustum_plane(m, n);
+
+          // left
+          n = new Vector4(-1.0, 0.0, 0.0, 0.0);
+          m = new Vector3(x, y + 0.5, z + 0.5);
+          P2 = get_frustum_plane(m, n);
+          
+          // right
+          n = new Vector4(1.0, 0.0, 0.0, 0.0);
+          m = new Vector3(x + 1.0, y + 0.5, z + 0.5);
+          P3 = get_frustum_plane(m, n);
+          
+          // up,
+          n = new Vector4(0.0, -1.0, 0.0, 0.0);
+          m = new Vector3(x + 0.5, y, z + 0.5);
+          P4 = get_frustum_plane(m, n);
+
+          // down
+          n = new Vector4(0.0, 1.0, 0.0, 0.0);
+          m = new Vector3(x + 0.5, y + 1.0, z + 0.5);
+          P5 = get_frustum_plane(m, n);
+
+          for (let lid = 0; lid < NUM_LIGHTS; lid ++){
+            let cur_sphr = sphr_arr[lid]
+          }
+        }
+      }
+    }
+    
+    //debugger;
+    this._clusterTexture.update();
+    
+  }
+
+
+  
+}
+
+function create_plane(){
+
+}
+
+function clamp(x, lower, max){
+  return Math.min(max, Math.max(x, lower));
+}
+
+function get_view_Sphere(scene, lid, viewMatrix){
+  // transform to camera space
+  var cur_light = scene.lights[lid];
+
+  var cur_light_world_pos = vec4.fromValues(
+    cur_light.position[0],
+    cur_light.position[1],
+    cur_light.position[2],
+    1.0
+  );
+
+  var cur_light_camera_pos = vec4.create();
+  // vec4.transformMat4(
+  //   cur_light_camera_pos, 
+  //   cur_light_world_pos,
+  //   viewMatrix
+  // );
+
+  var cur_light_radius = scene.lights[lid].radius;
+  let tmp_vec3 = new Vector3(
+    cur_light_camera_pos[0],
+    cur_light_camera_pos[1],
+    cur_light_camera_pos[2]
+  );
+
+  var lght_sphr = new Sphere();
+  lght_sphr.center = tmp_vec3;
+  lght_sphr.radius = cur_light_radius;
+}
+
+function origin_assign_light_func(){
+  var screen_width = camera.getFilmWidth() * 2;
     var screen_height = camera.getFilmHeight() * 2;
     var screen_depth = camera.far - camera.near;
 
@@ -124,21 +248,6 @@ export default class BaseRenderer {
       }
       
     }
-    //debugger;
-    this._clusterTexture.update();
-    
-  }
-
-
-  
-}
-
-function clamp(x, lower, max){
-  return Math.min(max, Math.max(x, lower));
-}
-
-function get3DsliceIdxFromSphr(sphr, width, height){
-
 }
 
 function getClusterFrustum(){

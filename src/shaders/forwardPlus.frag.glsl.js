@@ -177,7 +177,7 @@ export default function(params) {
     // ${params.numLights} can loop over un-constant variables, WebGL属实憨憨
     for (int i = 0; i < ${params.numLights}; ++i) {
       if (i >= numLights){
-        //break;
+        break;
       }
       int l_idx = int(ExtractFloat(
         u_clusterbuffer,
@@ -209,14 +209,15 @@ export default function(params) {
     float k_s = 0.75,shiness = 64.0;
     vec3 fragColor = vec3(0.0);
     //fragColor = NaiveShader(albedo, normap, normal, k_s, shiness);
-    fragColor = ClusterShader(cluster_idx, albedo, normap, normal, k_s, shiness);
+    fragColor += ClusterShader(cluster_idx, albedo, normap, normal, k_s, shiness);
 
     const vec3 ambientLight = vec3(0.025);
     fragColor += albedo * ambientLight;
     //vec3 debug = ( normalize(u_view_pos - v_position) + 1.0 ) / 2.0 ;
     if (u_DEBUG == 1){
       vec3 slice_vec = vec3(u_xSlice, u_ySlice, u_zSlice) + vec3(1.0);
-      gl_FragColor = vec4((cluster_idx + vec3(1.0) ) / slice_vec , 1.0);
+      gl_FragColor = vec4((cluster_idx ) / slice_vec , 1.0);
+      //gl_FragColor = vec4( vec2(cluster_idx) / vec2(slice_vec), 0.0, 1.0);
     } else {
       gl_FragColor = vec4(fragColor, 1.0);
     }
