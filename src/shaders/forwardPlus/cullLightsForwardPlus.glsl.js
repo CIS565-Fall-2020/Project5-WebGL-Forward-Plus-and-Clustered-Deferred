@@ -21,6 +21,7 @@ export default function(params) {
 	uniform sampler2D u_depthMin, u_depthMax;
 
 	${lightingUtils}
+	${frustumUtils}
 
 	layout (std430, binding = 0) buffer LightIn {
 		Light lights[];
@@ -31,8 +32,8 @@ export default function(params) {
 	layout (std430, binding = 2) buffer LightHead {
 		int head[];
 	} head;
+	layout (binding = 3) uniform atomic_uint u_numNodes;
 
-	${frustumUtils}
 
 	void main() {
 		uvec3 threadId = gl_GlobalInvocationID;
@@ -64,8 +65,8 @@ export default function(params) {
 			return;
 		}
 
-		int node = atomicAdd(head.head[0], 1);
-		int next = atomicExchange(head.head[index + 1u], node);
+		int node = int(atomicCounterIncrement(u_numNodes));
+		int next = atomicExchange(head.head[index], node);
 		list.node[node] = ivec2(threadId.z, next);
 	}`;
 }

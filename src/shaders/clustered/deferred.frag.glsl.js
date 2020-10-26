@@ -57,7 +57,7 @@ export default function(params) {
 
 		fragColor = vec4(0.0f, 0.0f, 0.0f, 1.0f);
 		int count = 0;
-		for (int i = head.head[clusterIndex + 1u]; i != -1; i = list.node[i].y) {
+		for (int i = head.head[clusterIndex]; i != -1; i = list.node[i].y) {
 			Light light = lights.lights[list.node[i].x];
 			float lightDistance = distance(light.position, worldPos);
 			vec3 L = (light.position - worldPos) / lightDistance;

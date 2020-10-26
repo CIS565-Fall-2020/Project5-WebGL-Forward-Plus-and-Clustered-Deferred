@@ -81,6 +81,8 @@ export default class ClusteredDeferredRenderer extends BaseRenderer {
 
 		this._lightHead = gl.createBuffer();
 
+		this._lightNodeCount = gl.createBuffer();
+
 		this._cullLightShader = addShaderLocations(
 			{
 				glShaderProgram: linkShader(compileShader(cullLightCs({
@@ -248,16 +250,20 @@ export default class ClusteredDeferredRenderer extends BaseRenderer {
 		gl.bindBuffer(gl.SHADER_STORAGE_BUFFER, this._lightBuffer);
 		gl.bufferData(gl.SHADER_STORAGE_BUFFER, lightArray, gl.DYNAMIC_DRAW);
 		// reset head
-		const heads = new Int32Array(numClusters + 1);
+		const heads = new Int32Array(numClusters);
 		heads.fill(-1);
-		heads[0] = 0;
 		gl.bindBuffer(gl.SHADER_STORAGE_BUFFER, this._lightHead);
 		gl.bufferData(gl.SHADER_STORAGE_BUFFER, heads, gl.DYNAMIC_COPY);
+		// reset counter
+		const counter = new Uint32Array([0]);
+		gl.bindBuffer(gl.ATOMIC_COUNTER_BUFFER, this._lightNodeCount);
+		gl.bufferData(gl.ATOMIC_COUNTER_BUFFER, counter, gl.DYNAMIC_DRAW);
 		// bind buffers
 		gl.bindBufferBase(gl.SHADER_STORAGE_BUFFER, 0, this._clusterDepthBuffer);
 		gl.bindBufferBase(gl.SHADER_STORAGE_BUFFER, 1, this._lightBuffer);
 		gl.bindBufferBase(gl.SHADER_STORAGE_BUFFER, 2, this._lightHead);
 		gl.bindBufferBase(gl.SHADER_STORAGE_BUFFER, 3, this._lightList);
+		gl.bindBufferBase(gl.ATOMIC_COUNTER_BUFFER, 4, this._lightNodeCount);
 		// uniforms
 		gl.uniform1ui(this._cullLightShader.u_numLights, NUM_LIGHTS);
 		const camY = Math.tan((Math.PI / 180) * 0.5 * camera.fov) / camera.zoom;

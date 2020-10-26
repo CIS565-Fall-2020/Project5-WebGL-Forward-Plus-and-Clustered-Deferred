@@ -44,7 +44,7 @@ export default function(params) {
 		uvec2 blockIndex = uvec2(gl_FragCoord.xy) / u_blockSize;
 		uint index = blockIndex.y * u_numBlocksX + blockIndex.x;
 		int count = 0;
-		for (int i = head.head[index + 1u]; i != -1; i = list.node[i].y) {
+		for (int i = head.head[index]; i != -1; i = list.node[i].y) {
 			Light light = lights.lights[list.node[i].x];
 			float lightDistance = distance(light.position, v_position);
 			vec3 L = (light.position - v_position) / lightDistance;

@@ -111,6 +111,8 @@ export default class ForwardPlusRenderer extends BaseRenderer {
 
 		this._lightHead = gl.createBuffer();
 
+		this._lightNodeCount = gl.createBuffer();
+
 		this._cullLightProgram = addShaderLocations(
 			{ glShaderProgram: linkShader(compileShader(cullLightCs({}), gl.COMPUTE_SHADER)) },
 			{ uniforms: [
@@ -121,6 +123,7 @@ export default class ForwardPlusRenderer extends BaseRenderer {
 		);
 
 
+		// final shading
 		this._shaderProgram = loadShaderProgram(vsSource, fsSource({
 			numLights: NUM_LIGHTS,
 		}), {
@@ -214,15 +217,19 @@ export default class ForwardPlusRenderer extends BaseRenderer {
 		gl.bindBuffer(gl.SHADER_STORAGE_BUFFER, this._lightBuffer);
 		gl.bufferData(gl.SHADER_STORAGE_BUFFER, lights, gl.DYNAMIC_DRAW);
 		// reset light link list head buffer
-		const heads = new Int32Array(numBlocksX * numBlocksY + 1);
+		const heads = new Int32Array(numBlocksX * numBlocksY);
 		heads.fill(-1);
-		heads[0] = 0;
 		gl.bindBuffer(gl.SHADER_STORAGE_BUFFER, this._lightHead);
 		gl.bufferData(gl.SHADER_STORAGE_BUFFER, heads, gl.DYNAMIC_COPY);
+		// reset node count
+		const count = new Uint32Array([0]);
+		gl.bindBuffer(gl.ATOMIC_COUNTER_BUFFER, this._lightNodeCount);
+		gl.bufferData(gl.ATOMIC_COUNTER_BUFFER, count, gl.DYNAMIC_DRAW);
 		// bind buffers
 		gl.bindBufferBase(gl.SHADER_STORAGE_BUFFER, 0, this._lightBuffer);
 		gl.bindBufferBase(gl.SHADER_STORAGE_BUFFER, 1, this._lightList);
 		gl.bindBufferBase(gl.SHADER_STORAGE_BUFFER, 2, this._lightHead);
+		gl.bindBufferBase(gl.ATOMIC_COUNTER_BUFFER, 3, this._lightNodeCount);
 		// set uniforms
 		gl.uniform1ui(this._cullLightProgram.u_width, canvas.width);
 		gl.uniform1ui(this._cullLightProgram.u_height, canvas.height);

@@ -31,6 +31,7 @@ export default function(params) {
 	layout (std430, binding = 3) buffer LightList {
 		ivec2 node[];
 	} list;
+	layout (binding = 4) uniform atomic_uint u_numNodes;
 
 	void main() {
 		uvec2 clusterXY = gl_GlobalInvocationID.xy;
@@ -71,8 +72,8 @@ export default function(params) {
 				);
 
 				if (frustumSphereIntersectionPossible(fr, lightCenter, lightRadius)) {
-					int node = atomicAdd(head.head[0], 1);
-					int next = atomicExchange(head.head[clusterIndex + 1u], node);
+					int node = int(atomicCounterIncrement(u_numNodes));
+					int next = atomicExchange(head.head[clusterIndex], node);
 					list.node[node] = ivec2(lightIndex, next);
 				}
 
