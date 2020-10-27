@@ -100,14 +100,17 @@ export default class BaseRenderer {
   // returns;
   //  pointWorldSpace (Vector3): treating the tileWorldSpace as on camera's far clip (highest possible value), want to find
   //    the corresponding point to slice z value (aka scale down from far clip and away from near clip)
-  getSliceWorldSpaceFromTileWorldSpace(pointFarClip, pointNearClip, pointSliceSpace, numSlices) {
+  getSliceWorldSpaceFromTileWorldSpace(pointFarClip, pointNearClip, numSliceZ, sliceZ) {
+    var sliceScale = sliceZ / numSliceZ;
+
     var vNearClipToFarClip = vec3.create();
     vec3.subtract(vNearClipToFarClip, pointFarClip, pointNearClip);
     
     var pointNormalizedSlice = vec3.create();
-    pointNormalizedSlice[0] = vNearClipToFarClip[0] * pointSliceSpace[0] / numSlices[2]
-    pointNormalizedSlice[1] = vNearClipToFarClip[1] * pointSliceSpace[1] / numSlices[2]
-    pointNormalizedSlice[2] = vNearClipToFarClip[2] * pointSliceSpace[2] / numSlices[2]
+    pointNormalizedSlice[0] = vNearClipToFarClip[0] * sliceScale;
+    pointNormalizedSlice[1] = vNearClipToFarClip[1] * sliceScale;
+    pointNormalizedSlice[2] = vNearClipToFarClip[2] * sliceScale;
+    //vec3.scale(pointNormalizedSlice, vNearClipToFarClip, sliceScale);
     
     var pointSliceWorldSpace = vec3.create();
     vec3.add(pointSliceWorldSpace, pointNormalizedSlice, pointNearClip);
@@ -115,11 +118,17 @@ export default class BaseRenderer {
   }
 
   updateClusters(camera, viewMatrix, scene) {
+    // TODO TESTONLY DELETE
+    var testLight = true;
+    var testClip = false;
+    var testSubFrustum = false;
 
-    if (this._firstCall > 0) {
-      return [];
-    }
-    this._firstCall = 1;
+    // camera.far = 10;
+    // if (this._firstCall > 0) {
+    //   return [];
+    // }
+    
+
     // TODO: Update the cluster texture with the count and indices of the lights in each cluster
     // This will take some time. The math is nontrivial... 
 
@@ -137,11 +146,15 @@ export default class BaseRenderer {
     var resolution = vec2.create();
     resolution[0] = canvas.width;
     resolution[1] = canvas.height;
-
     var numSlices = vec3.create();
     numSlices[0] = this._xSlices;
     numSlices[1] = this._ySlices;
     numSlices[2] = this._zSlices;
+
+    // height and width of a 2d slice in terms of pixels
+    var sliceDimension = vec2.create();
+    sliceDimension[0] = resolution[0] / this._xSlices;
+    sliceDimension[1] = resolution[1] / this._ySlices;
     
     // TODO: DELETE Test only
     var points = [];
@@ -153,8 +166,6 @@ export default class BaseRenderer {
           
           // Reset the light count to 0 for every cluster
           this._clusterTexture.buffer[this._clusterTexture.bufferIndex(i, 0)] = 0;
-
-          // LOOKS RIGHT
           
           // Find 4 points on far clips of the frustum from near clip to far clip -----------------------------------------------------------
           var sliceSpaceXY = vec2.create();
@@ -183,23 +194,17 @@ export default class BaseRenderer {
           var pointNearClipDownRight = this.getPointNearClipFromPointFarClip(camera, pointFarClipDownRight);
           var pointNearClipDownLeft = this.getPointNearClipFromPointFarClip(camera, pointFarClipDownLeft);
 
-          // Find the 8 points of the frustum
-          var sliceSpaceXYZ = vec3.create()
-          sliceSpaceXYZ[0] = x;
-          sliceSpaceXYZ[1] = y;
-          sliceSpaceXYZ[2] = z;
-          
-          var pointNearUpLeft = this.getSliceWorldSpaceFromTileWorldSpace(pointFarClipUpLeft, pointNearClipUpLeft, sliceSpaceXYZ, numSlices);
-          var pointNearUpRight = this.getSliceWorldSpaceFromTileWorldSpace(pointFarClipUpRight, pointNearClipUpRight, sliceSpaceXYZ, numSlices);
-          var pointNearDownRight = this.getSliceWorldSpaceFromTileWorldSpace(pointFarClipDownRight, pointNearClipDownRight, sliceSpaceXYZ, numSlices);
-          var pointNearDownLeft = this.getSliceWorldSpaceFromTileWorldSpace(pointFarClipDownLeft, pointNearClipDownLeft, sliceSpaceXYZ, numSlices);
-          
-          sliceSpaceXYZ[2] += 1;
-          var pointFarUpLeft =  this.getSliceWorldSpaceFromTileWorldSpace(pointFarClipUpLeft, pointNearClipUpLeft, sliceSpaceXYZ, numSlices);
-          var pointFarUpRight = this.getSliceWorldSpaceFromTileWorldSpace(pointFarClipUpRight, pointNearClipUpRight, sliceSpaceXYZ, numSlices);
-          var pointFarDownRight = this.getSliceWorldSpaceFromTileWorldSpace(pointFarClipDownRight, pointNearClipDownRight, sliceSpaceXYZ, numSlices);
-          var pointFarDownLeft = this.getSliceWorldSpaceFromTileWorldSpace(pointFarClipDownLeft, pointNearClipDownLeft, sliceSpaceXYZ, numSlices);
+          // Find the 8 points of the frustum             
+          var pointNearUpLeft = this.getSliceWorldSpaceFromTileWorldSpace(pointFarClipUpLeft, pointNearClipUpLeft, this._zSlices, z);
+          var pointNearUpRight = this.getSliceWorldSpaceFromTileWorldSpace(pointFarClipUpRight, pointNearClipUpRight, this._zSlices, z);
+          var pointNearDownRight = this.getSliceWorldSpaceFromTileWorldSpace(pointFarClipDownRight, pointNearClipDownRight, this._zSlices, z);
+          var pointNearDownLeft = this.getSliceWorldSpaceFromTileWorldSpace(pointFarClipDownLeft, pointNearClipDownLeft, this._zSlices, z);
 
+          var pointFarUpLeft =  this.getSliceWorldSpaceFromTileWorldSpace(pointFarClipUpLeft, pointNearClipUpLeft, this._zSlices, z + 1);
+          var pointFarUpRight = this.getSliceWorldSpaceFromTileWorldSpace(pointFarClipUpRight, pointNearClipUpRight, this._zSlices, z + 1);
+          var pointFarDownRight = this.getSliceWorldSpaceFromTileWorldSpace(pointFarClipDownRight, pointNearClipDownRight, this._zSlices, z + 1);
+          var pointFarDownLeft = this.getSliceWorldSpaceFromTileWorldSpace(pointFarClipDownLeft, pointNearClipDownLeft, this._zSlices, z + 1);
+          
           // Create 6 planes out of these points making a frustum
           var planeFar = this.getPlaneFrom3Points(pointFarUpRight, pointFarUpLeft, pointFarDownLeft); // normal faces away from cam
           var planeNear = this.getPlaneFrom3Points(pointNearUpLeft, pointNearUpRight, pointNearDownRight);// normal faces towards cam
@@ -209,57 +214,86 @@ export default class BaseRenderer {
           var planeDown = this.getPlaneFrom3Points(pointFarDownRight, pointNearDownRight, pointNearDownLeft); // normal faces down
 
           // // Create a frustum out of the planes
-          // var frustum = new Frustum(planeFar, planeNear, planeLeft, planeRight, planeUp, planeDown);
+          var frustum = new Frustum(planeFar, planeNear, planeLeft, planeRight, planeUp, planeDown);
 
-          // // Iterates through all the lights to see which light intersects with this frustum (treat lights as point lights)
-          // for (let i = 0; i < NUM_LIGHTS; ++i) {
-          //   var light = scene.lights[i];
-          //   var lightPos = new Vector3(light.position.x, light.position.y, light.position.z);
-          //   var lightSphere = new Sphere(lightPos, LIGHT_RADIUS);
-          //   if (frustum.intersectsSphere(lightSphere) && this._clusterTexture.buffer[i] < MAX_LIGHTS_PER_CLUSTER) {
-          //     this._clusterTexture.buffer[i] += 1;
-          //   }
-          //   this._lightTexture.buffer[this._lightTexture.bufferIndex(i, 0) + 0] = scene.lights[i].position[0];
-          //   this._lightTexture.buffer[this._lightTexture.bufferIndex(i, 0) + 1] = scene.lights[i].position[1];
-          //   this._lightTexture.buffer[this._lightTexture.bufferIndex(i, 0) + 2] = scene.lights[i].position[2];
-          //   this._lightTexture.buffer[this._lightTexture.bufferIndex(i, 0) + 3] = scene.lights[i].radius;
+          if (testLight) {
+            var lightCount = this._clusterTexture.buffer[this._clusterTexture.bufferIndex(i, 0)];
+            for (let l = 0; l < 10; ++l) {
+              var slotInCluster = Math.floor((lightCount + 4.0) / 4.0); // Have to add 4 because the first index stores the number of light
+              var elementInSlot = lightCount % 4;
 
-          //   this._lightTexture.buffer[this._lightTexture.bufferIndex(i, 1) + 0] = scene.lights[i].color[0];
-          //   this._lightTexture.buffer[this._lightTexture.bufferIndex(i, 1) + 1] = scene.lights[i].color[1];
-          //   this._lightTexture.buffer[this._lightTexture.bufferIndex(i, 1) + 2] = scene.lights[i].color[2];
+              // Save the index of the light into the buffer
+              this._clusterTexture.buffer[this._clusterTexture.bufferIndex(i, slotInCluster) + elementInSlot] = l;
+              // Update the number of light count
+              lightCount += 1;
+              this._clusterTexture.buffer[this._clusterTexture.bufferIndex(i, 0) + 0] = lightCount;
+            }
+            
+            this._clusterTexture.buffer[this._clusterTexture.bufferIndex(i, 0)] = 0;
+          }
           
+          // Iterates through all the lights to see which light intersects with this frustum (treat lights as point lights)
+          for (let l = 0; l < NUM_LIGHTS; ++l) {
+            var light = scene.lights[l];
+            var lightPos = new Vector3(light.position.x, light.position.y, light.position.z);
+            var lightSphere = new Sphere(lightPos, LIGHT_RADIUS);
             
-          // }
-           // TODO: TEST ONLY, DELETE
-          //points.push([pointNearClipUpLeft.x, pointNearClipUpLeft.y, pointNearClipUpLeft.z]);
-          //points.push([pointFarClipUpLeft.x, pointFarClipUpLeft.y, pointFarClipUpLeft.z]);
-          //points.push([pointNearClipUpRight.x, pointNearClipUpRight.y, pointNearClipUpRight.z]);
-          //points.push([pointFarClipUpRight.x, pointFarClipUpRight.y, pointFarClipUpRight.z]);
-          //points.push([pointNearClipDownRight.x, pointNearClipDownRight.y, pointNearClipDownRight.z]);
-          //points.push([pointFarClipDownRight.x, pointFarClipDownRight.y, pointFarClipDownRight.z]);
-          //points.push([pointNearClipDownLeft.x, pointNearClipDownLeft.y, pointNearClipDownLeft.z]);
-          //points.push([pointFarClipDownLeft.x, pointFarClipDownLeft.y, pointFarClipDownLeft.z]);
+            // Light count is store in the first index & element of this buffer
+            var lightCount = this._clusterTexture.buffer[this._clusterTexture.bufferIndex(i, 0)];
+              
+            if (frustum.intersectsSphere(lightSphere) && lightCount < MAX_LIGHTS_PER_CLUSTER) {
+              var slotInCluster = Math.floor((lightCount + 4.0) / 4.0); // Have to add 4 because the first index stores the number of light
+              var elementInSlot = lightCount % 4;
 
-          points.push([pointFarUpLeft[0], pointFarUpLeft[1], pointFarUpLeft[2]]);
-          points.push([pointFarUpRight[0], pointFarUpRight[1], pointFarUpRight[2]]);
-          points.push([pointFarUpLeft[0], pointFarUpLeft[1], pointFarUpLeft[2]]);
-          points.push([pointFarDownLeft[0], pointFarDownLeft[1], pointFarDownLeft[2]]);
-            
-          points.push([pointNearUpLeft[0], pointNearUpLeft[1], pointNearUpLeft[2]]);
-          points.push([pointNearUpRight[0], pointNearUpRight[1], pointNearUpRight[2]]);
-          points.push([pointNearUpLeft[0], pointNearUpLeft[1], pointNearUpLeft[2]]);
-          points.push([pointNearDownLeft[0], pointNearDownLeft[1], pointNearDownLeft[2]]);
+              // Save the index of the light into the buffer
+              this._clusterTexture.buffer[this._clusterTexture.bufferIndex(i, slotInCluster) + elementInSlot] = l;
+              // Update the number of light count
+              lightCount += 1;
+              this._clusterTexture.buffer[this._clusterTexture.bufferIndex(i, 0) + 0] = lightCount;
+            }
+          }
+
+          // TODO: TEST ONLY, DELETE
+          // From near clip to far clip
+
+          if (testClip) {
+            points.push([pointNearClipUpLeft[0], pointNearClipUpLeft[1], pointNearClipUpLeft[2]]);
+            points.push([pointFarClipUpLeft[0], pointFarClipUpLeft[1], pointFarClipUpLeft[2]]);
+            points.push([pointNearClipUpRight[0], pointNearClipUpRight[1], pointNearClipUpRight[2]]);
+            points.push([pointFarClipUpRight[0], pointFarClipUpRight[1], pointFarClipUpRight[2]]);
   
-         /* points.push([pointNearUpLeft[0], pointNearUpLeft[1], pointNearUpLeft[2]]);
-          points.push([pointFarUpLeft[0], pointFarUpLeft[1], pointFarUpLeft[2]]);
+            points.push([pointNearClipDownRight[0], pointNearClipDownRight[1], pointNearClipDownRight[2]]);
+            points.push([pointFarClipDownRight[0], pointFarClipDownRight[1], pointFarClipDownRight[2]]);
+            points.push([pointNearClipDownLeft[0], pointNearClipDownLeft[1], pointNearClipDownLeft[2]]);
+            points.push([pointFarClipDownLeft[0], pointFarClipDownLeft[1], pointFarClipDownLeft[2]]);
+  
+            points.push([pointNearClipUpLeft[0], pointNearClipUpLeft[1], pointNearClipUpLeft[2]]);
+            points.push([pointNearClipUpRight[0], pointNearClipUpRight[1], pointNearClipUpRight[2]]);
+            points.push([pointNearClipDownRight[0], pointNearClipDownRight[1], pointNearClipDownRight[2]]);
+            points.push([pointNearClipDownLeft[0], pointNearClipDownLeft[1], pointNearClipDownLeft[2]]);
             
-          points.push([pointNearUpRight[0], pointNearUpRight[1], pointNearUpRight[2]]);
-          points.push([pointFarUpRight[0], pointFarUpRight[1], pointFarUpRight[2]]); */ 
+            points.push([pointFarClipUpLeft[0], pointFarClipUpLeft[1], pointFarClipUpLeft[2]]);
+            points.push([pointFarClipDownLeft[0], pointFarClipDownLeft[1], pointFarClipDownLeft[2]]);
+            points.push([pointFarClipUpLeft[0], pointFarClipUpLeft[1], pointFarClipUpLeft[2]]);
+            points.push([pointFarClipUpRight[0], pointFarClipUpRight[1], pointFarClipUpRight[2]]); 
+          }
           
+          if (testSubFrustum && y < 1) {            
+            points.push([pointNearUpLeft[0], pointNearUpLeft[1], pointNearUpLeft[2]]);
+            points.push([pointNearUpRight[0], pointNearUpRight[1], pointNearUpRight[2]]);
+            points.push([pointNearUpLeft[0], pointNearUpLeft[1], pointNearUpLeft[2]]);
+            points.push([pointNearDownLeft[0], pointNearDownLeft[1], pointNearDownLeft[2]]);
+    
+            points.push([pointNearUpLeft[0], pointNearUpLeft[1], pointNearUpLeft[2]]);
+            points.push([pointFarUpLeft[0], pointFarUpLeft[1], pointFarUpLeft[2]]);
+              
+            points.push([pointNearUpRight[0], pointNearUpRight[1], pointNearUpRight[2]]);
+            points.push([pointFarUpRight[0], pointFarUpRight[1], pointFarUpRight[2]]); 
+          }          
         }
       }
     }
-
+    this._firstCall = 1;
     this._clusterTexture.update();
     return points;
   }
