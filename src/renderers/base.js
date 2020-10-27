@@ -1,4 +1,15 @@
 import TextureBuffer from './textureBuffer';
+import Wireframe from '../wireframe';
+
+import { Frustum, Plane, Vector2, Vector3 } from '../../node_modules/three/build/three'
+import { LIGHT_RADIUS } from '../scene';
+import { NUM_LIGHTS } from '../scene';
+import { mat2, vec2 } from 'gl-matrix';
+import { mat3, vec3 } from 'gl-matrix';
+import { mat4, vec4 } from 'gl-matrix';
+import { Matrix4 } from '../../node_modules/three/build/three'
+import { Sphere } from '../../node_modules/three/build/three'
+import { Vector4 } from '../../node_modules/three/build/three'
 
 export const MAX_LIGHTS_PER_CLUSTER = 100;
 
@@ -9,22 +20,247 @@ export default class BaseRenderer {
     this._xSlices = xSlices;
     this._ySlices = ySlices;
     this._zSlices = zSlices;
+    // TODO: TEST ONLY, DELETE
+    this._firstCall = 0;
+  }
+
+  // LOOKS RIGHT
+  // Given a 2d point in slice space, return it in world space coordinate
+  // params:
+  //  - resolution (Vector2): width and height of the canvas (or image)
+  //  - sliceDimension (Vector2): per slice width and height 
+  //  - camera (Camera): likely is perspective camera 
+  //  - viewProjectionMatrixInverse (Matrix4): View_inverse * Proj_inverse
+  //  - pointSliceSpace (Vector2): x and y coordinates in slice space
+  // returns:
+  //  - pointWorldSpace (Vector3)
+  sliceSpace2DToWorldSpace(farClip, viewProjectionMatrixInverse, pointSliceSpace) {   
+    // Transform to normalized device coordinate  (homogenized)
+    var pointNDC = vec4.create()
+    pointNDC[0] = (pointSliceSpace[0] / this._xSlices) * 2.0 - 1;
+    pointNDC[1] = 1.0 - (pointSliceSpace[1] / this._xSlices) * 2.0;
+    pointNDC[2] = 1;
+    pointNDC[3] = 1;
+
+    // Transform to world space
+    var pointNonNDC = vec4.create()
+    vec4.scale(pointNonNDC, pointNDC, farClip);
+
+    var pointWorldSpace = vec4.create()
+    vec4.transformMat4(pointWorldSpace, pointNonNDC, viewProjectionMatrixInverse);
+
+    var pointWorldSpaceVec3 = vec3.create();
+    pointWorldSpaceVec3[0] = pointWorldSpace[0]
+    pointWorldSpaceVec3[1] = pointWorldSpace[1]
+    pointWorldSpaceVec3[2] = pointWorldSpace[2]
+    return pointWorldSpaceVec3;
+  }
+
+  // Based on https://keisan.casio.com/exec/system/1223596129
+  // Based on http://www.songho.ca/math/plane/plane.html
+  // Normals: (point2 - point1) x (point0 - point1)
+  // params:
+  //  - point1 (Vector3)
+  //  - point2 (Vector3)
+  //  - point3 (Vector3)
+  // returns:
+  //  
+  getPlaneFrom3Points(point0, point1, point2) {
+    var v0 = vec3.create();
+    var v1 = vec3.create();
+    vec3.subtract(v0, point2, point1);
+    vec3.subtract(v0, point0, point1);
+   
+    // normal: the normal of the plane (normalized)
+    var normal = vec3.create();
+    vec3.cross(normal, v0, v1);
+    vec3.normalize(normal, normal);
+
+    // constant: the distance from the origin to the plane
+    var constant = -(normal[0] * point1[0] + normal[1] * point1[1] + normal[2] * point1[2]); // this is d in ax + by + cz + d = 0
+    
+    var plane = new Plane(new Vector3(normal[0], normal[1], normal[2]), constant);
+    return plane;
+  }
+
+  getPointNearClipFromPointFarClip(camera, pointFarClip) {
+    var pointNearClip = vec3.create()
+    var nearOverFar = camera.near / camera.far;
+    pointNearClip[0] = nearOverFar * pointFarClip[0];
+    pointNearClip[1] = nearOverFar * pointFarClip[1];
+    pointNearClip[2] = nearOverFar * pointFarClip[2];
+    return pointNearClip;
+  }
+
+  // params:
+  //  camera (Camera): likely to be PerspectiveCamera
+  //  tileWorldSpace (Vector3): point on the 2d plane on far clip representing a coordinate of the 2d tile
+  //  numSliceZ (int): number of slices in z direction
+  //  sliceZ (int): the current z coordinate of the slice in slice space
+  // returns;
+  //  pointWorldSpace (Vector3): treating the tileWorldSpace as on camera's far clip (highest possible value), want to find
+  //    the corresponding point to slice z value (aka scale down from far clip and away from near clip)
+  getSliceWorldSpaceFromTileWorldSpace(pointFarClip, pointNearClip, pointSliceSpace, numSlices) {
+    var vNearClipToFarClip = vec3.create();
+    vec3.subtract(vNearClipToFarClip, pointFarClip, pointNearClip);
+    
+    var pointNormalizedSlice = vec3.create();
+    pointNormalizedSlice[0] = vNearClipToFarClip[0] * pointSliceSpace[0] / numSlices[2]
+    pointNormalizedSlice[1] = vNearClipToFarClip[1] * pointSliceSpace[1] / numSlices[2]
+    pointNormalizedSlice[2] = vNearClipToFarClip[2] * pointSliceSpace[2] / numSlices[2]
+    
+    var pointSliceWorldSpace = vec3.create();
+    vec3.add(pointSliceWorldSpace, pointNormalizedSlice, pointNearClip);
+    return pointSliceWorldSpace;
   }
 
   updateClusters(camera, viewMatrix, scene) {
-    // TODO: Update the cluster texture with the count and indices of the lights in each cluster
-    // This will take some time. The math is nontrivial...
 
+    if (this._firstCall > 0) {
+      return [];
+    }
+    this._firstCall = 1;
+    // TODO: Update the cluster texture with the count and indices of the lights in each cluster
+    // This will take some time. The math is nontrivial... 
+
+    // Create inverse of view projection matrix
+    var viewMatrixInverse = mat4.create();
+    mat4.invert(viewMatrixInverse, viewMatrix);
+
+    var projectionMatrixInverse = mat4.create();
+    mat4.invert(projectionMatrixInverse, camera.projectionMatrix.elements);
+
+    var viewProjectionMatrixInverse = mat4.create();
+    mat4.multiply(viewProjectionMatrixInverse, viewMatrixInverse, projectionMatrixInverse);
+
+    // Other variables stays the same across all loops
+    var resolution = vec2.create();
+    resolution[0] = canvas.width;
+    resolution[1] = canvas.height;
+
+    var numSlices = vec3.create();
+    numSlices[0] = this._xSlices;
+    numSlices[1] = this._ySlices;
+    numSlices[2] = this._zSlices;
+    
+    // TODO: DELETE Test only
+    var points = [];
     for (let z = 0; z < this._zSlices; ++z) {
       for (let y = 0; y < this._ySlices; ++y) {
         for (let x = 0; x < this._xSlices; ++x) {
+
           let i = x + y * this._xSlices + z * this._xSlices * this._ySlices;
+          
           // Reset the light count to 0 for every cluster
           this._clusterTexture.buffer[this._clusterTexture.bufferIndex(i, 0)] = 0;
+
+          // LOOKS RIGHT
+          
+          // Find 4 points on far clips of the frustum from near clip to far clip -----------------------------------------------------------
+          var sliceSpaceXY = vec2.create();
+
+          sliceSpaceXY[0] = x;
+          
+          // slice: (x, y)     
+          sliceSpaceXY[1] = y;     
+          var pointFarClipUpLeft = this.sliceSpace2DToWorldSpace(camera.far, viewProjectionMatrixInverse, sliceSpaceXY);
+
+          // slice: (x + 1, y)
+          sliceSpaceXY[0] = x + 1;
+          var pointFarClipUpRight = this.sliceSpace2DToWorldSpace(camera.far, viewProjectionMatrixInverse, sliceSpaceXY);
+
+          // slice: (x + 1, y + 1)
+          sliceSpaceXY[1] = y + 1;
+          var pointFarClipDownRight = this.sliceSpace2DToWorldSpace(camera.far, viewProjectionMatrixInverse, sliceSpaceXY);
+          
+          // slice: (x, y + 1)
+          sliceSpaceXY[0] = x; 
+          var pointFarClipDownLeft = this.sliceSpace2DToWorldSpace(camera.far, viewProjectionMatrixInverse, sliceSpaceXY);
+
+          // Find 4 points on near clips of the frustum from near clip to far clip -----------------------------------------------------------
+          var pointNearClipUpLeft = this.getPointNearClipFromPointFarClip(camera, pointFarClipUpLeft);
+          var pointNearClipUpRight = this.getPointNearClipFromPointFarClip(camera, pointFarClipUpRight);
+          var pointNearClipDownRight = this.getPointNearClipFromPointFarClip(camera, pointFarClipDownRight);
+          var pointNearClipDownLeft = this.getPointNearClipFromPointFarClip(camera, pointFarClipDownLeft);
+
+          // Find the 8 points of the frustum
+          var sliceSpaceXYZ = vec3.create()
+          sliceSpaceXYZ[0] = x;
+          sliceSpaceXYZ[1] = y;
+          sliceSpaceXYZ[2] = z;
+          
+          var pointNearUpLeft = this.getSliceWorldSpaceFromTileWorldSpace(pointFarClipUpLeft, pointNearClipUpLeft, sliceSpaceXYZ, numSlices);
+          var pointNearUpRight = this.getSliceWorldSpaceFromTileWorldSpace(pointFarClipUpRight, pointNearClipUpRight, sliceSpaceXYZ, numSlices);
+          var pointNearDownRight = this.getSliceWorldSpaceFromTileWorldSpace(pointFarClipDownRight, pointNearClipDownRight, sliceSpaceXYZ, numSlices);
+          var pointNearDownLeft = this.getSliceWorldSpaceFromTileWorldSpace(pointFarClipDownLeft, pointNearClipDownLeft, sliceSpaceXYZ, numSlices);
+          
+          sliceSpaceXYZ[2] += 1;
+          var pointFarUpLeft =  this.getSliceWorldSpaceFromTileWorldSpace(pointFarClipUpLeft, pointNearClipUpLeft, sliceSpaceXYZ, numSlices);
+          var pointFarUpRight = this.getSliceWorldSpaceFromTileWorldSpace(pointFarClipUpRight, pointNearClipUpRight, sliceSpaceXYZ, numSlices);
+          var pointFarDownRight = this.getSliceWorldSpaceFromTileWorldSpace(pointFarClipDownRight, pointNearClipDownRight, sliceSpaceXYZ, numSlices);
+          var pointFarDownLeft = this.getSliceWorldSpaceFromTileWorldSpace(pointFarClipDownLeft, pointNearClipDownLeft, sliceSpaceXYZ, numSlices);
+
+          // Create 6 planes out of these points making a frustum
+          var planeFar = this.getPlaneFrom3Points(pointFarUpRight, pointFarUpLeft, pointFarDownLeft); // normal faces away from cam
+          var planeNear = this.getPlaneFrom3Points(pointNearUpLeft, pointNearUpRight, pointNearDownRight);// normal faces towards cam
+          var planeLeft = this.getPlaneFrom3Points(pointFarUpLeft, pointNearUpLeft, pointNearDownLeft); // normal faces to the left
+          var planeRight = this.getPlaneFrom3Points(pointFarUpRight, pointFarDownRight, pointNearDownRight); // normal faces to the right
+          var planeUp = this.getPlaneFrom3Points(pointFarUpRight, pointNearUpRight, pointNearUpLeft); // normal faces up
+          var planeDown = this.getPlaneFrom3Points(pointFarDownRight, pointNearDownRight, pointNearDownLeft); // normal faces down
+
+          // // Create a frustum out of the planes
+          // var frustum = new Frustum(planeFar, planeNear, planeLeft, planeRight, planeUp, planeDown);
+
+          // // Iterates through all the lights to see which light intersects with this frustum (treat lights as point lights)
+          // for (let i = 0; i < NUM_LIGHTS; ++i) {
+          //   var light = scene.lights[i];
+          //   var lightPos = new Vector3(light.position.x, light.position.y, light.position.z);
+          //   var lightSphere = new Sphere(lightPos, LIGHT_RADIUS);
+          //   if (frustum.intersectsSphere(lightSphere) && this._clusterTexture.buffer[i] < MAX_LIGHTS_PER_CLUSTER) {
+          //     this._clusterTexture.buffer[i] += 1;
+          //   }
+          //   this._lightTexture.buffer[this._lightTexture.bufferIndex(i, 0) + 0] = scene.lights[i].position[0];
+          //   this._lightTexture.buffer[this._lightTexture.bufferIndex(i, 0) + 1] = scene.lights[i].position[1];
+          //   this._lightTexture.buffer[this._lightTexture.bufferIndex(i, 0) + 2] = scene.lights[i].position[2];
+          //   this._lightTexture.buffer[this._lightTexture.bufferIndex(i, 0) + 3] = scene.lights[i].radius;
+
+          //   this._lightTexture.buffer[this._lightTexture.bufferIndex(i, 1) + 0] = scene.lights[i].color[0];
+          //   this._lightTexture.buffer[this._lightTexture.bufferIndex(i, 1) + 1] = scene.lights[i].color[1];
+          //   this._lightTexture.buffer[this._lightTexture.bufferIndex(i, 1) + 2] = scene.lights[i].color[2];
+          
+            
+          // }
+           // TODO: TEST ONLY, DELETE
+          //points.push([pointNearClipUpLeft.x, pointNearClipUpLeft.y, pointNearClipUpLeft.z]);
+          //points.push([pointFarClipUpLeft.x, pointFarClipUpLeft.y, pointFarClipUpLeft.z]);
+          //points.push([pointNearClipUpRight.x, pointNearClipUpRight.y, pointNearClipUpRight.z]);
+          //points.push([pointFarClipUpRight.x, pointFarClipUpRight.y, pointFarClipUpRight.z]);
+          //points.push([pointNearClipDownRight.x, pointNearClipDownRight.y, pointNearClipDownRight.z]);
+          //points.push([pointFarClipDownRight.x, pointFarClipDownRight.y, pointFarClipDownRight.z]);
+          //points.push([pointNearClipDownLeft.x, pointNearClipDownLeft.y, pointNearClipDownLeft.z]);
+          //points.push([pointFarClipDownLeft.x, pointFarClipDownLeft.y, pointFarClipDownLeft.z]);
+
+          points.push([pointFarUpLeft[0], pointFarUpLeft[1], pointFarUpLeft[2]]);
+          points.push([pointFarUpRight[0], pointFarUpRight[1], pointFarUpRight[2]]);
+          points.push([pointFarUpLeft[0], pointFarUpLeft[1], pointFarUpLeft[2]]);
+          points.push([pointFarDownLeft[0], pointFarDownLeft[1], pointFarDownLeft[2]]);
+            
+          points.push([pointNearUpLeft[0], pointNearUpLeft[1], pointNearUpLeft[2]]);
+          points.push([pointNearUpRight[0], pointNearUpRight[1], pointNearUpRight[2]]);
+          points.push([pointNearUpLeft[0], pointNearUpLeft[1], pointNearUpLeft[2]]);
+          points.push([pointNearDownLeft[0], pointNearDownLeft[1], pointNearDownLeft[2]]);
+  
+         /* points.push([pointNearUpLeft[0], pointNearUpLeft[1], pointNearUpLeft[2]]);
+          points.push([pointFarUpLeft[0], pointFarUpLeft[1], pointFarUpLeft[2]]);
+            
+          points.push([pointNearUpRight[0], pointNearUpRight[1], pointNearUpRight[2]]);
+          points.push([pointFarUpRight[0], pointFarUpRight[1], pointFarUpRight[2]]); */ 
+          
         }
       }
     }
 
     this._clusterTexture.update();
+    return points;
   }
 }

@@ -33,8 +33,9 @@ export default class ForwardPlusRenderer extends BaseRenderer {
     mat4.copy(this._projectionMatrix, camera.projectionMatrix.elements);
     mat4.multiply(this._viewProjectionMatrix, this._projectionMatrix, this._viewMatrix);
 
+    // TODO: DELETE var points = (TEST ONLY)
     // Update cluster texture which maps from cluster index to light list
-    this.updateClusters(camera, this._viewMatrix, scene);
+    var points = this.updateClusters(camera, this._viewMatrix, scene);
     
     // Update the buffer used to populate the texture packed with light data
     for (let i = 0; i < NUM_LIGHTS; ++i) {
@@ -79,5 +80,6 @@ export default class ForwardPlusRenderer extends BaseRenderer {
 
     // Draw the scene. This function takes the shader program so that the model's textures can be bound to the right inputs
     scene.draw(this._shaderProgram);
+    return points
   }
 };

@@ -5,6 +5,8 @@ import ClusteredDeferredRenderer from './renderers/clusteredDeferred';
 import Scene from './scene';
 import Wireframe from './wireframe';
 
+import { mat4, vec4 } from 'gl-matrix';
+
 const FORWARD = 'Forward';
 const FORWARD_PLUS = 'Forward+';
 const CLUSTERED = 'Clustered Deferred';
@@ -44,8 +46,8 @@ const wireframe = new Wireframe();
 var segmentStart = [-14.0, 0.0, -6.0];
 var segmentEnd = [14.0, 20.0, 6.0];
 var segmentColor = [1.0, 0.0, 0.0];
-wireframe.addLineSegment(segmentStart, segmentEnd, segmentColor);
-wireframe.addLineSegment([-14.0, 1.0, -6.0], [14.0, 21.0, 6.0], [0.0, 1.0, 0.0]);
+// wireframe.addLineSegment(segmentStart, segmentEnd, segmentColor);
+// wireframe.addLineSegment([-14.0, 1.0, -6.0], [14.0, 21.0, 6.0], [0.0, 1.0, 0.0]);
 
 camera.position.set(-10, 8, 0);
 cameraControls.target.set(0, 2, 0);
@@ -53,7 +55,15 @@ gl.enable(gl.DEPTH_TEST);
 
 function render() {
   scene.update();  
-  params._renderer.render(camera, scene);
+  var points = params._renderer.render(camera, scene);
+
+
+  for(let i = 0; i < points.length; i++) {
+    var s = points[i];
+    i += 1;
+    var e = points[i] ;
+    wireframe.addLineSegment(s, e, [0.0, 1.0, 0.0]);
+  }
 
   // LOOK: Render wireframe "in front" of everything else.
   // If you would like the wireframe to render behind and in front
