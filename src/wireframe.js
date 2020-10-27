@@ -33,6 +33,7 @@ export default class Wireframe {
   }
 
   reset(){
+    // Jack12 removes all the line in current frame 
     this._attributesNeedUpdate = true;
     this._positions = [];
     this._colors = [];

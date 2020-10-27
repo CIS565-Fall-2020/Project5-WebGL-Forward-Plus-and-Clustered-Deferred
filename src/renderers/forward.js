@@ -5,6 +5,7 @@ import { NUM_LIGHTS } from '../scene';
 import vsSource from '../shaders/forward.vert.glsl';
 import fsSource from '../shaders/forward.frag.glsl.js';
 import TextureBuffer from './textureBuffer';
+import Wireframe from '../wireframe';
 
 export default class ForwardRenderer {
   constructor() {
@@ -18,6 +19,8 @@ export default class ForwardRenderer {
       uniforms: ['u_viewProjectionMatrix', 'u_colmap', 'u_normap', 'u_lightbuffer'],
       attribs: ['a_position', 'a_normal', 'a_uv'],
     });
+
+    this._wireFramer = new Wireframe();
 
     this._projectionMatrix = mat4.create();
     this._viewMatrix = mat4.create();

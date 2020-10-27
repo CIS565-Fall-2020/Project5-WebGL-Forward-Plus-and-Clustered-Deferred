@@ -34,6 +34,8 @@ export default class BaseRenderer {
       2.0 / this._ySlices,
       2.0 / this._zSlices,
     );
+
+    //cluster_NDC_size.multiplyScalar(0.5);
     // to recover w component
     var Z_range = camera.far - camera.near;
     var Z_size = Z_range / this._zSlices;
@@ -46,12 +48,13 @@ export default class BaseRenderer {
     inverseProjectionMatrix.getInverse(camera.projectionMatrix);
     
     var inverseViewMatrix = new Matrix4();
-    inverseViewMatrix.copy(camera.matrixWorldInverse);
+    inverseViewMatrix.copy(camera.matrixWorld);
 
-    var inverseProjectionViewMatrix = new Matrix4();
-    inverseProjectionViewMatrix.multiplyMatrices(
-      inverseProjectionMatrix,
-      inverseViewMatrix);
+    var inverseViewProjectionMatrix = new Matrix4();
+    inverseViewProjectionMatrix.multiplyMatrices(
+      inverseViewMatrix,
+      inverseProjectionMatrix
+      );
 
     // store the light sphere in an array 
     var sphr_arr = []
@@ -65,16 +68,27 @@ export default class BaseRenderer {
       ndc_m.multiply(cluster_NDC_size);
       ndc_m.add(offset);
       // not sure the matrix multiplication is right
+      ndc_m = new Vector4(ndc_m.x, ndc_m.y, ndc_m.z);
+      ndc_m.multiplyScalar(get_W(ndc_m.z));
       ndc_m.applyMatrix4(inverseProjectionMatrix);
+      let m = new Vector3(ndc_m.x, ndc_m.y, ndc_m.z);
       let n = new Vector3(ndc_n.x, ndc_n.y, ndc_n.z);
       n.normalize();
-      return new Plane(n, ndc_m.lengthSq());
+      return new Plane(n, m);
     }
 
+    var T2 = camera.projectionMatrix.elements[14];
+    var T1 = camera.projectionMatrix.elements[10];
+    var E1 = -1;
+
+    function get_W(ndc_Z){
+      return T2 / (ndc_Z - T1 / E1);
+    }
     // for each frustum, traverse each light
-    for (let z = 0; z < this._zSlices; ++z) {
-      for (let y = 0; y < this._ySlices; ++y) {
-        for (let x = 0; x < this._xSlices; ++x) {
+    for (let z = 0; z < this._zSlices; z++) {
+      for (let y = 0; y < this._ySlices; y++) {
+        for (let x = 0; x < this._xSlices; x++) {
+          //console.log(x,y,z);
           // get the frustum
           var n, m; // n : normal, m: middle point of face of cluster(grid) 
           //n = new Vector4(0.0, 0.0, 0.0, 0.0); m = new Vector3();
@@ -120,19 +134,35 @@ export default class BaseRenderer {
           
           left_bottom_near.add(offset);
           right_up_far.add(offset);
+          
+          //debugger;
 
           left_bottom_near = new Vector4(left_bottom_near.x, left_bottom_near.y, left_bottom_near.z);
           right_up_far = new Vector4(right_up_far.x, right_up_far.y, right_up_far.z);
-
-          left_bottom_near.multiplyScalar(camera.near + z  * Z_size);
-          right_up_far.multiplyScalar(camera.near + (z + 1) * Z_size);
-
-          left_bottom_near.applyMatrix4(inverseProjectionViewMatrix);
-          right_up_far.applyMatrix4(inverseProjectionViewMatrix);
           
+          // to recover W
+          left_bottom_near.multiplyScalar(get_W(left_bottom_near.z));
+          right_up_far.multiplyScalar(get_W(right_up_far.z));
+
+          var tmp_left = left_bottom_near.clone();
+          tmp_left.applyMatrix4(inverseProjectionMatrix);
+
+          var tmp_right = right_up_far.clone();
+          tmp_right.applyMatrix4(inverseProjectionMatrix);
+
+          //debugger;
+
+          left_bottom_near.applyMatrix4(inverseViewProjectionMatrix);
+          right_up_far.applyMatrix4(inverseViewProjectionMatrix);
+          
+          //debugger;
+          var cur_color = new Vector3(x+1, y+1, z+1);
+          var slice_size = new Vector3(this._xSlices, this._ySlices, this._zSlices);
+          cur_color.divide(slice_size);
+
           var start_pos = [left_bottom_near.x, left_bottom_near.y, left_bottom_near.z];
           var end_pos = [right_up_far.x, right_up_far.y, right_up_far.z];
-          var segmentColor = [1.0, 0.0, 0.0];
+          var segmentColor = [cur_color.x, cur_color.y, cur_color.z];
           this._wireFramer.addLineSegment(start_pos, end_pos, segmentColor);
           
           
@@ -189,6 +219,8 @@ function get_view_Sphere(scene, lid, viewMatrix){
   lght_sphr.center = tmp_vec3;
   lght_sphr.radius = cur_light_radius;
 }
+
+
 
 function origin_assign_light_func(){
   var screen_width = camera.getFilmWidth() * 2;

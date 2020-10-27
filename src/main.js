@@ -28,7 +28,7 @@ function setRenderer(renderer) {
       params._renderer = new ForwardRenderer();
       break;
     case FORWARD_PLUS:
-      params._renderer = new ForwardPlusRenderer(2, 2, 2);
+      params._renderer = new ForwardPlusRenderer(15, 15, 15);
       break;
     case CLUSTERED:
       params._renderer = new ClusteredDeferredRenderer(15, 15, 15);
@@ -70,7 +70,7 @@ function render() {
   gl.disable(gl.DEPTH_TEST);
   params._renderer._wireFramer.render(camera);
   params._renderer._wireFramer.reset();
-  wireframe.render(camera);
+  //wireframe.render(camera);
   gl.enable(gl.DEPTH_TEST);
 }
 
