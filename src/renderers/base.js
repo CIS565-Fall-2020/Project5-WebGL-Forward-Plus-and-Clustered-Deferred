@@ -93,12 +93,66 @@ export default class BaseRenderer {
     function get_W(ndc_Z){
       return T2 / (ndc_Z - T1 / E1);
     }
+
+    function idx2World(x, y, z){
+      var world_p = idx2ClipPos(x, y, z);
+      world_p.applyMatrix4(inverseViewProjectionMatrix);
+      return world_p;
+    }
+
+    function idx2WorldArray(x, y, z){
+      var vec = idx2World(x, y, z);
+      return [vec.x, vec.y, vec.z];
+    }
+
+    function idx2ClipPos(x, y, z){
+      var P;
+      P = new Vector3(x, y, z);
+      P.multiply(cluster_NDC_size);
+      P.add(offset);
+      // add 1 to W
+      P = new Vector4(P.x, P.y, P.z);
+      P.multiplyScalar(get_W(P.z));
+      return P;
+    }
+
+    function get_frustum(x, y, z, render){
+      var n, m;
+      var P0, P1, P2, P3, P4, P5, P6, P7;
+      // transfer all the point to world space
+      P0 = idx2WorldArray(x,y,z);
+      P1 = idx2WorldArray(x+1,y,z);
+      P2 = idx2WorldArray(x+1,y+1,z);
+      P3 = idx2WorldArray(x,y+1,z);
+      P4 = idx2WorldArray(x,y,z+1);
+      P5 = idx2WorldArray(x+1,y,z+1);
+      P6 = idx2WorldArray(x+1,y+1,z+1);
+      P7 = idx2WorldArray(x,y+1,z+1);
+      // 12 edge
+      var cur_color = [1, 0, 0];
+      
+      render._wireFramer.addLineSegment(P0, P1, cur_color);
+      render._wireFramer.addLineSegment(P2, P1, cur_color);
+      render._wireFramer.addLineSegment(P0, P3, cur_color);
+      render._wireFramer.addLineSegment(P2, P3, cur_color);
+      render._wireFramer.addLineSegment(P1, P3, cur_color);
+      render._wireFramer.addLineSegment(P2, P6, cur_color);
+      render._wireFramer.addLineSegment(P0, P4, cur_color);
+      render._wireFramer.addLineSegment(P3, P7, cur_color);
+      render._wireFramer.addLineSegment(P4, P5, cur_color);
+      render._wireFramer.addLineSegment(P5, P6, cur_color);
+      render._wireFramer.addLineSegment(P6, P7, cur_color);
+      render._wireFramer.addLineSegment(P4, P7, cur_color);
+    }
     // for each frustum, traverse each light
     for (let z = 0; z < this._zSlices; z++) {
       for (let y = 0; y < this._ySlices; y++) {
         for (let x = 0; x < this._xSlices; x++) {
           //console.log(x,y,z);
           // get the frustum
+          
+          get_frustum(x, y, z, this);
+          
           var n, m; // n : normal, m: middle point of face of cluster(grid) 
           //n = new Vector4(0.0, 0.0, 0.0, 0.0); m = new Vector3();
           
@@ -178,12 +232,12 @@ export default class BaseRenderer {
             
           }
           
+          var i = x + y * this._xSlices + z * this._xSlices * this._ySlices;
           for (let lid = 0; lid < NUM_LIGHTS; lid ++){
             let cur_sphr = sphr_arr[lid];
             //debugger;
             if (cur_frstm.intersectsSphere(cur_sphr)){
-              let i = x + y * this._xSlices + z * this._xSlices * this._ySlices;
-
+              //debugger;
               let cluster_start_idx = this._clusterTexture.bufferIndex(i, 0) + 0;
               let cur_count = this._clusterTexture.buffer[cluster_start_idx];
               
@@ -197,7 +251,7 @@ export default class BaseRenderer {
                 
                 this._clusterTexture.buffer[rgba_index + rgba_offset] = lid;
                 this._clusterTexture.buffer[cluster_start_idx] = cur_count;
-               // console.log(x, y, z, ": ", cur_count);
+                console.log(x, y, z, ": ", lid, ' with ' ,cur_count);
 
               //debugger;
               }
@@ -210,7 +264,7 @@ export default class BaseRenderer {
       }
     }
     this._wireFramer._lock = true;
-    //debugger;
+    debugger;
     this._clusterTexture.update();
     
   }
