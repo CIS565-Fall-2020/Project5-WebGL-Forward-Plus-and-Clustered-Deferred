@@ -1,10 +1,11 @@
 import TextureBuffer from './textureBuffer';
-import {Sphere, Frustum, Vector3, Matrix4, Vector4, Plane} from 'three';
+import {Sphere, Frustum, Vector3, Matrix4, Vector4, Plane, Matrix3} from 'three';
 import Scene, { NUM_LIGHTS } from '../scene';
 import { vec3 ,vec4 } from 'gl-matrix';
 import Wireframe from '../wireframe';
-export const MAX_LIGHTS_PER_CLUSTER = 100;
+export const MAX_LIGHTS_PER_CLUSTER = 512;
 
+const draw_line = false;
 export default class BaseRenderer {
   constructor(xSlices, ySlices, zSlices) {
     // Create a texture to store cluster data. Each cluster stores the number of lights followed by the light indices
@@ -37,12 +38,10 @@ export default class BaseRenderer {
 
     //cluster_NDC_size.multiplyScalar(0.5);
     // to recover w component
-    var Z_range = camera.far - camera.near;
-    var Z_size = Z_range / this._zSlices;
+    //var Z_range = camera.far - camera.near;
+    //var Z_size = Z_range / this._zSlices;
 
-    var transProjectionMatrix = new Matrix4();
-    transProjectionMatrix.copy(camera.projectionMatrix);
-    transProjectionMatrix.transpose();
+    
 
     var inverseProjectionMatrix = new Matrix4();
     inverseProjectionMatrix.getInverse(camera.projectionMatrix);
@@ -55,6 +54,14 @@ export default class BaseRenderer {
       inverseViewMatrix,
       inverseProjectionMatrix
       );
+    // get the matrix to transfer normal from NDC -> world space
+    var mat3NormalProj2World = new Matrix3();
+    // let tmp = new Matrix4();
+    // tmp.multiplyMatrices(
+    //   camera.matrixWorldInverse,
+    //   camera.projectionMatrix
+    //   );
+    mat3NormalProj2World.getNormalMatrix(inverseViewProjectionMatrix);
 
     // store the light sphere in an array 
     var sphr_arr = []
@@ -64,13 +71,15 @@ export default class BaseRenderer {
     var offset = new Vector3(-1.0, -1.0, -1.0, 0.0);
     
     function get_frustum_plane(ndc_m, ndc_n){
-      ndc_n.applyMatrix4(transProjectionMatrix);
+      //ndc_n = new Vector3(ndc_n.x, ndc_n.y, ndc_n.z);
+      ndc_n.applyMatrix3(mat3NormalProj2World);
+      
       ndc_m.multiply(cluster_NDC_size);
       ndc_m.add(offset);
       // not sure the matrix multiplication is right
       ndc_m = new Vector4(ndc_m.x, ndc_m.y, ndc_m.z);
       ndc_m.multiplyScalar(get_W(ndc_m.z));
-      ndc_m.applyMatrix4(inverseProjectionMatrix);
+      ndc_m.applyMatrix4(inverseViewProjectionMatrix);
       let m = new Vector3(ndc_m.x, ndc_m.y, ndc_m.z);
       let n = new Vector3(ndc_n.x, ndc_n.y, ndc_n.z);
       n.normalize();
@@ -95,78 +104,83 @@ export default class BaseRenderer {
           
           var P0, P1, P2, P3, P4, P5;
           // z near,
-          n = new Vector4(0.0, 0.0, 1.0, 0.0);
+          n = new Vector3(0.0, 0.0, 1.0);
           m = new Vector3(x + 0.5, y + 0.5, z);
           P0 = get_frustum_plane(m, n);
           
           // z far,
-          n = new Vector4(0.0, 0.0, -1.0, 0.0);
+          n = new Vector3(0.0, 0.0, -1.0);
           m = new Vector3(x + 0.5, y + 0.5, z + 1.0);
           P1 = get_frustum_plane(m, n);
 
           // left
-          n = new Vector4(-1.0, 0.0, 0.0, 0.0);
+          n = new Vector3(-1.0, 0.0, 0.0);
           m = new Vector3(x, y + 0.5, z + 0.5);
           P2 = get_frustum_plane(m, n);
           
           // right
-          n = new Vector4(1.0, 0.0, 0.0, 0.0);
+          n = new Vector3(1.0, 0.0, 0.0);
           m = new Vector3(x + 1.0, y + 0.5, z + 0.5);
           P3 = get_frustum_plane(m, n);
           
           // up,
-          n = new Vector4(0.0, -1.0, 0.0, 0.0);
+          n = new Vector3(0.0, -1.0, 0.0);
           m = new Vector3(x + 0.5, y, z + 0.5);
           P4 = get_frustum_plane(m, n);
 
           // down
-          n = new Vector4(0.0, 1.0, 0.0, 0.0);
+          n = new Vector3(0.0, 1.0, 0.0);
           m = new Vector3(x + 0.5, y + 1.0, z + 0.5);
           P5 = get_frustum_plane(m, n);
           
+          //debugger;
           var cur_frstm = new Frustum(P0, P1, P2, P3, P4, P5);
           // to visualize
-          // var left_bottom_near = new Vector3(x, y, z);
-          // var right_up_far = new Vector3(x + 1, y + 1, z + 1);
-          
-          // left_bottom_near.multiply(cluster_NDC_size);
-          // right_up_far.multiply(cluster_NDC_size); 
-          
-          // left_bottom_near.add(offset);
-          // right_up_far.add(offset);
-          
-          // //debugger;
+          if (draw_line){
+            var left_bottom_near = new Vector3(x, y, z);
+            var right_up_far = new Vector3(x + 1, y + 1, z + 1);
+            
+            left_bottom_near.multiply(cluster_NDC_size);
+            right_up_far.multiply(cluster_NDC_size); 
+            
+            left_bottom_near.add(offset);
+            right_up_far.add(offset);
+            
+            //debugger;
 
-          // left_bottom_near = new Vector4(left_bottom_near.x, left_bottom_near.y, left_bottom_near.z);
-          // right_up_far = new Vector4(right_up_far.x, right_up_far.y, right_up_far.z);
-          
-          // // to recover W
-          // left_bottom_near.multiplyScalar(get_W(left_bottom_near.z));
-          // right_up_far.multiplyScalar(get_W(right_up_far.z));
+            left_bottom_near = new Vector4(left_bottom_near.x, left_bottom_near.y, left_bottom_near.z);
+            right_up_far = new Vector4(right_up_far.x, right_up_far.y, right_up_far.z);
+            
+            // to recover W
+            left_bottom_near.multiplyScalar(get_W(left_bottom_near.z));
+            right_up_far.multiplyScalar(get_W(right_up_far.z));
 
-          // var tmp_left = left_bottom_near.clone();
-          // tmp_left.applyMatrix4(inverseProjectionMatrix);
+            var tmp_left = left_bottom_near.clone();
+            tmp_left.applyMatrix4(inverseProjectionMatrix);
 
-          // var tmp_right = right_up_far.clone();
-          // tmp_right.applyMatrix4(inverseProjectionMatrix);
+            var tmp_right = right_up_far.clone();
+            tmp_right.applyMatrix4(inverseProjectionMatrix);
 
-          // //debugger;
+            //debugger;
 
-          // left_bottom_near.applyMatrix4(inverseViewProjectionMatrix);
-          // right_up_far.applyMatrix4(inverseViewProjectionMatrix);
-          
-          // //debugger;
-          // var cur_color = new Vector3(x+1, y+1, z+1);
-          // var slice_size = new Vector3(this._xSlices, this._ySlices, this._zSlices);
-          // cur_color.divide(slice_size);
+            left_bottom_near.applyMatrix4(inverseViewProjectionMatrix);
+            right_up_far.applyMatrix4(inverseViewProjectionMatrix);
+            
+            //debugger;
+            var cur_color = new Vector3(x+1, y+1, z+1);
+            var slice_size = new Vector3(this._xSlices, this._ySlices, this._zSlices);
+            cur_color.divide(slice_size);
 
-          // var start_pos = [left_bottom_near.x, left_bottom_near.y, left_bottom_near.z];
-          // var end_pos = [right_up_far.x, right_up_far.y, right_up_far.z];
-          // var segmentColor = [cur_color.x, cur_color.y, cur_color.z];
-          // this._wireFramer.addLineSegment(start_pos, end_pos, segmentColor);
+            var start_pos = [left_bottom_near.x, left_bottom_near.y, left_bottom_near.z];
+            var end_pos = [right_up_far.x, right_up_far.y, right_up_far.z];
+            var segmentColor = [cur_color.x, cur_color.y, cur_color.z];
+            this._wireFramer.addLineSegment(start_pos, end_pos, segmentColor);
+            
+          }
           
           for (let lid = 0; lid < NUM_LIGHTS; lid ++){
             let cur_sphr = sphr_arr[lid];
+            //debugger;
             if (cur_frstm.intersectsSphere(cur_sphr)){
               let i = x + y * this._xSlices + z * this._xSlices * this._ySlices;
 
@@ -176,13 +190,15 @@ export default class BaseRenderer {
               if (cur_count < MAX_LIGHTS_PER_CLUSTER){
                 cur_count ++;
                 // from texturebuffer.js, a pixel(a unit in texutre) contains 4 floats
-              let component = Math.floor(cur_count / 4);
-              let rgba_index = this._clusterTexture.bufferIndex(i, component);
+                let component = Math.floor(cur_count / 4);
+                let rgba_index = this._clusterTexture.bufferIndex(i, component);
 
-              let rgba_offset = cur_count % 4;
-              
-              this._clusterTexture.buffer[rgba_index + rgba_offset] = lid;
-              this._clusterTexture.buffer[cluster_start_idx] = cur_count;
+                let rgba_offset = cur_count % 4;
+                
+                this._clusterTexture.buffer[rgba_index + rgba_offset] = lid;
+                this._clusterTexture.buffer[cluster_start_idx] = cur_count;
+               // console.log(x, y, z, ": ", cur_count);
+
               //debugger;
               }
 
@@ -193,7 +209,7 @@ export default class BaseRenderer {
         }
       }
     }
-    
+    this._wireFramer._lock = true;
     //debugger;
     this._clusterTexture.update();
     
@@ -212,7 +228,7 @@ function clamp(x, lower, max){
 }
 
 function get_view_Sphere(scene, lid, viewMatrix){
-  // transform to camera space
+  // get three.sphere in world space
   var cur_light = scene.lights[lid];
 
   var cur_light_world_pos = vec4.fromValues(
@@ -222,7 +238,7 @@ function get_view_Sphere(scene, lid, viewMatrix){
     1.0
   );
 
-  var cur_light_camera_pos = vec4.create();
+  //var cur_light_camera_pos = vec4.create();
   // vec4.transformMat4(
   //   cur_light_camera_pos, 
   //   cur_light_world_pos,
@@ -231,9 +247,9 @@ function get_view_Sphere(scene, lid, viewMatrix){
 
   var cur_light_radius = scene.lights[lid].radius;
   var tmp_vec3 = new Vector3(
-    cur_light_camera_pos[0],
-    cur_light_camera_pos[1],
-    cur_light_camera_pos[2]
+    cur_light_world_pos[0],
+    cur_light_world_pos[1],
+    cur_light_world_pos[2]
   );
 
   var lght_sphr = new Sphere();
