@@ -126,49 +126,70 @@ export default class BaseRenderer {
           
           var cur_frstm = new Frustum(P0, P1, P2, P3, P4, P5);
           // to visualize
-          var left_bottom_near = new Vector3(x, y, z);
-          var right_up_far = new Vector3(x + 1, y + 1, z + 1);
+          // var left_bottom_near = new Vector3(x, y, z);
+          // var right_up_far = new Vector3(x + 1, y + 1, z + 1);
           
-          left_bottom_near.multiply(cluster_NDC_size);
-          right_up_far.multiply(cluster_NDC_size); 
+          // left_bottom_near.multiply(cluster_NDC_size);
+          // right_up_far.multiply(cluster_NDC_size); 
           
-          left_bottom_near.add(offset);
-          right_up_far.add(offset);
+          // left_bottom_near.add(offset);
+          // right_up_far.add(offset);
           
-          //debugger;
+          // //debugger;
 
-          left_bottom_near = new Vector4(left_bottom_near.x, left_bottom_near.y, left_bottom_near.z);
-          right_up_far = new Vector4(right_up_far.x, right_up_far.y, right_up_far.z);
+          // left_bottom_near = new Vector4(left_bottom_near.x, left_bottom_near.y, left_bottom_near.z);
+          // right_up_far = new Vector4(right_up_far.x, right_up_far.y, right_up_far.z);
           
-          // to recover W
-          left_bottom_near.multiplyScalar(get_W(left_bottom_near.z));
-          right_up_far.multiplyScalar(get_W(right_up_far.z));
+          // // to recover W
+          // left_bottom_near.multiplyScalar(get_W(left_bottom_near.z));
+          // right_up_far.multiplyScalar(get_W(right_up_far.z));
 
-          var tmp_left = left_bottom_near.clone();
-          tmp_left.applyMatrix4(inverseProjectionMatrix);
+          // var tmp_left = left_bottom_near.clone();
+          // tmp_left.applyMatrix4(inverseProjectionMatrix);
 
-          var tmp_right = right_up_far.clone();
-          tmp_right.applyMatrix4(inverseProjectionMatrix);
+          // var tmp_right = right_up_far.clone();
+          // tmp_right.applyMatrix4(inverseProjectionMatrix);
 
-          //debugger;
+          // //debugger;
 
-          left_bottom_near.applyMatrix4(inverseViewProjectionMatrix);
-          right_up_far.applyMatrix4(inverseViewProjectionMatrix);
+          // left_bottom_near.applyMatrix4(inverseViewProjectionMatrix);
+          // right_up_far.applyMatrix4(inverseViewProjectionMatrix);
           
-          //debugger;
-          var cur_color = new Vector3(x+1, y+1, z+1);
-          var slice_size = new Vector3(this._xSlices, this._ySlices, this._zSlices);
-          cur_color.divide(slice_size);
+          // //debugger;
+          // var cur_color = new Vector3(x+1, y+1, z+1);
+          // var slice_size = new Vector3(this._xSlices, this._ySlices, this._zSlices);
+          // cur_color.divide(slice_size);
 
-          var start_pos = [left_bottom_near.x, left_bottom_near.y, left_bottom_near.z];
-          var end_pos = [right_up_far.x, right_up_far.y, right_up_far.z];
-          var segmentColor = [cur_color.x, cur_color.y, cur_color.z];
-          this._wireFramer.addLineSegment(start_pos, end_pos, segmentColor);
-          
+          // var start_pos = [left_bottom_near.x, left_bottom_near.y, left_bottom_near.z];
+          // var end_pos = [right_up_far.x, right_up_far.y, right_up_far.z];
+          // var segmentColor = [cur_color.x, cur_color.y, cur_color.z];
+          // this._wireFramer.addLineSegment(start_pos, end_pos, segmentColor);
           
           for (let lid = 0; lid < NUM_LIGHTS; lid ++){
-            let cur_sphr = sphr_arr[lid]
+            let cur_sphr = sphr_arr[lid];
+            if (cur_frstm.intersectsSphere(cur_sphr)){
+              let i = x + y * this._xSlices + z * this._xSlices * this._ySlices;
+
+              let cluster_start_idx = this._clusterTexture.bufferIndex(i, 0) + 0;
+              let cur_count = this._clusterTexture.buffer[cluster_start_idx];
+              
+              if (cur_count < MAX_LIGHTS_PER_CLUSTER){
+                cur_count ++;
+                // from texturebuffer.js, a pixel(a unit in texutre) contains 4 floats
+              let component = Math.floor(cur_count / 4);
+              let rgba_index = this._clusterTexture.bufferIndex(i, component);
+
+              let rgba_offset = cur_count % 4;
+              
+              this._clusterTexture.buffer[rgba_index + rgba_offset] = lid;
+              this._clusterTexture.buffer[cluster_start_idx] = cur_count;
+              //debugger;
+              }
+
+            }
           }
+
+
         }
       }
     }
@@ -209,7 +230,7 @@ function get_view_Sphere(scene, lid, viewMatrix){
   // );
 
   var cur_light_radius = scene.lights[lid].radius;
-  let tmp_vec3 = new Vector3(
+  var tmp_vec3 = new Vector3(
     cur_light_camera_pos[0],
     cur_light_camera_pos[1],
     cur_light_camera_pos[2]
@@ -218,6 +239,7 @@ function get_view_Sphere(scene, lid, viewMatrix){
   var lght_sphr = new Sphere();
   lght_sphr.center = tmp_vec3;
   lght_sphr.radius = cur_light_radius;
+  return lght_sphr;
 }
 
 
