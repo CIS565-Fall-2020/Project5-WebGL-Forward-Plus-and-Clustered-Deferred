@@ -2,6 +2,8 @@
 #extension GL_EXT_draw_buffers: enable
 precision highp float;
 
+#define OPTIMIZE 1
+
 uniform sampler2D u_colmap;
 uniform sampler2D u_normap;
 uniform mat4 u_viewProjectionMatrix;
@@ -29,8 +31,14 @@ void main() {
     // gl_FragData[2] = ??
     // gl_FragData[3] = ??
 
+
     gl_FragData[0] = vec4(v_position, 1.0);
-    gl_FragData[1] = vec4(norm, 1.0);
-    gl_FragData[2] = vec4(col, 1.0);
+    gl_FragData[1] = vec4(col, 1.0);
+    gl_FragData[2] = vec4(norm, 1.0);
     gl_FragData[3] = transformed;
+
+    // optimzed
+    gl_FragData[0] = vec4(v_position, 1.0);
+    gl_FragData[1] = vec4(col, 1.0);
+    gl_FragData[2] = vec4(norm, 1.0);
 }

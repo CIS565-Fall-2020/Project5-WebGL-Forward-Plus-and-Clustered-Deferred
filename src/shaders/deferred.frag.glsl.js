@@ -6,7 +6,9 @@ export default function(params) {
   uniform sampler2D u_gbuffers[${params.numGBuffers}];
   uniform sampler2D u_lightbuffer;
   uniform sampler2D u_clusterbuffer;
+  uniform mat4 u_viewProjectionMatrix;
   uniform vec2 u_cameraNF;
+  uniform vec3 u_cameraPos;
 
   varying vec2 v_uv;
   
@@ -70,10 +72,17 @@ export default function(params) {
 
   void main() {
     vec3 position = texture2D(u_gbuffers[0], v_uv).xyz;
-    vec3 normal = texture2D(u_gbuffers[1], v_uv).xyz;
-    vec3 albedo = texture2D(u_gbuffers[2], v_uv).rgb;
-    vec4 transformed = texture2D(u_gbuffers[3], v_uv);
+    vec3 albedo = texture2D(u_gbuffers[1], v_uv).rgb;
+    vec3 normal = texture2D(u_gbuffers[2], v_uv).xyz;
+    vec4 transformed;
 
+    if (${params.numGBuffers} == 4) {
+      transformed = texture2D(u_gbuffers[${params.numGBuffers} - 1], v_uv);
+    } else {
+      // optimized version: numGBuffers = 3
+      transformed = u_viewProjectionMatrix * vec4(position, 1.0);
+    }
+    
     vec3 fragColor = vec3(0.0);
 
     float near = u_cameraNF.x;
@@ -91,6 +100,9 @@ export default function(params) {
     int count = int(ExtractFloat(u_clusterbuffer, numClusters, ${params.clusterWidth}, cidx, 0));
     const int max_iter = ${params.clusterWidth} * 4;
 
+    // hard coded shininess
+    const float shin = 16.0;
+
     for (int i = 1; i < max_iter; ++i) {
       if (i > count) {
         break;
@@ -104,13 +116,25 @@ export default function(params) {
       float lightIntensity = cubicGaussian(2.0 * lightDistance / light.radius);
       float lambertTerm = max(dot(L, normal), 0.0);
 
+      // blinn
+      float specular = 0.0;
+      if (lambertTerm > 0.0) {
+        vec3 viewDir = normalize(u_cameraPos - position);
+        vec3 halfDir = normalize(L + viewDir);
+        float specAngle = max(dot(halfDir, normal), 0.0);
+        specular = pow(specAngle, shin);
+      }
+
       fragColor += albedo * lambertTerm * light.color * vec3(lightIntensity);
+      fragColor += light.color * specular * vec3(lightIntensity);
     }
 
     const vec3 ambientLight = vec3(0.025);
     fragColor += albedo * ambientLight;
 
     gl_FragColor = vec4(fragColor, 1.0);
+    // vec3 rgb_normal = normal * 0.5 + 0.5;
+    // gl_FragColor = vec4(rgb_normal, 1.0);
   }
   `;
 }
