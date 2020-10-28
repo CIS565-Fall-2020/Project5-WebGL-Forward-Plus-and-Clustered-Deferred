@@ -98,7 +98,7 @@ export default class ClusteredDeferredRenderer extends BaseRenderer {
     gl.bindTexture(gl.TEXTURE_2D, null);
   }
 
-  render(camera, scene) {
+  render(camera, scene, wireframe) {
     if (canvas.width != this._width || canvas.height != this._height) {
       this.resize(canvas.width, canvas.height);
     }
