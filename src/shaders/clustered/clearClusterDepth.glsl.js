@@ -1,12 +1,10 @@
 import cluster from './cluster.glsl'
 
-export default function() {
+export default function(params) {
 	return `#version 310 es
 	precision highp float;
 
 	layout (local_size_x = 64, local_size_y = 1, local_size_z = 1) in;
-
-	uniform uint u_totalClusters;
 
 	${cluster}
 
@@ -16,7 +14,7 @@ export default function() {
 
 	void main() {
 		uint id = gl_GlobalInvocationID.x;
-		if (id >= u_totalClusters) {
+		if (id >= ${params.xSlices}u * ${params.ySlices}u * ${params.zSlices}u) {
 			return;
 		}
 		clusterDepths.values[id].xMin = 10000;

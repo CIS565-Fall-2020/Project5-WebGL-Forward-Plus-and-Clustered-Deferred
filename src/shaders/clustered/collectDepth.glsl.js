@@ -26,7 +26,6 @@ export default function(params) {
 		if (clusterCoord.x >= ${params.xSlices}u || clusterCoord.y >= ${params.ySlices}u) {
 			return;
 		}
-		uvec2 inClusterCoord = pixelCoord - clusterCoord * uvec2(u_blockSizeX, u_blockSizeY);
 
 		float depth = depthSampleToWorld(texelFetch(u_depth, ivec2(pixelCoord), 0).x, u_cameraNear, u_cameraFar);
 		float depth01 = (depth - u_cameraNear) / (u_cameraFar - u_cameraNear);

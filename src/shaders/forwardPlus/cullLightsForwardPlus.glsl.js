@@ -9,52 +9,48 @@ export default function(params) {
 
 	uniform uint u_width;
 	uniform uint u_height;
-	uniform uint u_blockSize;
+	uniform uint u_blockSizeX;
+	uniform uint u_blockSizeY;
 	uniform uint u_numLights;
 
 	uniform mat4 u_viewMatrix;
 	uniform float u_cameraRight;
 	uniform float u_cameraUp;
-	uniform float u_cameraNear;
-	uniform float u_cameraFar;
-
-	uniform sampler2D u_depthMin, u_depthMax;
 
 	${lightingUtils}
 	${frustumUtils}
 
-	layout (std430, binding = 0) buffer LightIn {
+	layout (std430, binding = 0) buffer ClusterDepths {
+		ivec2 values[];
+	} clusterDepths;
+	layout (std430, binding = 1) buffer LightIn {
 		Light lights[];
 	} lights;
-	layout (std430, binding = 1) buffer LightList {
+	layout (std430, binding = 2) buffer LightList {
 		ivec2 node[];
 	} list;
-	layout (std430, binding = 2) buffer LightHead {
+	layout (std430, binding = 3) buffer LightHead {
 		int head[];
 	} head;
-	layout (binding = 3) uniform atomic_uint u_numNodes;
+	layout (binding = 4) uniform atomic_uint u_numNodes;
 
 
 	void main() {
 		uvec3 threadId = gl_GlobalInvocationID;
-		uint numBlocksX = u_width / u_blockSize;
-		uint numBlocksY = u_height / u_blockSize;
-		if (threadId.x >= numBlocksX || threadId.y >= numBlocksY || threadId.z >= u_numLights) {
+		if (threadId.x >= ${params.xSlices}u || threadId.y >= ${params.ySlices}u || threadId.z >= u_numLights) {
 			return;
 		}
 
-		uint index = threadId.x + threadId.y * numBlocksX;
+		uint index = threadId.x + threadId.y * ${params.xSlices}u;
 
-		uvec2 blockPos = u_blockSize * threadId.xy;
+		uvec2 blockPos = uvec2(u_blockSizeX, u_blockSizeY) * threadId.xy;
 
-		float depthMin = texelFetch(u_depthMin, ivec2(threadId.xy), 0).x;
-		float depthMax = texelFetch(u_depthMax, ivec2(threadId.xy), 0).x;
-		depthMin = depthSampleToWorld(depthMin, u_cameraNear, u_cameraFar);
-		depthMax = depthSampleToWorld(depthMax, u_cameraNear, u_cameraFar);
+		float depthMin = intBitsToFloat(clusterDepths.values[index].x);
+		float depthMax = intBitsToFloat(clusterDepths.values[index].y);
 
 		Frustum frustum = computeFrustum(
 			u_cameraRight, u_cameraUp, uvec2(u_width, u_height),
-			blockPos, blockPos + uvec2(u_blockSize), depthMin, depthMax
+			blockPos, blockPos + uvec2(u_blockSizeX, u_blockSizeY), depthMin, depthMax
 		);
 
 		vec3 lightPos = (u_viewMatrix * vec4(lights.lights[threadId.z].position, 1.0f)).xyz;
@@ -66,7 +62,9 @@ export default function(params) {
 		}
 
 		int node = int(atomicCounterIncrement(u_numNodes));
-		int next = atomicExchange(head.head[index], node);
-		list.node[node] = ivec2(threadId.z, next);
+		if (node < ${params.lightListSize}) {
+			int next = atomicExchange(head.head[index], node);
+			list.node[node] = ivec2(threadId.z, next);
+		}
 	}`;
 }

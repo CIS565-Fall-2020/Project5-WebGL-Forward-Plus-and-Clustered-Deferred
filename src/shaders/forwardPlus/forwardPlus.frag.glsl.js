@@ -8,8 +8,8 @@ export default function(params) {
 	uniform sampler2D u_colmap;
 	uniform sampler2D u_normap;
 
-	uniform uint u_blockSize;
-	uniform uint u_numBlocksX;
+	uniform uint u_blockSizeX;
+	uniform uint u_blockSizeY;
 
 	uniform int u_debugMode;
 	uniform float u_debugModeParam;
@@ -41,8 +41,8 @@ export default function(params) {
 
 		fragColor = vec4(0.0f, 0.0f, 0.0f, 1.0f);
 
-		uvec2 blockIndex = uvec2(gl_FragCoord.xy) / u_blockSize;
-		uint index = blockIndex.y * u_numBlocksX + blockIndex.x;
+		uvec2 blockIndex = uvec2(gl_FragCoord.xy) / uvec2(u_blockSizeX, u_blockSizeY);
+		uint index = blockIndex.y * ${params.xSlices}u + blockIndex.x;
 		int count = 0;
 		for (int i = head.head[index]; i != -1; i = list.node[i].y) {
 			Light light = lights.lights[list.node[i].x];
@@ -58,6 +58,7 @@ export default function(params) {
 
 		const vec3 ambientLight = vec3(0.025);
 		fragColor.xyz += albedo * ambientLight;
+
 		if (u_debugMode == 2) {
 			fragColor.xyz = mix(
 				vec3(0.0f, 0.0f, 1.0f),

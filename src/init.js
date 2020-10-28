@@ -1,5 +1,6 @@
 // TODO: Change this to enable / disable debug mode
-export const DEBUG = true && process.env.NODE_ENV === 'development';
+export const DEBUG = false;
+export const SHOW_SPECTOR = true;
 
 import DAT from 'dat.gui';
 import WebGLDebug from 'webgl-debug';
@@ -20,7 +21,13 @@ export const canvas = document.getElementById('canvas');
 // Initialize the WebGL context
 const glContext = canvas.getContext('webgl2-compute');
 if (!glContext) {
-  abort('no gl :(');
+  document.body = document.createElement('body');
+  const warning = document.createElement('p');
+  warning.innerText = 'Failed to create webgl2-compute context.';
+  warning.style.background = 'black';
+  warning.style.color = 'white';
+  document.body.appendChild(warning);
+  abort();
 }
 
 // Get a debug context
@@ -29,13 +36,7 @@ export const gl = DEBUG ? WebGLDebug.makeDebugContext(glContext, (err, funcName,
 }) : glContext;
 
 const supportedExtensions = gl.getSupportedExtensions();
-const requiredExtensions = [
-  /*'OES_texture_float',
-  'OES_texture_float_linear',
-  'OES_element_index_uint',
-  'WEBGL_draw_buffers',*/
-  'EXT_color_buffer_float'
-];
+const requiredExtensions = [ 'EXT_color_buffer_float' ];
 
 // Check that all required extensions are supported
 for (let i = 0; i < requiredExtensions.length; ++i) {
@@ -50,12 +51,12 @@ export const FORWARD_PLUS = 'Forward+';
 export const CLUSTERED = 'Clustered Deferred';
 
 export const globalParams = {
-	renderer: CLUSTERED,
+	renderer: FORWARD_PLUS,
   _renderer: null,
 
 	updateLights: true,
   debugMode: 0,
-  debugModeParam: 1,
+  debugModeParam: 1
 };
 
 export const gui = new DAT.GUI();
@@ -69,7 +70,7 @@ stats.domElement.style.top = '0px';
 document.body.appendChild(stats.domElement);
 
 // Initialize camera
-export const camera = new PerspectiveCamera(75, canvas.clientWidth / canvas.clientHeight, 0.1, 100);
+export const camera = new PerspectiveCamera(75, canvas.clientWidth / canvas.clientHeight, 0.1, 60);
 
 // Initialize camera controls
 export const cameraControls = new OrbitControls(camera, canvas);
@@ -89,7 +90,7 @@ function setSize(width, height) {
 setSize(canvas.clientWidth, canvas.clientHeight);
 window.addEventListener('resize', () => setSize(canvas.clientWidth, canvas.clientHeight));
 
-if (DEBUG) {
+if (SHOW_SPECTOR) {
   const spector = new Spector();
   spector.displayUI();
 }

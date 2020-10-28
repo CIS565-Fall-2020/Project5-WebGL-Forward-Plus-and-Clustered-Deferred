@@ -19,7 +19,7 @@ import debugVisualizeClusterDepthFragGlsl from '../shaders/clustered/debugVisual
 
 export const NUM_GBUFFERS = 2;
 
-const EXPECTED_LIGHTS_PER_CLUSTER = 500;
+const EXPECTED_LIGHTS_PER_CLUSTER = Math.ceil(NUM_LIGHTS / 2);
 
 export default class ClusteredDeferredRenderer extends BaseRenderer {
 	constructor(xSlices, ySlices, zSlices) {
@@ -51,10 +51,11 @@ export default class ClusteredDeferredRenderer extends BaseRenderer {
 			gl.DYNAMIC_COPY
 		);
 
-		this._clearClusterDepthCs = addShaderLocations(
-			{ glShaderProgram: linkShader(compileShader(clearClusterDepthCs(), gl.COMPUTE_SHADER)) },
-			{ uniforms: ['u_totalClusters'] }
-		);
+		this._clearClusterDepthCs = {
+			glShaderProgram: linkShader(compileShader(clearClusterDepthCs({
+				xSlices: this._xSlices, ySlices: this._ySlices, zSlices: this._zSlices
+			}), gl.COMPUTE_SHADER))
+		};
 
 		this._collectDepthCs = addShaderLocations(
 			{
@@ -69,15 +70,13 @@ export default class ClusteredDeferredRenderer extends BaseRenderer {
 
 
 		// cull light pass
+		const lightListSize = EXPECTED_LIGHTS_PER_CLUSTER * this._xSlices * this._ySlices * this._zSlices;
+
 		this._lightBuffer = gl.createBuffer();
 
 		this._lightList = gl.createBuffer();
 		gl.bindBuffer(gl.SHADER_STORAGE_BUFFER, this._lightList);
-		gl.bufferData(
-			gl.SHADER_STORAGE_BUFFER,
-			EXPECTED_LIGHTS_PER_CLUSTER * this._xSlices * this._ySlices * this._zSlices * 8,
-			gl.DYNAMIC_COPY
-		);
+		gl.bufferData(gl.SHADER_STORAGE_BUFFER, lightListSize * 8, gl.DYNAMIC_COPY);
 
 		this._lightHead = gl.createBuffer();
 
@@ -88,7 +87,8 @@ export default class ClusteredDeferredRenderer extends BaseRenderer {
 				glShaderProgram: linkShader(compileShader(cullLightCs({
 					xSlices: this._xSlices,
 					ySlices: this._ySlices,
-					zSlices: this._zSlices
+					zSlices: this._zSlices,
+					lightListSize: lightListSize
 				}), gl.COMPUTE_SHADER))
 			},
 			{ uniforms: ['u_numLights', 'u_camRight', 'u_camUp', 'u_width', 'u_height', 'u_view'] }
@@ -120,7 +120,7 @@ export default class ClusteredDeferredRenderer extends BaseRenderer {
 				ySlices: this._ySlices,
 				zSlices: this._zSlices
 			}), {
-				uniforms: ['u_depthLayer']
+				uniforms: ['u_depthLayer', 'u_cameraNear', 'u_cameraFar', 'u_depth']
 			}
 		);
 	}
@@ -213,7 +213,6 @@ export default class ClusteredDeferredRenderer extends BaseRenderer {
 		// clear clusters
 		gl.useProgram(this._clearClusterDepthCs.glShaderProgram);
 		gl.bindBufferBase(gl.SHADER_STORAGE_BUFFER, 0, this._clusterDepthBuffer);
-		gl.uniform1ui(this._clearClusterDepthCs.u_totalClusters, this._xSlices * this._ySlices * this._zSlices);
 		gl.dispatchCompute((numClusters + 63) / 64, 1, 1);
 		gl.memoryBarrier(gl.SHADER_STORAGE_BARRIER_BIT);
 
@@ -274,7 +273,7 @@ export default class ClusteredDeferredRenderer extends BaseRenderer {
 		gl.uniform1ui(this._cullLightShader.u_height, canvas.height);
 		gl.uniformMatrix4fv(this._cullLightShader.u_view, false, this._viewMatrix);
 		// run compute shader
-		gl.dispatchCompute((this._xSlices + 7) / 8, (this._ySlices + 7) / 8, (NUM_LIGHTS + 7) / 8);
+		gl.dispatchCompute((this._xSlices + 7) / 8, (this._ySlices + 7) / 8, (NUM_LIGHTS + 3) / 4);
 		gl.memoryBarrier(gl.SHADER_STORAGE_BARRIER_BIT);
 
 
@@ -285,7 +284,14 @@ export default class ClusteredDeferredRenderer extends BaseRenderer {
 		if (globalParams.debugMode == 1) {
 			gl.useProgram(this._debugDepthShader.glShaderProgram);
 			gl.bindBufferBase(gl.SHADER_STORAGE_BUFFER, 0, this._clusterDepthBuffer);
+			// uniforms
 			gl.uniform1f(this._debugDepthShader.u_depthLayer, globalParams.debugModeParam);
+			gl.uniform1f(this._debugDepthShader.u_cameraNear, camera.near);
+			gl.uniform1f(this._debugDepthShader.u_cameraFar, camera.far);
+			// depth
+			gl.activeTexture(gl.TEXTURE0);
+			gl.bindTexture(gl.TEXTURE_2D, this._depthTex);
+			gl.uniform1i(this._debugDepthShader.u_depth, 0);
 			renderFullscreenQuad(this._debugDepthShader);
 		} else {
 			gl.useProgram(this._progShade.glShaderProgram);

@@ -6,7 +6,7 @@ export default function(params) {
 	return `#version 310 es
 	precision highp float;
 
-	layout (local_size_x = 8, local_size_y = 8, local_size_z = 8) in;
+	layout (local_size_x = 8, local_size_y = 8, local_size_z = 4) in;
 
 	uniform uint u_numLights;
 	uniform float u_camRight;
@@ -73,8 +73,10 @@ export default function(params) {
 
 				if (frustumSphereIntersectionPossible(fr, lightCenter, lightRadius)) {
 					int node = int(atomicCounterIncrement(u_numNodes));
-					int next = atomicExchange(head.head[clusterIndex], node);
-					list.node[node] = ivec2(lightIndex, next);
+					if (node < ${params.lightListSize}) {
+						int next = atomicExchange(head.head[clusterIndex], node);
+						list.node[node] = ivec2(lightIndex, next);
+					}
 				}
 
 				++clusterId.z;
