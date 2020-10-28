@@ -135,8 +135,6 @@ export default class ClusteredDeferredRenderer extends BaseRenderer {
 		gl.bindTexture(gl.TEXTURE_2D, this._depthTex);
 		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
 		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-		gl.texImage2D(gl.TEXTURE_2D, 0, gl.DEPTH_COMPONENT24, width, height, 0, gl.DEPTH_COMPONENT, gl.UNSIGNED_INT, null);
-		gl.bindTexture(gl.TEXTURE_2D, null);
 
 
 		this._gBuffer = gl.createFramebuffer();
@@ -145,27 +143,25 @@ export default class ClusteredDeferredRenderer extends BaseRenderer {
 
 		// Create, bind, and store "color" target textures for the FBO
 		this._gbuffers = new Array(NUM_GBUFFERS);
-		let attachments = new Array(NUM_GBUFFERS);
 		for (let i = 0; i < NUM_GBUFFERS; i++) {
-			attachments[i] = gl[`COLOR_ATTACHMENT${i}`];
 			this._gbuffers[i] = gl.createTexture();
 			gl.bindTexture(gl.TEXTURE_2D, this._gbuffers[i]);
 			gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
 			gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
-			gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA32F, width, height, 0, gl.RGBA, gl.FLOAT, null);
-			gl.bindTexture(gl.TEXTURE_2D, null);
+		}
 
+		this.resize(this._width, this._height);
+
+		let attachments = new Array(NUM_GBUFFERS);
+		for (let i = 0; i < NUM_GBUFFERS; ++i) {
+			attachments[i] = gl[`COLOR_ATTACHMENT${i}`];
+			gl.bindTexture(gl.TEXTURE_2D, this._gbuffers[i]);
 			gl.framebufferTexture2D(gl.FRAMEBUFFER, attachments[i], gl.TEXTURE_2D, this._gbuffers[i], 0);
 		}
 		if (gl.checkFramebufferStatus(gl.FRAMEBUFFER) != gl.FRAMEBUFFER_COMPLETE) {
 			throw "Framebuffer incomplete";
 		}
-
-		// Tell the WEBGL_draw_buffers extension which FBO attachments are
-		// being used. (This extension allows for multiple render targets.)
 		gl.drawBuffers(attachments);
-
-		gl.bindFramebuffer(gl.FRAMEBUFFER, null);
 	}
 
 	resize(width, height) {
@@ -176,11 +172,14 @@ export default class ClusteredDeferredRenderer extends BaseRenderer {
 		gl.texImage2D(
 			gl.TEXTURE_2D, 0, gl.DEPTH_COMPONENT24, width, height, 0, gl.DEPTH_COMPONENT, gl.UNSIGNED_INT, null
 		);
-		for (let i = 0; i < NUM_GBUFFERS; i++) {
-			gl.bindTexture(gl.TEXTURE_2D, this._gbuffers[i]);
-			gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA32F, width, height, 0, gl.RGBA, gl.FLOAT, null);
-		}
-		gl.bindTexture(gl.TEXTURE_2D, null);
+
+		// float16 for normal
+		gl.bindTexture(gl.TEXTURE_2D, this._gbuffers[0]);
+		gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA16F, width, height, 0, gl.RGBA, gl.HALF_FLOAT, null);
+
+		// uint8 for albedo
+		gl.bindTexture(gl.TEXTURE_2D, this._gbuffers[1]);
+		gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, width, height, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
 	}
 
 	render(camera, scene) {
