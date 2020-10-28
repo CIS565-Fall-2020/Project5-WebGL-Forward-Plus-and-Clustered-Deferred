@@ -4,6 +4,7 @@ import ForwardPlusRenderer from './renderers/forwardPlus';
 import ClusteredDeferredRenderer from './renderers/clusteredDeferred';
 import Scene from './scene';
 import Wireframe from './wireframe';
+import {frustumWireframe} from './renderers/base';
 
 const FORWARD = 'Forward';
 const FORWARD_PLUS = 'Forward+';
@@ -45,7 +46,7 @@ var segmentStart = [-14.0, 0.0, -6.0];
 var segmentEnd = [14.0, 20.0, 6.0];
 var segmentColor = [1.0, 0.0, 0.0];
 wireframe.addLineSegment(segmentStart, segmentEnd, segmentColor);
-wireframe.addLineSegment([-14.0, 1.0, -6.0], [14.0, 21.0, 6.0], [0.0, 1.0, 0.0]);
+wireframe.addLineSegment([0, 0, 0], [14.0, 21.0, 6.0], [0.0, 1.0, 0.0]);
 
 camera.position.set(-10, 8, 0);
 cameraControls.target.set(0, 2, 0);
@@ -61,6 +62,7 @@ function render() {
   //the gl.disable(gl.DEPTH_TEST) and gl.enable(gl.DEPTH_TEST) lines.
   gl.disable(gl.DEPTH_TEST);
   wireframe.render(camera);
+  frustumWireframe.render(camera);
   gl.enable(gl.DEPTH_TEST);
 }
 

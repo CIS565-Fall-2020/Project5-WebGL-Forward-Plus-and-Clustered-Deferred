@@ -11,6 +11,9 @@ export default function(params) {
 
   // TODO: Read this buffer to determine the lights influencing a cluster
   uniform sampler2D u_clusterbuffer;
+  uniform int u_xSlices;
+  uniform int u_ySlices;
+  uniform int u_zSlices;
 
   varying vec3 v_position;
   varying vec3 v_normal;
@@ -80,6 +83,9 @@ export default function(params) {
     vec3 normal = applyNormalMap(v_normal, normap);
 
     vec3 fragColor = vec3(0.0);
+
+    // Calculate cluster index
+    
 
     for (int i = 0; i < ${params.numLights}; ++i) {
       Light light = UnpackLight(i);
