@@ -14,10 +14,16 @@ export default function(params) {
   uniform int u_xSlices;
   uniform int u_ySlices;
   uniform int u_zSlices;
+  uniform int u_screenWidth;
+  uniform int u_screenHeight;
+  uniform float u_zminView;
+  uniform float u_zmaxView;
+  uniform ivec2 u_clusterSize;
 
   varying vec3 v_position;
   varying vec3 v_normal;
   varying vec2 v_uv;
+  varying float v_viewDepth;
 
   vec3 applyNormalMap(vec3 geomnor, vec3 normap) {
     normap = normap * 2.0 - 1.0;
@@ -85,10 +91,22 @@ export default function(params) {
     vec3 fragColor = vec3(0.0);
 
     // Calculate cluster index
-    
+    int cx = int(float(u_xSlices) * gl_FragCoord.x / float(u_screenWidth));
+    int cy = int(float(u_ySlices) * gl_FragCoord.y / float(u_screenHeight));
+    int cz = int(float(u_zSlices) * (v_viewDepth - u_zminView) / (u_zmaxView - u_zminView));
+    int cid = cz * u_xSlices * u_ySlices + cy * u_xSlices + cx;
 
-    for (int i = 0; i < ${params.numLights}; ++i) {
-      Light light = UnpackLight(i);
+    int lightNum = int(ExtractFloat(u_clusterbuffer, u_clusterSize.x, u_clusterSize.y, cid, 0));
+    int sum = 0;
+    for (int i = 1; i <= ${params.numLights}; ++i)
+    {
+      if (i > lightNum)
+      {
+        break;
+      }
+      int lightid = int(ExtractFloat(u_clusterbuffer, u_clusterSize.x, u_clusterSize.y, cid, i) + 0.1);
+      sum ++;
+      Light light = UnpackLight(lightid);
       float lightDistance = distance(light.position, v_position);
       vec3 L = (light.position - v_position) / lightDistance;
 
@@ -102,6 +120,7 @@ export default function(params) {
     fragColor += albedo * ambientLight;
 
     gl_FragColor = vec4(fragColor, 1.0);
+    //gl_FragColor = vec4(float(u_clusterSize.x) /2.0, 0, 0, 1);
   }
   `;
 }

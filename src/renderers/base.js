@@ -18,18 +18,17 @@ export default class BaseRenderer {
   // p0, p1, p2 are points on the plane in counterclockwise order.
   pointPlaneDistance(p0, p1, p2, pc) {
     var planeNormal = vec3.create();
-    var d10 = vec3.create();
-    var d20 = vec3.create();
-    vec3.subtract(d10, p1, p0);
-    vec3.subtract(d20, p2, p0);
-    vec3.cross(planeNormal, d10, d20);
+    var d01 = vec3.create();
+    var d02 = vec3.create();
+    vec3.subtract(d01, p1, p0);
+    vec3.subtract(d02, p2, p0);
+    vec3.cross(planeNormal, d01, d02);
     vec3.normalize(planeNormal, planeNormal);
     // Plane: ax + by + cx + d = 0
-    var d = -vec3.dot(planeNormal, p0);
     
-    var dc0 = vec3.create();
-    vec3.subtract(dc0, pc, p0);
-    return vec3.dot(planeNormal, dc0);
+    var d0c = vec3.create();
+    vec3.subtract(d0c, pc, p0);
+    return vec3.dot(planeNormal, d0c);
   }
 
   // l: left r: right b: bottom t: top n: near f: far 
@@ -43,7 +42,7 @@ export default class BaseRenderer {
       [rtf, ltf, ltn],  // top
       [rbn, lbn, lbf],  // bottom
     ];
-    var result = false;
+    var result = true;
     for (let i = 0; i < 6; ++i)
     {
       var d = this.pointPlaneDistance(faces[i][0], faces[i][1], faces[i][2], sc);
@@ -51,19 +50,19 @@ export default class BaseRenderer {
       {
         return false;
       }
-      else if (d < sr)
-      {
-        result = true;
-      }
+      // else if (d < sr)
+      // {
+      //   result = true;
+      // }
     }
     return result;
   }
 
-  updateClusters(camera, viewMatrix, scene) {
+  updateClusters(camera, viewMatrix, scene, depthMax) {
     // TODO: Update the cluster texture with the count and indices of the lights in each cluster
     // This will take some time. The math is nontrivial...
 
-    var depth = (100 - camera.near);
+    var depth = (depthMax - camera.near);
     var dz = depth / this._zSlices;
     var tanHalfFov = Math.tan(camera.fov * Math.PI / 180);
 
@@ -92,7 +91,7 @@ export default class BaseRenderer {
           var xminNear = x * dxmin - widthMin / 2;
           var xmaxNear = (x + 1) * dxmin - widthMin / 2;
           var xminFar = x * dxmax - widthMax / 2;
-          var xmaxFar = x * dxmax - widthMax / 2;
+          var xmaxFar = (x + 1) * dxmax - widthMax / 2;
           
 
           for (let lid = 0; lid < scene.lights.length; ++lid)
@@ -100,8 +99,8 @@ export default class BaseRenderer {
             var light = scene.lights[lid];
             var lightPos = vec4.fromValues(light.position[0], light.position[1], light.position[2], 1);
             vec4.transformMat4(lightPos, lightPos, viewMatrix); // Convert lightPos from world space to view space
+            lightPos[2] *= -1.0;
             var lightRadius = light.radius;
-            
             if (lightCnt <= MAX_LIGHTS_PER_CLUSTER)
             {
               var intersect = this.sphereFrustumIntersect(vec3.fromValues(xminNear, yminNear, zmin),
@@ -119,7 +118,7 @@ export default class BaseRenderer {
                 //debugger;
                 lightCnt++;
                 var index = this._clusterTexture.bufferIndex(i, Math.floor(lightCnt / 4)) + lightCnt % 4;
-                this._clusterTexture[index] = lid;
+                this._clusterTexture.buffer[index] = lid;
               }
             }
           }
