@@ -66,30 +66,10 @@ export default class BaseRenderer {
     // store the light sphere in an array 
     var sphr_arr = []
     for (let lid = 0; lid < NUM_LIGHTS; lid ++){
-      sphr_arr[lid] = get_view_Sphere(scene, lid, viewMatrix);
+      sphr_arr[lid] = get_world_Sphere(scene, lid, viewMatrix);
     }
     var offset = new Vector3(-1.0, -1.0, -1.0, 0.0);
     
-    function get_frustum_plane(ndc_m, ndc_n, render){
-      //ndc_n = new Vector3(ndc_n.x, ndc_n.y, ndc_n.z);
-      ndc_n.applyMatrix3(mat3NormalProj2World);
-
-      let n = new Vector3(ndc_n.x, ndc_n.y, ndc_n.z);
-      n.normalize();
-      
-      let m1 = idx2World(ndc_m);
-      let m2 = new Vector4();
-      let normal_vec4 = new Vector4(n.x, n.y, n.z);
-      m2.addVectors(m1, normal_vec4);
-
-      let m1_arr = [m1.x, m1.y, m1.z];
-      let m2_arr = [m2.x, m2.y, m2.z];
-
-      //render._wireFramer.addLineSegment(m1_arr, m2_arr, [1.0, 1.0, 0.0]);
-
-      return new Plane(n, m);
-    }
-
     var T2 = camera.projectionMatrix.elements[14];
     var T1 = camera.projectionMatrix.elements[10];
     var E1 = -1;
@@ -153,6 +133,17 @@ export default class BaseRenderer {
       render._wireFramer.addLineSegment(vec2arr(p), vec2arr(p2), [0, 1, 0]);
     }
 
+    function frustum_sphere_intersect(frstm, sphr){
+      var planes = frstm.planes;
+      
+      var cntr = sphr.center;
+      var rdis = sphr.radius;
+
+      for (var i = 0; i < 6 ; i ++){
+
+      }
+    }
+
     function get_frustum(x, y, z, render){
       var p0, p1, p2, p3, p4, p5, p6, p7;
       // transfer all the point to world space
@@ -179,6 +170,39 @@ export default class BaseRenderer {
       n4 = get_normal(p2, p6, p3);
       // down
       n5 = get_normal(p1, p0, p5);
+
+      var P0, P1, P2, P3, P4, P5;
+      P0 = new Plane();
+      P1 = new Plane();
+      P2 = new Plane();
+      P3 = new Plane();
+      P4 = new Plane();
+      P5 = new Plane();
+
+      // P0.setFromCoplanarPoints(arr2vec(p2), arr2vec(p3), arr2vec(p0));
+      // P1.setFromCoplanarPoints(arr2vec(p7), arr2vec(p6), arr2vec(p5));
+      // P2.setFromCoplanarPoints(arr2vec(p3), arr2vec(p7), arr2vec(p4));
+      // P3.setFromCoplanarPoints(arr2vec(p6), arr2vec(p2), arr2vec(p1));
+      // P4.setFromCoplanarPoints(arr2vec(p6), arr2vec(p7), arr2vec(p3));
+      // P5.setFromCoplanarPoints(arr2vec(p1), arr2vec(p0), arr2vec(p4));
+      //debugger;
+      // P0.setFromNormalAndCoplanarPoint(n0, arr2vec(p0));
+
+      // P1.setFromNormalAndCoplanarPoint(n1, arr2vec(p4));
+
+      // P2.setFromNormalAndCoplanarPoint(n2, arr2vec(p0));
+
+      // P3.setFromNormalAndCoplanarPoint(n3, arr2vec(p1));
+
+      // P4.setFromNormalAndCoplanarPoint(n4, arr2vec(p2));
+
+      // P5.setFromNormalAndCoplanarPoint(n5, arr2vec(p0));
+      P0 = new Plane(n0, arr2vec(p0).length());
+      P1 = new Plane(n1, arr2vec(p4).length());
+      P2 = new Plane(n2, arr2vec(p0).length());
+      P3 = new Plane(n3, arr2vec(p1).length());
+      P4 = new Plane(n4, arr2vec(p2).length());
+      P5 = new Plane(n5, arr2vec(p0).length());
 
       // 12 edge
       if (draw_line){
@@ -214,6 +238,9 @@ export default class BaseRenderer {
         vis_normal(n4, m4, render);
         vis_normal(n5, m5, render);
       }
+
+
+      return new Frustum(P0, P1, P2, P3, P4, P5);
       
 
     }
@@ -221,90 +248,14 @@ export default class BaseRenderer {
     for (let z = 0; z < this._zSlices; z++) {
       for (let y = 0; y < this._ySlices; y++) {
         for (let x = 0; x < this._xSlices; x++) {
-          //console.log(x,y,z);
-          // get the frustum
-          
-          get_frustum(x, y, z, this);
-          
-          var n, m; // n : normal, m: middle point of face of cluster(grid) 
-          //n = new Vector4(0.0, 0.0, 0.0, 0.0); m = new Vector3();
-          
-          var P0, P1, P2, P3, P4, P5;
-          // z near,
-          n = new Vector3(0.0, 0.0, 1.0);
-          m = new Vector3(x + 0.5, y + 0.5, z);
-          P0 = get_frustum_plane(m, n, this);
-          
-          // z far,
-          n = new Vector3(0.0, 0.0, -1.0);
-          m = new Vector3(x + 0.5, y + 0.5, z + 1.0);
-          P1 = get_frustum_plane(m, n, this);
-
-          // left
-          n = new Vector3(-1.0, 0.0, 0.0);
-          m = new Vector3(x, y + 0.5, z + 0.5);
-          P2 = get_frustum_plane(m, n, this);
-          
-          // right
-          n = new Vector3(1.0, 0.0, 0.0);
-          m = new Vector3(x + 1.0, y + 0.5, z + 0.5);
-          P3 = get_frustum_plane(m, n, this);
-          
-          // up,
-          n = new Vector3(0.0, -1.0, 0.0);
-          m = new Vector3(x + 0.5, y, z + 0.5);
-          P4 = get_frustum_plane(m, n, this);
-
-          // down
-          n = new Vector3(0.0, 1.0, 0.0);
-          m = new Vector3(x + 0.5, y + 1.0, z + 0.5);
-          P5 = get_frustum_plane(m, n, this);
+          // get the frustu
+        
           
           //debugger;
-          var cur_frstm = new Frustum(P0, P1, P2, P3, P4, P5);
-          // to visualize
-          if (draw_line){
-            var left_bottom_near = new Vector3(x, y, z);
-            var right_up_far = new Vector3(x + 1, y + 1, z + 1);
-            
-            left_bottom_near.multiply(cluster_NDC_size);
-            right_up_far.multiply(cluster_NDC_size); 
-            
-            left_bottom_near.add(offset);
-            right_up_far.add(offset);
-            
-            //debugger;
-
-            left_bottom_near = new Vector4(left_bottom_near.x, left_bottom_near.y, left_bottom_near.z);
-            right_up_far = new Vector4(right_up_far.x, right_up_far.y, right_up_far.z);
-            
-            // to recover W
-            left_bottom_near.multiplyScalar(get_W(left_bottom_near.z));
-            right_up_far.multiplyScalar(get_W(right_up_far.z));
-
-            var tmp_left = left_bottom_near.clone();
-            tmp_left.applyMatrix4(inverseProjectionMatrix);
-
-            var tmp_right = right_up_far.clone();
-            tmp_right.applyMatrix4(inverseProjectionMatrix);
-
-            //debugger;
-
-            left_bottom_near.applyMatrix4(inverseViewProjectionMatrix);
-            right_up_far.applyMatrix4(inverseViewProjectionMatrix);
-            
-            //debugger;
-            var cur_color = new Vector3(x+1, y+1, z+1);
-            var slice_size = new Vector3(this._xSlices, this._ySlices, this._zSlices);
-            cur_color.divide(slice_size);
-
-            var start_pos = [left_bottom_near.x, left_bottom_near.y, left_bottom_near.z];
-            var end_pos = [right_up_far.x, right_up_far.y, right_up_far.z];
-            var segmentColor = [cur_color.x, cur_color.y, cur_color.z];
-            this._wireFramer.addLineSegment(start_pos, end_pos, segmentColor);
-            
-          }
-          
+          //var cur_frstm = new Frustum(P0, P1, P2, P3, P4, P5);
+          var cur_frstm = get_frustum(x, y, z, this);
+          //cur_frstm.setFromProjectionMatrix(camera.projectionMatrix);
+          //debugger;
           var i = x + y * this._xSlices + z * this._xSlices * this._ySlices;
           for (let lid = 0; lid < NUM_LIGHTS; lid ++){
             let cur_sphr = sphr_arr[lid];
@@ -354,35 +305,19 @@ function clamp(x, lower, max){
   return Math.min(max, Math.max(x, lower));
 }
 
-function get_view_Sphere(scene, lid, viewMatrix){
+function get_world_Sphere(scene, lid, viewMatrix){
   // get three.sphere in world space
   var cur_light = scene.lights[lid];
 
-  var cur_light_world_pos = vec4.fromValues(
+  var radius = scene.lights[lid].radius;
+  var pos = new Vector3(
     cur_light.position[0],
     cur_light.position[1],
-    cur_light.position[2],
-    1.0
+    cur_light.position[2]
   );
 
-  //var cur_light_camera_pos = vec4.create();
-  // vec4.transformMat4(
-  //   cur_light_camera_pos, 
-  //   cur_light_world_pos,
-  //   viewMatrix
-  // );
-
-  var cur_light_radius = scene.lights[lid].radius;
-  var tmp_vec3 = new Vector3(
-    cur_light_world_pos[0],
-    cur_light_world_pos[1],
-    cur_light_world_pos[2]
-  );
-
-  var lght_sphr = new Sphere();
-  lght_sphr.center = tmp_vec3;
-  lght_sphr.radius = cur_light_radius;
-  return lght_sphr;
+  var sphr = new Sphere(pos, radius);
+  return sphr 
 }
 
 

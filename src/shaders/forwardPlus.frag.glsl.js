@@ -196,6 +196,21 @@ export default function(params) {
     return fragColor;
   }
 
+  vec4 vis_num_light(vec3 cluster_idx){
+    vec3 fragColor = vec3(0.0);
+    int idx = int(cluster_idx.x + 
+              cluster_idx.y * u_xSlice + 
+              cluster_idx.z * u_xSlice * u_ySlice);
+    
+    int total_slice = int(u_xSlice * u_ySlice * u_zSlice);
+    float clusterBufferIdx = float(idx + 1) / float(total_slice + 1);
+    int numLights = int(texture2D(u_clusterbuffer, vec2(clusterBufferIdx, 0))[0]);
+
+    float percent = float(numLights) / float(u_maxLights);
+
+    return vec4(vec3(percent), 1.0);
+  }
+
   
 
   void main() {
@@ -214,7 +229,10 @@ export default function(params) {
     const vec3 ambientLight = vec3(0.025);
     fragColor += albedo * ambientLight;
     //vec3 debug = ( normalize(u_view_pos - v_position) + 1.0 ) / 2.0 ;
-    if (u_DEBUG == 1){
+    if (u_DEBUG == 2){
+      gl_FragColor = vis_num_light(cluster_idx);
+    }
+    else if (u_DEBUG == 1){
       vec3 slice_vec = vec3(u_xSlice, u_ySlice, u_zSlice) + vec3(1.0);
       gl_FragColor = vec4((cluster_idx ) / slice_vec , 1.0);
       //gl_FragColor = vec4( vec2(cluster_idx) / vec2(slice_vec), 0.0, 1.0);
