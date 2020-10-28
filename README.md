@@ -3,26 +3,38 @@ WebGL Forward+ and Clustered Deferred Shading
 
 **University of Pennsylvania, CIS 565: GPU Programming and Architecture, Project 5**
 
-* (TODO) YOUR NAME HERE
-* Tested on: (TODO) **Google Chrome 222.2** on
-  Windows 22, i7-2222 @ 2.22GHz 22GB, GTX 222 222MB (Moore 2222 Lab)
+* Han Yan
+* Tested on: Macbook Pro
 
 ### Live Online
 
-[![](img/thumb.png)](http://TODO.github.io/Project5-WebGL-Forward-Plus-and-Clustered-Deferred)
+![](img/p1.png)[https://tracy-yan.github.io/Project5-WebGL-Forward-Plus-and-Clustered-Deferred/]
 
 ### Demo Video/GIF
 
-[![](img/video.png)](TODO)
+![](img/proj5.gif)
 
-### (TODO: Your README)
+## Performance Analysis
 
-*DO NOT* leave the README to the last minute! It is a crucial part of the
-project, and we will not be able to grade you without a good README.
+### Forward+ vs. Clustered Deferred
 
-This assignment has a considerable amount of performance analysis compared
-to implementation work. Complete the implementation early to leave time!
+For my implementation, clustered deferred is faster when the number of lights per cluster is large. For other cases where the number of clusters is larger than total number of lights, Forward+ performs better. So I think the most significant factor is the number of lights per cluster.
 
+With 15x15x15 clusters and 100 lights, rate for Forward+ is 15.5 fps and rate for clustered deferred is 14.8 fps. With 2x2x2 clusters and 300 lights, rate for Forward+ is 32 fps and rate for clustered deferred is 44 fps. 
+
+The advantage of Forward+ is that it has one less stage in the pipeline, but it does expensive lighting computation on every fragment. The advantage of clustered deferred is that it does the lighting computation on fewer fragments, but it uses more memory for passign gbuffer data and slows down rendering with one more stage in pipeline.
+
+### Blinn-Phong Shading
+
+Blinn-Phong shading provides better visual effect. It does not affect performance since it only adds a few more lines of mathematics computation.
+
+### G-Buffer Optimization
+
+Before optimization, I use 4 Gbuffers, to pass vertex positions, normals, colors and view projected positions. But since view projected positions can be computed in the next fragment shader, it suffices to use 3 Gbuffers.
+
+* 4 GBuffers: 62 ms; 3 GBuffers: 71 ms.
+
+This optimization is not dependent on the scenarios. There's no significant tradeoff, as having less buffer data always reduce memory usage and blocking time. 
 
 ### Credits
 
