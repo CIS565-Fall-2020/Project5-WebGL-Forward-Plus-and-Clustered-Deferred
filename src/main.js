@@ -2,15 +2,19 @@ import { makeRenderLoop, camera, cameraControls, gui, gl } from './init';
 import ForwardRenderer from './renderers/forward';
 import ForwardPlusRenderer from './renderers/forwardPlus';
 import ClusteredDeferredRenderer from './renderers/clusteredDeferred';
+import ToonRenderer from './renderers/toon';
 import Scene from './scene';
 import Wireframe from './wireframe';
 
 const FORWARD = 'Forward';
 const FORWARD_PLUS = 'Forward+';
 const CLUSTERED = 'Clustered Deferred';
+const TOON = 'Toon';
+const wireframe_debug = false;
 
 const params = {
-  renderer: FORWARD_PLUS,
+  //renderer: FORWARD_PLUS,
+  renderer: TOON,
   _renderer: null,
 };
 
@@ -27,10 +31,13 @@ function setRenderer(renderer) {
     case CLUSTERED:
       params._renderer = new ClusteredDeferredRenderer(15, 15, 15);
       break;
+    case TOON:
+      params._renderer = new ToonRenderer(15, 15, 15);
+      break;
   }
 }
 
-gui.add(params, 'renderer', [FORWARD, FORWARD_PLUS, CLUSTERED]).onChange(setRenderer);
+gui.add(params, 'renderer', [FORWARD, FORWARD_PLUS, CLUSTERED, TOON]).onChange(setRenderer);
 
 const scene = new Scene();
 scene.loadGLTF('models/sponza/sponza.gltf');
@@ -40,12 +47,14 @@ scene.loadGLTF('models/sponza/sponza.gltf');
 // This may be helpful for visualizing your frustum clusters so you can make
 // sure that they are in the right place.
 const wireframe = new Wireframe();
-
-var segmentStart = [-14.0, 0.0, -6.0];
-var segmentEnd = [14.0, 20.0, 6.0];
-var segmentColor = [1.0, 0.0, 0.0];
-wireframe.addLineSegment(segmentStart, segmentEnd, segmentColor);
-wireframe.addLineSegment([-14.0, 1.0, -6.0], [14.0, 21.0, 6.0], [0.0, 1.0, 0.0]);
+if (wireframe_debug) {
+  
+  var segmentStart = [-14.0, 0.0, -6.0];
+  var segmentEnd = [14.0, 20.0, 6.0];
+  var segmentColor = [1.0, 0.0, 0.0];
+  wireframe.addLineSegment(segmentStart, segmentEnd, segmentColor);
+  wireframe.addLineSegment([-14.0, 1.0, -6.0], [14.0, 21.0, 6.0], [0.0, 1.0, 0.0]);
+}
 
 camera.position.set(-10, 8, 0);
 cameraControls.target.set(0, 2, 0);
