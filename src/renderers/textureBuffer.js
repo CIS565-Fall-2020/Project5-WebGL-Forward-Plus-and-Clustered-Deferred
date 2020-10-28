@@ -18,7 +18,7 @@ export default class TextureBuffer {
     // The texture stores 4 values in each "pixel". Thus, the texture we create is elementCount x ceil(elementSize / 4)
     this._pixelsPerElement = Math.ceil(elementSize / 4);
     this._elementCount = elementCount;
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, elementCount, this._pixelsPerElement, 0, gl.RGBA, gl.FLOAT, null);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA32F, elementCount, this._pixelsPerElement, 0, gl.RGBA, gl.FLOAT, null);
     gl.bindTexture(gl.TEXTURE_2D, null);
 
     // Create a buffer to use to upload to the texture
