@@ -74,7 +74,7 @@ export default function(params) {
     for (int i = 0; i < ${params.numLights}; ++i) {
       
       Light light = UnpackLight(i);
-      fragColor += shaderLight(albedo, normap, normal, light, shiness, k_s);
+      fragColor += shaderLight(albedo, normap, normal, light, shiness, k_s, v_position);
     }
 
     const vec3 ambientLight = vec3(0.025);
@@ -112,7 +112,7 @@ export default function(params) {
         i + 1
       ));
       Light light = UnpackLight(l_idx);
-      fragColor += shaderLight(albedo, normap, normal, light, shiness, k_s);
+      fragColor += shaderLight(albedo, normap, normal, light, shiness, k_s, v_position);
     }
 
     const vec3 ambientLight = vec3(0.025);

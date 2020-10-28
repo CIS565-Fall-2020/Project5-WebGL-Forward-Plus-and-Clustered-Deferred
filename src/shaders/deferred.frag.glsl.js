@@ -1,3 +1,5 @@
+import shadelightfunction from './shadelight.glsl'
+
 export default function(params) {
   return `
   #version 100
@@ -5,6 +7,13 @@ export default function(params) {
   
   uniform sampler2D u_gbuffers[${params.numGBuffers}];
   
+  uniform vec3 u_view_pos;
+  
+  uniform float u_xSlice;
+  uniform float u_ySlice;
+  uniform float u_zSlice; 
+
+  ${shadelightfunction}
   varying vec2 v_uv;
   
   void main() {

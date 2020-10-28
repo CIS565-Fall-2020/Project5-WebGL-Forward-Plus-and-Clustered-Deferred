@@ -5,6 +5,7 @@ import { NUM_LIGHTS } from '../scene';
 import vsSource from '../shaders/forward.vert.glsl';
 import fsSource from '../shaders/normal.frag.glsl.js';
 import TextureBuffer from './textureBuffer';
+import Wireframe from '../wireframe';
 
 export default class NormalRenderer {
   constructor() {
@@ -22,6 +23,7 @@ export default class NormalRenderer {
     this._projectionMatrix = mat4.create();
     this._viewMatrix = mat4.create();
     this._viewProjectionMatrix = mat4.create();
+    this._wireFramer = new Wireframe();
   }
 
   render(camera, scene) {
