@@ -70,19 +70,23 @@ export default class BaseRenderer {
     }
     var offset = new Vector3(-1.0, -1.0, -1.0, 0.0);
     
-    function get_frustum_plane(ndc_m, ndc_n){
+    function get_frustum_plane(ndc_m, ndc_n, render){
       //ndc_n = new Vector3(ndc_n.x, ndc_n.y, ndc_n.z);
       ndc_n.applyMatrix3(mat3NormalProj2World);
-      
-      ndc_m.multiply(cluster_NDC_size);
-      ndc_m.add(offset);
-      // not sure the matrix multiplication is right
-      ndc_m = new Vector4(ndc_m.x, ndc_m.y, ndc_m.z);
-      ndc_m.multiplyScalar(get_W(ndc_m.z));
-      ndc_m.applyMatrix4(inverseViewProjectionMatrix);
-      let m = new Vector3(ndc_m.x, ndc_m.y, ndc_m.z);
+
       let n = new Vector3(ndc_n.x, ndc_n.y, ndc_n.z);
       n.normalize();
+      
+      let m1 = idx2World(ndc_m);
+      let m2 = new Vector4();
+      let normal_vec4 = new Vector4(n.x, n.y, n.z);
+      m2.addVectors(m1, normal_vec4);
+
+      let m1_arr = [m1.x, m1.y, m1.z];
+      let m2_arr = [m2.x, m2.y, m2.z];
+
+      //render._wireFramer.addLineSegment(m1_arr, m2_arr, [1.0, 1.0, 0.0]);
+
       return new Plane(n, m);
     }
 
@@ -95,14 +99,24 @@ export default class BaseRenderer {
     }
 
     function idx2World(x, y, z){
+      // return 4d vec
       var world_p = idx2ClipPos(x, y, z);
       world_p.applyMatrix4(inverseViewProjectionMatrix);
       return world_p;
     }
 
+    function vec2arr(v){
+      return [v.x, v.y, v.z];
+    }
+
+    function arr2vec(a){
+      var v = new Vector3(a[0], a[1], a[2]);
+      return v;
+    }
+
     function idx2WorldArray(x, y, z){
       var vec = idx2World(x, y, z);
-      return [vec.x, vec.y, vec.z];
+      return vec2arr(vec);
     }
 
     function idx2ClipPos(x, y, z){
@@ -116,33 +130,92 @@ export default class BaseRenderer {
       return P;
     }
 
-    function get_frustum(x, y, z, render){
-      var n, m;
-      var P0, P1, P2, P3, P4, P5, P6, P7;
-      // transfer all the point to world space
-      P0 = idx2WorldArray(x,y,z);
-      P1 = idx2WorldArray(x+1,y,z);
-      P2 = idx2WorldArray(x+1,y+1,z);
-      P3 = idx2WorldArray(x,y+1,z);
-      P4 = idx2WorldArray(x,y,z+1);
-      P5 = idx2WorldArray(x+1,y,z+1);
-      P6 = idx2WorldArray(x+1,y+1,z+1);
-      P7 = idx2WorldArray(x,y+1,z+1);
-      // 12 edge
-      var cur_color = [1, 0, 0];
+    function get_normal(p0, p1, p2){
+      p0 = arr2vec(p0);
+      p1 = arr2vec(p1);
+      p2 = arr2vec(p2);
+
+      let p01 = new Vector3();
+      let p02 = new Vector3();
+      p01.subVectors(p1, p0);
+      p02.subVectors(p2, p0);
       
-      render._wireFramer.addLineSegment(P0, P1, cur_color);
-      render._wireFramer.addLineSegment(P2, P1, cur_color);
-      render._wireFramer.addLineSegment(P0, P3, cur_color);
-      render._wireFramer.addLineSegment(P2, P3, cur_color);
-      render._wireFramer.addLineSegment(P1, P3, cur_color);
-      render._wireFramer.addLineSegment(P2, P6, cur_color);
-      render._wireFramer.addLineSegment(P0, P4, cur_color);
-      render._wireFramer.addLineSegment(P3, P7, cur_color);
-      render._wireFramer.addLineSegment(P4, P5, cur_color);
-      render._wireFramer.addLineSegment(P5, P6, cur_color);
-      render._wireFramer.addLineSegment(P6, P7, cur_color);
-      render._wireFramer.addLineSegment(P4, P7, cur_color);
+      var n = new Vector3();
+      n.crossVectors(p01, p02);
+      n.normalize();
+      
+      return n;
+    }
+
+    function vis_normal(n , p, render){
+      let p2 = new Vector3();
+      p2.addVectors(p, n);
+      render._wireFramer.addLineSegment(vec2arr(p), vec2arr(p2), [0, 1, 0]);
+    }
+
+    function get_frustum(x, y, z, render){
+      var p0, p1, p2, p3, p4, p5, p6, p7;
+      // transfer all the point to world space
+      p0 = idx2WorldArray(x,y,z);
+      p1 = idx2WorldArray(x+1,y,z);
+      p2 = idx2WorldArray(x+1,y+1,z);
+      p3 = idx2WorldArray(x,y+1,z);
+      p4 = idx2WorldArray(x,y,z+1);
+      p5 = idx2WorldArray(x+1,y,z+1);
+      p6 = idx2WorldArray(x+1,y+1,z+1);
+      p7 = idx2WorldArray(x,y+1,z+1);
+      
+      // get normal
+      var n0, n1, n2, n3, n4, n5;
+      // near
+      n0 = get_normal(p0, p1, p3);
+      // far
+      n1 = get_normal(p4, p7, p5);
+      // left
+      n2 = get_normal(p0, p3, p4);
+      // right
+      n3 = get_normal(p1, p5, p2);
+      // up
+      n4 = get_normal(p2, p6, p3);
+      // down
+      n5 = get_normal(p1, p0, p5);
+
+      // 12 edge
+      if (draw_line){
+        var cur_color = [1, 0, 0];
+      
+        render._wireFramer.addLineSegment(p0, p1, cur_color);
+        render._wireFramer.addLineSegment(p2, p1, cur_color);
+        render._wireFramer.addLineSegment(p0, p3, cur_color);
+        render._wireFramer.addLineSegment(p2, p3, cur_color);
+        render._wireFramer.addLineSegment(p1, p5, cur_color);
+        render._wireFramer.addLineSegment(p2, p6, cur_color);
+        render._wireFramer.addLineSegment(p0, p4, cur_color);
+        render._wireFramer.addLineSegment(p3, p7, cur_color);
+        render._wireFramer.addLineSegment(p4, p5, cur_color);
+        render._wireFramer.addLineSegment(p5, p6, cur_color);
+        render._wireFramer.addLineSegment(p6, p7, cur_color);
+        render._wireFramer.addLineSegment(p4, p7, cur_color);
+
+        // visualize normal
+        var normal_color = [0, 0, 1];
+        var m0, m1, m2, m3, m4, m5;
+        m0 = idx2World(x+0.5, y+0.5, z);
+        m1 = idx2World(x+0.5, y+0.5, z+1);
+        m2 = idx2World(x, y+0.5, z+0.5);
+        m3 = idx2World(x+1, y+0.5, z+0.5);
+        m4 = idx2World(x+0.5, y+1, z+0.5);
+        m5 = idx2World(x+0.5, y, z+0.5);
+        
+        vis_normal(n0, m0, render);
+        vis_normal(n1, m1, render);
+        vis_normal(n2, m2, render);
+        vis_normal(n3, m3, render);
+        vis_normal(n4, m4, render);
+        vis_normal(n5, m5, render);
+      }
+      
+
     }
     // for each frustum, traverse each light
     for (let z = 0; z < this._zSlices; z++) {
@@ -160,32 +233,32 @@ export default class BaseRenderer {
           // z near,
           n = new Vector3(0.0, 0.0, 1.0);
           m = new Vector3(x + 0.5, y + 0.5, z);
-          P0 = get_frustum_plane(m, n);
+          P0 = get_frustum_plane(m, n, this);
           
           // z far,
           n = new Vector3(0.0, 0.0, -1.0);
           m = new Vector3(x + 0.5, y + 0.5, z + 1.0);
-          P1 = get_frustum_plane(m, n);
+          P1 = get_frustum_plane(m, n, this);
 
           // left
           n = new Vector3(-1.0, 0.0, 0.0);
           m = new Vector3(x, y + 0.5, z + 0.5);
-          P2 = get_frustum_plane(m, n);
+          P2 = get_frustum_plane(m, n, this);
           
           // right
           n = new Vector3(1.0, 0.0, 0.0);
           m = new Vector3(x + 1.0, y + 0.5, z + 0.5);
-          P3 = get_frustum_plane(m, n);
+          P3 = get_frustum_plane(m, n, this);
           
           // up,
           n = new Vector3(0.0, -1.0, 0.0);
           m = new Vector3(x + 0.5, y, z + 0.5);
-          P4 = get_frustum_plane(m, n);
+          P4 = get_frustum_plane(m, n, this);
 
           // down
           n = new Vector3(0.0, 1.0, 0.0);
           m = new Vector3(x + 0.5, y + 1.0, z + 0.5);
-          P5 = get_frustum_plane(m, n);
+          P5 = get_frustum_plane(m, n, this);
           
           //debugger;
           var cur_frstm = new Frustum(P0, P1, P2, P3, P4, P5);
@@ -251,7 +324,7 @@ export default class BaseRenderer {
                 
                 this._clusterTexture.buffer[rgba_index + rgba_offset] = lid;
                 this._clusterTexture.buffer[cluster_start_idx] = cur_count;
-                console.log(x, y, z, ": ", lid, ' with ' ,cur_count);
+                //console.log(x, y, z, ": ", lid, ' with ' ,cur_count);
 
               //debugger;
               }
@@ -264,7 +337,7 @@ export default class BaseRenderer {
       }
     }
     this._wireFramer._lock = true;
-    debugger;
+    //debugger;
     this._clusterTexture.update();
     
   }
