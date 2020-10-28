@@ -84,7 +84,7 @@ export default class BaseRenderer {
   }
 
   getPointNearClipFromPointFarClip(camera, pointFarClip) {
-    var pointNearClip = vec3.create()
+    var pointNearClip = vec3.create();
     var nearOverFar = camera.near / camera.far;
     pointNearClip[0] = nearOverFar * pointFarClip[0];
     pointNearClip[1] = nearOverFar * pointFarClip[1];
@@ -100,16 +100,18 @@ export default class BaseRenderer {
   // returns;
   //  pointWorldSpace (Vector3): treating the tileWorldSpace as on camera's far clip (highest possible value), want to find
   //    the corresponding point to slice z value (aka scale down from far clip and away from near clip)
-  getSliceWorldSpaceFromTileWorldSpace(pointFarClip, pointNearClip, numSliceZ, sliceZ) {
-    var sliceScale = sliceZ / numSliceZ;
-
+  getSliceWorldSpaceFromTileWorldSpace(pointFarClip, pointNearClip, numSlices, pointSliceSpace) {
+    var sliceScaleX = pointSliceSpace[0] / numSlices[0];
+    var sliceScaleX = pointSliceSpace[1] / numSlices[0];
+    var sliceScaleZ = pointSliceSpace[2] / numSlices[2];
+    
     var vNearClipToFarClip = vec3.create();
     vec3.subtract(vNearClipToFarClip, pointFarClip, pointNearClip);
     
     var pointNormalizedSlice = vec3.create();
-    pointNormalizedSlice[0] = vNearClipToFarClip[0] * sliceScale;
-    pointNormalizedSlice[1] = vNearClipToFarClip[1] * sliceScale;
-    pointNormalizedSlice[2] = vNearClipToFarClip[2] * sliceScale;
+    pointNormalizedSlice[0] = vNearClipToFarClip[0] * sliceScaleZ;
+    pointNormalizedSlice[1] = vNearClipToFarClip[1] * sliceScaleZ;
+    pointNormalizedSlice[2] = vNearClipToFarClip[2] * sliceScaleZ;
     //vec3.scale(pointNormalizedSlice, vNearClipToFarClip, sliceScale);
     
     var pointSliceWorldSpace = vec3.create();
@@ -119,11 +121,12 @@ export default class BaseRenderer {
 
   updateClusters(camera, viewMatrix, scene) {
     // TODO TESTONLY DELETE
-    var testLight = true;
+    var testLight = false;
     var testClip = false;
     var testSubFrustum = false;
 
-    // camera.far = 10;
+    camera.far = 50;
+    camera.updateProjectionMatrix();
     // if (this._firstCall > 0) {
     //   return [];
     // }
@@ -168,25 +171,25 @@ export default class BaseRenderer {
           this._clusterTexture.buffer[this._clusterTexture.bufferIndex(i, 0)] = 0;
           
           // Find 4 points on far clips of the frustum from near clip to far clip -----------------------------------------------------------
-          var sliceSpaceXY = vec2.create();
+          var sliceSpaceXYZ = vec3.create();
 
-          sliceSpaceXY[0] = x;
+          sliceSpaceXYZ[0] = x;
           
           // slice: (x, y)     
-          sliceSpaceXY[1] = y;     
-          var pointFarClipUpLeft = this.sliceSpace2DToWorldSpace(camera.far, viewProjectionMatrixInverse, sliceSpaceXY);
+          sliceSpaceXYZ[1] = y;     
+          var pointFarClipUpLeft = this.sliceSpace2DToWorldSpace(camera.far, viewProjectionMatrixInverse, sliceSpaceXYZ);
 
           // slice: (x + 1, y)
-          sliceSpaceXY[0] = x + 1;
-          var pointFarClipUpRight = this.sliceSpace2DToWorldSpace(camera.far, viewProjectionMatrixInverse, sliceSpaceXY);
+          sliceSpaceXYZ[0] = x + 1;
+          var pointFarClipUpRight = this.sliceSpace2DToWorldSpace(camera.far, viewProjectionMatrixInverse, sliceSpaceXYZ);
 
           // slice: (x + 1, y + 1)
-          sliceSpaceXY[1] = y + 1;
-          var pointFarClipDownRight = this.sliceSpace2DToWorldSpace(camera.far, viewProjectionMatrixInverse, sliceSpaceXY);
+          sliceSpaceXYZ[1] = y + 1;
+          var pointFarClipDownRight = this.sliceSpace2DToWorldSpace(camera.far, viewProjectionMatrixInverse, sliceSpaceXYZ);
           
           // slice: (x, y + 1)
-          sliceSpaceXY[0] = x; 
-          var pointFarClipDownLeft = this.sliceSpace2DToWorldSpace(camera.far, viewProjectionMatrixInverse, sliceSpaceXY);
+          sliceSpaceXYZ[0] = x; 
+          var pointFarClipDownLeft = this.sliceSpace2DToWorldSpace(camera.far, viewProjectionMatrixInverse, sliceSpaceXYZ);
 
           // Find 4 points on near clips of the frustum from near clip to far clip -----------------------------------------------------------
           var pointNearClipUpLeft = this.getPointNearClipFromPointFarClip(camera, pointFarClipUpLeft);
@@ -194,16 +197,19 @@ export default class BaseRenderer {
           var pointNearClipDownRight = this.getPointNearClipFromPointFarClip(camera, pointFarClipDownRight);
           var pointNearClipDownLeft = this.getPointNearClipFromPointFarClip(camera, pointFarClipDownLeft);
 
-          // Find the 8 points of the frustum             
-          var pointNearUpLeft = this.getSliceWorldSpaceFromTileWorldSpace(pointFarClipUpLeft, pointNearClipUpLeft, this._zSlices, z);
-          var pointNearUpRight = this.getSliceWorldSpaceFromTileWorldSpace(pointFarClipUpRight, pointNearClipUpRight, this._zSlices, z);
-          var pointNearDownRight = this.getSliceWorldSpaceFromTileWorldSpace(pointFarClipDownRight, pointNearClipDownRight, this._zSlices, z);
-          var pointNearDownLeft = this.getSliceWorldSpaceFromTileWorldSpace(pointFarClipDownLeft, pointNearClipDownLeft, this._zSlices, z);
+          // Find the 8 points of the frustum
+          sliceSpaceXYZ[1] = y;
+          sliceSpaceXYZ[2] = z;             
+          var pointNearUpLeft = this.getSliceWorldSpaceFromTileWorldSpace(pointFarClipUpLeft, pointNearClipUpLeft, numSlices, sliceSpaceXYZ);
+          var pointNearUpRight = this.getSliceWorldSpaceFromTileWorldSpace(pointFarClipUpRight, pointNearClipUpRight, numSlices, sliceSpaceXYZ);
+          var pointNearDownRight = this.getSliceWorldSpaceFromTileWorldSpace(pointFarClipDownRight, pointNearClipDownRight, numSlices, sliceSpaceXYZ);
+          var pointNearDownLeft = this.getSliceWorldSpaceFromTileWorldSpace(pointFarClipDownLeft, pointNearClipDownLeft, numSlices, sliceSpaceXYZ);
 
-          var pointFarUpLeft =  this.getSliceWorldSpaceFromTileWorldSpace(pointFarClipUpLeft, pointNearClipUpLeft, this._zSlices, z + 1);
-          var pointFarUpRight = this.getSliceWorldSpaceFromTileWorldSpace(pointFarClipUpRight, pointNearClipUpRight, this._zSlices, z + 1);
-          var pointFarDownRight = this.getSliceWorldSpaceFromTileWorldSpace(pointFarClipDownRight, pointNearClipDownRight, this._zSlices, z + 1);
-          var pointFarDownLeft = this.getSliceWorldSpaceFromTileWorldSpace(pointFarClipDownLeft, pointNearClipDownLeft, this._zSlices, z + 1);
+          sliceSpaceXYZ[2] += 1;
+          var pointFarUpLeft =  this.getSliceWorldSpaceFromTileWorldSpace(pointFarClipUpLeft, pointNearClipUpLeft, numSlices, sliceSpaceXYZ);
+          var pointFarUpRight = this.getSliceWorldSpaceFromTileWorldSpace(pointFarClipUpRight, pointNearClipUpRight, numSlices, sliceSpaceXYZ);
+          var pointFarDownRight = this.getSliceWorldSpaceFromTileWorldSpace(pointFarClipDownRight, pointNearClipDownRight, numSlices, sliceSpaceXYZ);
+          var pointFarDownLeft = this.getSliceWorldSpaceFromTileWorldSpace(pointFarClipDownLeft, pointNearClipDownLeft, numSlices, sliceSpaceXYZ);
           
           // Create 6 planes out of these points making a frustum
           var planeFar = this.getPlaneFrom3Points(pointFarUpRight, pointFarUpLeft, pointFarDownLeft); // normal faces away from cam
@@ -252,44 +258,6 @@ export default class BaseRenderer {
               this._clusterTexture.buffer[this._clusterTexture.bufferIndex(i, 0) + 0] = lightCount;
             }
           }
-
-          // TODO: TEST ONLY, DELETE
-          // From near clip to far clip
-
-          if (testClip) {
-            points.push([pointNearClipUpLeft[0], pointNearClipUpLeft[1], pointNearClipUpLeft[2]]);
-            points.push([pointFarClipUpLeft[0], pointFarClipUpLeft[1], pointFarClipUpLeft[2]]);
-            points.push([pointNearClipUpRight[0], pointNearClipUpRight[1], pointNearClipUpRight[2]]);
-            points.push([pointFarClipUpRight[0], pointFarClipUpRight[1], pointFarClipUpRight[2]]);
-  
-            points.push([pointNearClipDownRight[0], pointNearClipDownRight[1], pointNearClipDownRight[2]]);
-            points.push([pointFarClipDownRight[0], pointFarClipDownRight[1], pointFarClipDownRight[2]]);
-            points.push([pointNearClipDownLeft[0], pointNearClipDownLeft[1], pointNearClipDownLeft[2]]);
-            points.push([pointFarClipDownLeft[0], pointFarClipDownLeft[1], pointFarClipDownLeft[2]]);
-  
-            points.push([pointNearClipUpLeft[0], pointNearClipUpLeft[1], pointNearClipUpLeft[2]]);
-            points.push([pointNearClipUpRight[0], pointNearClipUpRight[1], pointNearClipUpRight[2]]);
-            points.push([pointNearClipDownRight[0], pointNearClipDownRight[1], pointNearClipDownRight[2]]);
-            points.push([pointNearClipDownLeft[0], pointNearClipDownLeft[1], pointNearClipDownLeft[2]]);
-            
-            points.push([pointFarClipUpLeft[0], pointFarClipUpLeft[1], pointFarClipUpLeft[2]]);
-            points.push([pointFarClipDownLeft[0], pointFarClipDownLeft[1], pointFarClipDownLeft[2]]);
-            points.push([pointFarClipUpLeft[0], pointFarClipUpLeft[1], pointFarClipUpLeft[2]]);
-            points.push([pointFarClipUpRight[0], pointFarClipUpRight[1], pointFarClipUpRight[2]]); 
-          }
-          
-          if (testSubFrustum && y < 1) {            
-            points.push([pointNearUpLeft[0], pointNearUpLeft[1], pointNearUpLeft[2]]);
-            points.push([pointNearUpRight[0], pointNearUpRight[1], pointNearUpRight[2]]);
-            points.push([pointNearUpLeft[0], pointNearUpLeft[1], pointNearUpLeft[2]]);
-            points.push([pointNearDownLeft[0], pointNearDownLeft[1], pointNearDownLeft[2]]);
-    
-            points.push([pointNearUpLeft[0], pointNearUpLeft[1], pointNearUpLeft[2]]);
-            points.push([pointFarUpLeft[0], pointFarUpLeft[1], pointFarUpLeft[2]]);
-              
-            points.push([pointNearUpRight[0], pointNearUpRight[1], pointNearUpRight[2]]);
-            points.push([pointFarUpRight[0], pointFarUpRight[1], pointFarUpRight[2]]); 
-          }          
         }
       }
     }

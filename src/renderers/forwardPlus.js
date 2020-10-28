@@ -17,7 +17,8 @@ export default class ForwardPlusRenderer extends BaseRenderer {
     this._shaderProgram = loadShaderProgram(vsSource, fsSource({
       numLights: NUM_LIGHTS,
     }), {
-      uniforms: ['u_viewProjectionMatrix', 'u_colmap', 'u_normap', 'u_lightbuffer', 'u_clusterbuffer'],
+      uniforms: ['u_viewProjectionMatrix', 'u_colmap', 'u_normap', 'u_lightbuffer', 'u_clusterbuffer', 
+      'u_slicesCount', 'u_canvasDimension', 'u_cameraFarClip', 'u_cameraNearClip', 'u_viewProjectionMatrixInverse'],
       attribs: ['a_position', 'a_normal', 'a_uv'],
     });
 
@@ -65,6 +66,9 @@ export default class ForwardPlusRenderer extends BaseRenderer {
 
     // Upload the camera matrix
     gl.uniformMatrix4fv(this._shaderProgram.u_viewProjectionMatrix, false, this._viewProjectionMatrix);
+    var viewProjectionMatrixInverse = mat4.create();
+    mat4.invert(viewProjectionMatrixInverse, this._viewProjectionMatrix);
+    gl.uniformMatrix4fv(this._shaderProgram.u_viewProjectionMatrixInverse, false, viewProjectionMatrixInverse);
 
     // Set the light texture as a uniform input to the shader
     gl.activeTexture(gl.TEXTURE2);
@@ -76,10 +80,18 @@ export default class ForwardPlusRenderer extends BaseRenderer {
     gl.bindTexture(gl.TEXTURE_2D, this._clusterTexture.glTexture);
     gl.uniform1i(this._shaderProgram.u_clusterbuffer, 3);
 
+    gl.uniform2fv(this._shaderProgram.u_clusterbufferDimension, [this._clusterTexture._elementCount, this._clusterTexture._pixelsPerElement]);
+
     // TODO: Bind any other shader inputs
+    
+    // Set the number of slices
+    gl.uniform3fv(this._shaderProgram.u_slicesCount, [this._xSlices, this._ySlices, this._zSlices]);
+    gl.uniform2fv(this._shaderProgram.u_canvasDimension, [canvas.width, canvas.height]);
+    gl.uniform1f(this._shaderProgram.u_cameraFarClip, camera.far);
+    gl.uniform1f(this._shaderProgram.u_cameraNearClip, camera.near);
 
     // Draw the scene. This function takes the shader program so that the model's textures can be bound to the right inputs
     scene.draw(this._shaderProgram);
-    return points
+    return points;
   }
 };
