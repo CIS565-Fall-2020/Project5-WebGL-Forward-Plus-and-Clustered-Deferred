@@ -133,17 +133,6 @@ export default class BaseRenderer {
       render._wireFramer.addLineSegment(vec2arr(p), vec2arr(p2), [0, 1, 0]);
     }
 
-    function frustum_sphere_intersect(frstm, sphr){
-      var planes = frstm.planes;
-      
-      var cntr = sphr.center;
-      var rdis = sphr.radius;
-
-      for (var i = 0; i < 6 ; i ++){
-
-      }
-    }
-
     function get_frustum(x, y, z, render){
       var p0, p1, p2, p3, p4, p5, p6, p7;
       // transfer all the point to world space
@@ -186,15 +175,16 @@ export default class BaseRenderer {
       // P4.setFromCoplanarPoints(arr2vec(p6), arr2vec(p7), arr2vec(p3));
       // P5.setFromCoplanarPoints(arr2vec(p1), arr2vec(p0), arr2vec(p4));
       //debugger;
+
       // P0.setFromNormalAndCoplanarPoint(n0, arr2vec(p0));
 
-      // P1.setFromNormalAndCoplanarPoint(n1, arr2vec(p4));
+      // P1.setFromNormalAndCoplanarPoint(n1, arr2vec(p6));
 
       // P2.setFromNormalAndCoplanarPoint(n2, arr2vec(p0));
 
-      // P3.setFromNormalAndCoplanarPoint(n3, arr2vec(p1));
+      // P3.setFromNormalAndCoplanarPoint(n3, arr2vec(p6));
 
-      // P4.setFromNormalAndCoplanarPoint(n4, arr2vec(p2));
+      // P4.setFromNormalAndCoplanarPoint(n4, arr2vec(p6));
 
       // P5.setFromNormalAndCoplanarPoint(n5, arr2vec(p0));
       P0 = new Plane(n0, arr2vec(p0).length());
