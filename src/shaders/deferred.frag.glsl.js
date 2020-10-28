@@ -15,6 +15,7 @@ export default function(params) {
 
   ${shadelightfunction}
   varying vec2 v_uv;
+  varying vec3 v_projection_position;
   
   void main() {
     // TODO: extract data from g buffers and do lighting
@@ -22,6 +23,7 @@ export default function(params) {
     // vec4 gb1 = texture2D(u_gbuffers[1], v_uv);
     // vec4 gb2 = texture2D(u_gbuffers[2], v_uv);
     // vec4 gb3 = texture2D(u_gbuffers[3], v_uv);
+    vec3 cluster_idx = p2ClusterIdx(v_projection_position);
 
     gl_FragColor = vec4(v_uv, 0.0, 1.0);
   }

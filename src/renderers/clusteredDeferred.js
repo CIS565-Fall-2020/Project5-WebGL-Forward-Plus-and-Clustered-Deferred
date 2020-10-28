@@ -29,7 +29,8 @@ export default class ClusteredDeferredRenderer extends BaseRenderer {
       numLights: NUM_LIGHTS,
       numGBuffers: NUM_GBUFFERS,
     }), {
-      uniforms: ['u_gbuffers[0]', 'u_gbuffers[1]', 'u_gbuffers[2]', 'u_gbuffers[3]'],
+      uniforms: ['u_gbuffers[0]', 'u_gbuffers[1]', 'u_gbuffers[2]', 'u_gbuffers[3]',
+      'u_xSlice', 'u_ySlice', 'u_zSlice',],
       attribs: ['a_uv'],
     });
 
@@ -154,6 +155,9 @@ export default class ClusteredDeferredRenderer extends BaseRenderer {
     gl.useProgram(this._progShade.glShaderProgram);
 
     // TODO: Bind any other shader inputs
+    gl.uniform1f(this._progShade.u_xSlice, this._xSlices);
+    gl.uniform1f(this._progShade.u_ySlice, this._ySlices);
+    gl.uniform1f(this._progShade.u_zSlice, this._zSlices);
 
     // Bind g-buffers
     const firstGBufferBinding = 0; // You may have to change this if you use other texture slots

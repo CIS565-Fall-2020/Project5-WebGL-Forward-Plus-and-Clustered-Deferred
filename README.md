@@ -37,7 +37,31 @@ for cluster in clusterArray
           cluster += light
 ```
 
+intro to light culling
 
+##### The way I implement
+
+I choose to uniformly divide the frustum from NDC plane, then map the divided grid back to world space as frustum. The pipeline would be
+
+```bash
+NDC (x, y, z ranged from [-1,1] ) space
+to
+clip space (x, y, z, w)
+to 
+view space
+to 
+world space
+```
+
+  
+
+The most technically challenging key point is how to recover the **W** component of NDC space since the  **W** component is lost.
+
+
+
+To demonstrate I implement the frustum right.
+
+show all I got
 
 ### Reference:
 
@@ -52,3 +76,5 @@ for cluster in clusterArray
 * [webgl-debug](https://github.com/KhronosGroup/WebGLDeveloperTools) by Khronos Group Inc.
 * [glMatrix](https://github.com/toji/gl-matrix) by [@toji](https://github.com/toji) and contributors
 * [minimal-gltf-loader](https://github.com/shrekshao/minimal-gltf-loader) by [@shrekshao](https://github.com/shrekshao)
+* Map NDC to clip space
+* 
