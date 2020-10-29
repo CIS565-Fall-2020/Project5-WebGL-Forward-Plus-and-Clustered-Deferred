@@ -43,7 +43,7 @@ vec3 applyNormalMap(vec3 geomnor, vec3 normap) {
   
 
   vec3 shaderLight(
-    vec3 albedo, vec3 normap, vec3 normal, 
+    vec3 albedo, vec3 normal, 
     Light light, float shiness, float k_s,
     vec3 v_position
     ){

@@ -9,7 +9,7 @@ import fsSource from '../shaders/deferred.frag.glsl.js';
 import TextureBuffer from './textureBuffer';
 import BaseRenderer from './base';
 
-export const NUM_GBUFFERS = 3;
+export const NUM_GBUFFERS = 4;
 
 export default class ClusteredDeferredRenderer extends BaseRenderer {
   constructor(xSlices, ySlices, zSlices) {
@@ -29,9 +29,10 @@ export default class ClusteredDeferredRenderer extends BaseRenderer {
       numLights: NUM_LIGHTS,
       numGBuffers: NUM_GBUFFERS,
     }), {
-      uniforms: ['u_lightbuffer', 'u_clusterbuffer',
+      uniforms: ['u_lightbuffer', 'u_clusterbuffer', 'u_view_pos',
         'u_gbuffers[0]', 'u_gbuffers[1]', 'u_gbuffers[2]', 'u_gbuffers[3]',
-      'u_xSlice', 'u_ySlice', 'u_zSlice',],
+      'u_xSlice', 'u_ySlice', 'u_zSlice', 'u_maxLights',
+      'u_DEBUG'],
       attribs: ['a_uv'],
     });
 
@@ -163,12 +164,16 @@ export default class ClusteredDeferredRenderer extends BaseRenderer {
 
     gl.activeTexture(gl.TEXTURE3);
     gl.bindTexture(gl.TEXTURE_2D, this._clusterTexture.glTexture);
+
+    gl.uniform3f(this._progShade.u_view_pos, camera.position.x, camera.position.y, camera.position.z);
     gl.uniform1i(this._progShade.u_clusterbuffer, 3);
 
     gl.uniform1f(this._progShade.u_xSlice, this._xSlices);
     gl.uniform1f(this._progShade.u_ySlice, this._ySlices);
     gl.uniform1f(this._progShade.u_zSlice, this._zSlices);
-
+    
+    gl.uniform1i(this._progShade.u_DEBUG, 4);
+    gl.uniform1i(this._progShade.u_maxLights, NUM_LIGHTS);
     // Bind g-buffers
     // 0 ,1 for color map, normal map 
     const firstGBufferBinding = 4; // You may have to change this if you use other texture slots

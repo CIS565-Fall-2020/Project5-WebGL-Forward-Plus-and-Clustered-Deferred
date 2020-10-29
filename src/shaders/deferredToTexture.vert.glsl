@@ -13,7 +13,8 @@ varying vec2 v_uv;
 
 void main() {
     gl_Position = u_viewProjectionMatrix * vec4(a_position, 1.0);
-    v_position = a_position;
+    //v_position = a_position;
+    v_position = gl_Position.xyz / gl_Position.w;
     v_normal = a_normal;
     v_uv = a_uv;
 }
