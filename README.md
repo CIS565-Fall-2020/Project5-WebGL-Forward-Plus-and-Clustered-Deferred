@@ -3,25 +3,35 @@ WebGL Forward+ and Clustered Deferred Shading
 
 **University of Pennsylvania, CIS 565: GPU Programming and Architecture, Project 5**
 
-* (TODO) YOUR NAME HERE
-* Tested on: (TODO) **Google Chrome 222.2** on
-  Windows 22, i7-2222 @ 2.22GHz 22GB, GTX 222 222MB (Moore 2222 Lab)
+* Spencer Webster-Bass
+* Tested on: **Google Chrome Version 86.0.4240.111 (Official Build) (64-bit)** on
+  Windows Processor	Intel(R) Core(TM) i7-8565U CPU @ 1.80GHz, 1992 Mhz, 4 Core(s), 8 Logical Processor(s)
 
 ### Live Online
 
-[![](img/thumb.png)](http://TODO.github.io/Project5-WebGL-Forward-Plus-and-Clustered-Deferred)
+![](img/forward+0.png)
+
+![](img/forward+1.png)
+
+![](img/cluster_deferred0.png)
 
 ### Demo Video/GIF
 
 [![](img/video.png)](TODO)
 
+https://drive.google.com/file/d/1e5ZsRN7bboK-4Bq249mDDDxN7u5Ogs0Q/view?usp=sharing
+
 ### (TODO: Your README)
 
-*DO NOT* leave the README to the last minute! It is a crucial part of the
-project, and we will not be able to grade you without a good README.
+Performance Analysis:
 
-This assignment has a considerable amount of performance analysis compared
-to implementation work. Complete the implementation early to leave time!
+The Forward Plus Renderer fram rate varied drastically with a frame rate in between 90 and 110 for close up scenes that do not show much geometry to frame rates in between 38 and 57 for far away scenes that show a lot of the scene.
+
+The Cluster Deferred Renderer performed slightly worse in the far away scene with a frame rate in between 47 and 50 while th eclose up scene varied widely from the 50s ro the 90s in frame rate.
+
+It's hard to say what caused the difference in performance especially because my clustered deferred renderer is not correct or complete.
+
+No new features added.
 
 
 ### Credits
