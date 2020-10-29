@@ -36,13 +36,6 @@ export default class BaseRenderer {
       2.0 / this._zSlices,
     );
 
-    //cluster_NDC_size.multiplyScalar(0.5);
-    // to recover w component
-    //var Z_range = camera.far - camera.near;
-    //var Z_size = Z_range / this._zSlices;
-
-    
-
     var inverseProjectionMatrix = new Matrix4();
     inverseProjectionMatrix.getInverse(camera.projectionMatrix);
     
@@ -56,11 +49,7 @@ export default class BaseRenderer {
       );
     // get the matrix to transfer normal from NDC -> world space
     var mat3NormalProj2World = new Matrix3();
-    // let tmp = new Matrix4();
-    // tmp.multiplyMatrices(
-    //   camera.matrixWorldInverse,
-    //   camera.projectionMatrix
-    //   );
+
     mat3NormalProj2World.getNormalMatrix(inverseViewProjectionMatrix);
 
     // store the light sphere in an array 
@@ -285,10 +274,6 @@ export default class BaseRenderer {
 
 
   
-}
-
-function create_plane(){
-
 }
 
 function clamp(x, lower, max){

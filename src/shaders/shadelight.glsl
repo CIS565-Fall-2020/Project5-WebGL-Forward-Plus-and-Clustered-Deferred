@@ -63,9 +63,9 @@ vec3 applyNormalMap(vec3 geomnor, vec3 normap) {
       vec3 R = normalize(myreflect(normal, light.position - v_position));
       // intensity of specular
       // blinn phong
-      //float specularTerm = max(dot(H, normal), 0.0);
+      float specularTerm = max(dot(H, normal), 0.0);
       // vanilla phong
-      float specularTerm = max(dot(V, R), 0.0);
+      //float specularTerm = max(dot(V, R), 0.0);
       float i_s = pow(specularTerm, shiness);
 
       tmp_frag_color +=  k_s * i_s * light.color * vec3(lightIntensity);

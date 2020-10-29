@@ -71,9 +71,38 @@ However, this method still introduce some sort of headaches and drawbacks:
 
 
 
-To demonstrate the frustum assigning is implemented right, here we show
+To demonstrate the frustum assigning is implemented about right, here we show
 
-show all I got
+1. The frustum of the initial camera pose. If we slice uniformly on NDC plane, the size on world is non-linear.
+
+![not_linear_frustum](./img/not_linear_frustum.png)
+
+2. The frustum normal. To see whether the normal is about right.
+
+![not_linear_frustum](./img/normal.png)
+
+
+
+3. Here we wanna visualize which grid each fragment is in. 
+
+- The color shows current which grid current fragment is placed
+- The line is plot from each frustum `near bottom left` to `far up right`. Notice the line nearly cross from grid left down to up right, which is intuitively correct.
+
+![not_linear_frustum](./img/which_grid.png)
+
+4. How many light did each grid occupy?
+
+The brighter the pixel is, the more light current pixel is applied
+
+![num_of_light](./img/num_of_light.png)
+
+
+
+#### Effect
+
+
+
+
 
 ### Reference:
 
