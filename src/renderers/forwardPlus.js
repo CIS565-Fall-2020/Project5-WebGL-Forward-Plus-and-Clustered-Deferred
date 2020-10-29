@@ -1,11 +1,11 @@
-import { gl } from '../init';
+import { canvas, gl } from '../init';
 import { mat4, vec4, vec3 } from 'gl-matrix';
 import { loadShaderProgram } from '../utils';
 import { NUM_LIGHTS } from '../scene';
 import vsSource from '../shaders/forwardPlus.vert.glsl';
 import fsSource from '../shaders/forwardPlus.frag.glsl.js';
 import TextureBuffer from './textureBuffer';
-import BaseRenderer from './base';
+import BaseRenderer, { MAX_LIGHTS_PER_CLUSTER } from './base';
 
 export default class ForwardPlusRenderer extends BaseRenderer {
   constructor(xSlices, ySlices, zSlices) {
@@ -17,7 +17,9 @@ export default class ForwardPlusRenderer extends BaseRenderer {
     this._shaderProgram = loadShaderProgram(vsSource, fsSource({
       numLights: NUM_LIGHTS,
     }), {
-      uniforms: ['u_viewProjectionMatrix', 'u_colmap', 'u_normap', 'u_lightbuffer', 'u_clusterbuffer'],
+      uniforms: ['u_viewProjectionMatrix', 'u_colmap', 'u_normap', 'u_lightbuffer', 'u_clusterbuffer', 
+    'u_viewMatrix', 'u_nearClip', 'u_farClip', 'u_height', 'u_width', 'u_camPos', 'u_xSlices', 'u_ySlices', 'u_zSlices', 'u_maxLightsPerCluster',
+    'u_texElemCount', 'u_pixelsPerElem'],
       attribs: ['a_position', 'a_normal', 'a_uv'],
     });
 
@@ -76,6 +78,29 @@ export default class ForwardPlusRenderer extends BaseRenderer {
     gl.uniform1i(this._shaderProgram.u_clusterbuffer, 3);
 
     // TODO: Bind any other shader inputs
+    //Uniforms:
+    //-view matrix 
+    gl.uniformMatrix4fv(this._shaderProgram.u_viewMatrix, false, this._viewMatrix); 
+    //-near and far clip
+    gl.uniform1f(this._shaderProgram.u_nearClip, camera.near); 
+    gl.uniform1f(this._shaderProgram.u_farClip, camera.far); 
+    //-Height and width of the screen 
+    gl.uniform1f(this._shaderProgram.u_height, canvas.height); 
+    gl.uniform1f(this._shaderProgram.u_width, canvas.width); 
+    //-Camera position
+    var camPos = vec3.fromValues(camera.position.x, camera.position.y, camera.position.z); 
+    gl.uniform3fv(this._shaderProgram.u_camPos, camPos); 
+    //-Slice dimensions 
+    gl.uniform1i(this._shaderProgram.u_xSlices, this._xSlices); 
+    gl.uniform1i(this._shaderProgram.u_ySlices, this._ySlices);
+    gl.uniform1i(this._shaderProgram.u_zSlices, this._zSlices);
+    //-maxLightsPerCluster
+    gl.uniform1i(this._shaderProgram.u_maxLightsPerCluster, MAX_LIGHTS_PER_CLUSTER); 
+    //-Element Count
+    gl.uniform1i(this._shaderProgram.u_texElemCount, this._clusterTexture._elementCount); 
+    //-Pixels per element 
+    gl.uniform1i(this._shaderProgram.u_pixelsPerElem, this._clusterTexture._pixelsPerElement); 
+    
 
     // Draw the scene. This function takes the shader program so that the model's textures can be bound to the right inputs
     scene.draw(this._shaderProgram);
