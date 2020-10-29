@@ -31,7 +31,7 @@ function setRenderer(renderer) {
       params._renderer = new ForwardPlusRenderer(16, 16, 1);
       break;
     case CLUSTERED:
-      params._renderer = new ClusteredDeferredRenderer(15, 15, 1);
+      params._renderer = new ClusteredDeferredRenderer(16, 16, 1);
       break;
     case NORMAL:
       params._renderer = new NormalRenderer();
