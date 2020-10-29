@@ -1,4 +1,4 @@
-import { gl } from '../init';
+import { canvas, gl } from '../init';
 import { mat4, vec4, vec3 } from 'gl-matrix';
 import { loadShaderProgram } from '../utils';
 import { NUM_LIGHTS } from '../scene';
@@ -17,13 +17,18 @@ export default class ForwardPlusRenderer extends BaseRenderer {
     this._shaderProgram = loadShaderProgram(vsSource, fsSource({
       numLights: NUM_LIGHTS, 
       maxLightsPerCluster: MAX_LIGHTS_PER_CLUSTER,
-      clusterBufferTextureHeight: Math.ceil((MAX_LIGHTS_PER_CLUSTER + 1.0) / 4.0)
+      clusterBufferTextureHeight: Math.ceil((MAX_LIGHTS_PER_CLUSTER + 1.0) / 4.0),
+      numFrustums: xSlices * ySlices * zSlices,
+      numXSlices: xSlices, 
+      numYSlices: ySlices,
+      numZSlices: zSlices,
+      resolutionWidth: canvas.width,
+      resolutionHeight: canvas.height
     }), {
-      uniforms: ['u_viewProjectionMatrix', 'u_viewProjectionMatrixInverse',
+      uniforms: ['u_viewProjectionMatrix',
       'u_colmap', 'u_normap', 
       'u_lightbuffer', 'u_clusterbuffer', 
-      'u_slicesCount', 'u_canvasDimension', 
-      'u_cameraFarClip', 'u_cameraNearClip'  
+      'u_farClip'  
     ],
       attribs: ['a_position', 'a_normal', 'a_uv'],
     });
@@ -72,9 +77,6 @@ export default class ForwardPlusRenderer extends BaseRenderer {
 
     // Upload the camera matrix
     gl.uniformMatrix4fv(this._shaderProgram.u_viewProjectionMatrix, false, this._viewProjectionMatrix);
-    var viewProjectionMatrixInverse = mat4.create();
-    mat4.invert(viewProjectionMatrixInverse, this._viewProjectionMatrix);
-    gl.uniformMatrix4fv(this._shaderProgram.u_viewProjectionMatrixInverse, false, viewProjectionMatrixInverse);
 
     // Set the light texture as a uniform input to the shader
     gl.activeTexture(gl.TEXTURE2);
@@ -86,15 +88,8 @@ export default class ForwardPlusRenderer extends BaseRenderer {
     gl.bindTexture(gl.TEXTURE_2D, this._clusterTexture.glTexture);
     gl.uniform1i(this._shaderProgram.u_clusterbuffer, 3);
 
-    gl.uniform2fv(this._shaderProgram.u_clusterbufferDimension, [this._clusterTexture._elementCount, this._clusterTexture._pixelsPerElement]);
-
     // TODO: Bind any other shader inputs
-    
-    // Set the number of slices
-    gl.uniform3fv(this._shaderProgram.u_slicesCount, [this._xSlices, this._ySlices, this._zSlices]);
-    gl.uniform2fv(this._shaderProgram.u_canvasDimension, [canvas.width, canvas.height]);
-    gl.uniform1f(this._shaderProgram.u_cameraFarClip, camera.far);
-    gl.uniform1f(this._shaderProgram.u_cameraNearClip, camera.near);
+    gl.uniform1f(this._shaderProgram.u_farClip, camera.far);
 
     // Draw the scene. This function takes the shader program so that the model's textures can be bound to the right inputs
     scene.draw(this._shaderProgram);

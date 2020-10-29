@@ -12,13 +12,8 @@ export default function(params) {
   // TODO: Read this buffer to determine the lights influencing a cluster
   uniform sampler2D u_clusterbuffer;
   uniform vec2 u_clusterbufferDimension;
-
-  uniform vec3 u_slicesCount;
-  uniform vec2 u_canvasDimension;
   uniform mat4 u_viewProjectionMatrix;
-  uniform mat4 u_viewProjectionMatrixInverse;
-  uniform float u_cameraNearClip;
-  uniform float u_cameraFarClip;
+  uniform float u_farClip;
 
   varying vec3 v_position;
   varying vec3 v_normal;
@@ -82,49 +77,24 @@ export default function(params) {
     }
   }
 
-  // From pixel space to world space
-  vec3 pixelSpaceToWorldSpace(vec2 pixel, float distance) {
-    vec4 res = vec4(pixel.x, pixel.y, distance, distance);
-
-    // Pixel space to homogenized screen space
-    res.x = (res.x / u_canvasDimension.x) * 2.0 - 1.0;
-    res.y = 1.0 - (res.y / u_canvasDimension.y) * 2.0;
-
-    // Homogenized screen space to unhomogenized screen space
-    res.x *= distance;
-    res.y *= distance;
-
-    // Unhomogenized screen space to world space
-    res = u_viewProjectionMatrixInverse * res;
-    return res.xyz;
-  }
-
   void main() {
     vec3 albedo = texture2D(u_colmap, v_uv).rgb;
     vec3 normap = texture2D(u_normap, v_uv).xyz;
     vec3 normal = applyNormalMap(v_normal, normap);
     vec3 fragColor = vec3(0.0);
 
-    // Need to somehow determine the cluster for this fragment -------------------
-    int frustumCount = int(u_slicesCount.x * u_slicesCount.y * u_slicesCount.z);
-    vec3 frustum = vec3(0.0);
-    
-    // Determine slice x and y
-    frustum.x = floor(u_slicesCount.x * gl_FragCoord.x / u_canvasDimension.x);
-    frustum.y = floor(u_slicesCount.y * gl_FragCoord.y / u_canvasDimension.y);
-    
-    // Find the far clip and near clip point and near clip point
-    vec3 nearClip = pixelSpaceToWorldSpace(gl_FragCoord.xy, u_cameraNearClip);
-    vec3 farClip = pixelSpaceToWorldSpace(gl_FragCoord.xy, u_cameraFarClip);
-    frustum.z = floor(u_slicesCount.z * distance(v_position, nearClip) / distance(farClip, nearClip));
+    int frustumX = int(gl_FragCoord.x / float(${params.resolutionWidth}) * float(${params.numXSlices}));
+    int frustumY = int(gl_FragCoord.y / float(${params.resolutionHeight}) * float(${params.numYSlices}));
+    int frustumZ = int(float(${params.numZSlices}) * (u_viewProjectionMatrix * vec4(v_position, 1.0)).z / u_farClip);
+    int frustumIndex = frustumX + frustumY * ${params.numXSlices} + frustumZ * ${params.numXSlices} * ${params.numYSlices};
 
-    int frustumIndex = int((frustum.x + frustum.y * u_slicesCount.x + frustum.z * u_slicesCount.x * u_slicesCount.y) / float(frustumCount));
-  
-    // Get the number of light stored in this frustum
-    int lightCount = int(ExtractFloat(u_clusterbuffer, frustumCount, ${params.clusterBufferTextureHeight}, frustumIndex, 0));
-    
-    for (int i = 1; i <= ${params.maxLightsPerCluster}; ++i) {
-      int lightIndex = int(ExtractFloat(u_clusterbuffer, frustumCount, ${params.clusterBufferTextureHeight}, frustumIndex, i));
+    int numLightsFrustum = int(ExtractFloat(u_clusterbuffer, ${params.numFrustums}, ${params.clusterBufferTextureHeight}, frustumIndex, 0));
+
+    for (int i = 1; i <= ${params.numLights}; ++i) {
+      if (i > numLightsFrustum) {
+        break;
+      }
+      int lightIndex = int(ExtractFloat(u_clusterbuffer, ${params.numFrustums}, ${params.clusterBufferTextureHeight}, frustumIndex, i));
 
       Light light = UnpackLight(lightIndex);
       float lightDistance = distance(light.position, v_position);
@@ -140,10 +110,6 @@ export default function(params) {
     fragColor += albedo * ambientLight;
 
     gl_FragColor = vec4(fragColor, 1.0);
-
-    //TEST ONLY
-    //gl_FragColor = vec4(frustum.x / u_slicesCount.x, frustum.y / u_slicesCount.y, 0.0, 1.0);
-    gl_FragColor = vec4(frustum.z, frustum.z, frustum.z * 100.0, 1.0);
-  }
+ }
   `;
 }

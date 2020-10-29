@@ -2,8 +2,6 @@ import TextureBuffer from './textureBuffer';
 import Wireframe from '../wireframe';
 
 import { Frustum, Plane, Vector2, Vector3 } from '../../node_modules/three/build/three'
-import { LIGHT_RADIUS } from '../scene';
-import { NUM_LIGHTS } from '../scene';
 import { mat2, vec2 } from 'gl-matrix';
 import { mat3, vec3 } from 'gl-matrix';
 import { mat4, vec4 } from 'gl-matrix';
@@ -207,28 +205,32 @@ export default class BaseRenderer {
 
           // // Create a frustum out of the planes
           var frustum = new Frustum(planeFar, planeNear, planeLeft, planeRight, planeUp, planeDown);
-          
+          var lightsInfluenceFrustum = [];
           // Iterates through all the lights to see which light intersects with this frustum (treat lights as point lights)
-          for (let lightIndex = 0; lightIndex < NUM_LIGHTS; ++lightIndex) {
+          for (let lightIndex = 0; lightIndex < scene.lights.length; ++lightIndex) {
+            if (lightsInfluenceFrustum.length >= MAX_LIGHTS_PER_CLUSTER) {
+              break;
+            }
+
             var light = scene.lights[lightIndex];
             var lightPos = new Vector3(light.position[0], light.position[1], light.position[2]);
-            var lightSphere = new Sphere(lightPos, LIGHT_RADIUS);
+            var lightSphere = new Sphere(lightPos, light.radius);
             
-            // Light count is store in the first index & element of this buffer
-            var lightCount = this._clusterTexture.buffer[this._clusterTexture.bufferIndex(i, 0)];
-              
-            if (frustum.intersectsSphere(lightSphere) && lightCount < MAX_LIGHTS_PER_CLUSTER) {
-              var row = Math.floor(1.0 + Math.floor(lightCount / 4.0)); // Have to add 4 because the first index stores the number of light
-              var elementInSlot = lightCount % 4;
-
-              // Save the index of the light into the buffer
-              this._clusterTexture.buffer[this._clusterTexture.bufferIndex(i, row) + elementInSlot] = lightIndex;
-              // Update the number of light count
-              lightCount += 1;
-              this._clusterTexture.buffer[this._clusterTexture.bufferIndex(i, 0) + 0] = lightCount;
+            if (frustum.intersectsSphere(lightSphere)) {
+              lightsInfluenceFrustum.push(lightIndex)
             }
           }
-          var m = 2;
+
+          var row = 0;
+          var component = 1;
+          for (let j = 0; j < lightsInfluenceFrustum.length; j++) {
+            this._clusterTexture.buffer[this._clusterTexture.bufferIndex(i, row) + component] = lightsInfluenceFrustum[j];
+            if (component > 4) {
+              row++;
+              component = 0;
+            }           
+          }
+          this._clusterTexture.buffer[this._clusterTexture.bufferIndex(i, 0)] = lightsInfluenceFrustum.length;
         }
       }
     }
