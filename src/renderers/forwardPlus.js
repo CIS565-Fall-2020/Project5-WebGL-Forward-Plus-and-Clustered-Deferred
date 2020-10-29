@@ -1,5 +1,5 @@
 import { gl } from '../init';
-import { mat4, vec4, vec3 } from 'gl-matrix';
+import { mat4, vec4 } from 'gl-matrix';
 import { loadShaderProgram } from '../utils';
 import { NUM_LIGHTS } from '../scene';
 import vsSource from '../shaders/forwardPlus.vert.glsl';
@@ -17,13 +17,16 @@ export default class ForwardPlusRenderer extends BaseRenderer {
     this._shaderProgram = loadShaderProgram(vsSource, fsSource({
       numLights: NUM_LIGHTS,
     }), {
-      uniforms: ['u_viewProjectionMatrix', 'u_colmap', 'u_normap', 'u_lightbuffer', 'u_clusterbuffer'],
+      uniforms: ['u_viewProjectionMatrix', 'u_colmap', 'u_normap', 'u_lightbuffer', 'u_clusterbuffer', 'u_viewMatrix', 'u_cameraInfo', 'u_slicesInfo'],
       attribs: ['a_position', 'a_normal', 'a_uv'],
     });
 
     this._projectionMatrix = mat4.create();
     this._viewMatrix = mat4.create();
     this._viewProjectionMatrix = mat4.create();
+
+    this._cameraInfo = vec4.create();
+    this._slicesInfo = vec4.create();
   }
 
   render(camera, scene) {
@@ -33,11 +36,17 @@ export default class ForwardPlusRenderer extends BaseRenderer {
     mat4.copy(this._projectionMatrix, camera.projectionMatrix.elements);
     mat4.multiply(this._viewProjectionMatrix, this._projectionMatrix, this._viewMatrix);
 
+    this._cameraInfo = vec4.fromValues(camera.fov, camera.aspect, camera.near, camera.far);
+    this._slicesInfo = vec4.fromValues(this._xSlices, this._ySlices, this._zSlices, this._xSlices * this._ySlices * this._zSlices);
+
     // Update cluster texture which maps from cluster index to light list
     this.updateClusters(camera, this._viewMatrix, scene);
     
     // Update the buffer used to populate the texture packed with light data
     for (let i = 0; i < NUM_LIGHTS; ++i) {
+      // these light positions that are being passed into the fragment shader are likely
+      // in world space which means that the distance function between these lights and the
+      // geometry position of the fragment is also likely to be in world space
       this._lightTexture.buffer[this._lightTexture.bufferIndex(i, 0) + 0] = scene.lights[i].position[0];
       this._lightTexture.buffer[this._lightTexture.bufferIndex(i, 0) + 1] = scene.lights[i].position[1];
       this._lightTexture.buffer[this._lightTexture.bufferIndex(i, 0) + 2] = scene.lights[i].position[2];
@@ -76,6 +85,10 @@ export default class ForwardPlusRenderer extends BaseRenderer {
     gl.uniform1i(this._shaderProgram.u_clusterbuffer, 3);
 
     // TODO: Bind any other shader inputs
+    // Upload the camera's view matrix
+    gl.uniformMatrix4fv(this._shaderProgram.u_viewMatrix, false, this._viewMatrix);
+    gl.uniform4fv(this._shaderProgram.u_cameraInfo, this._cameraInfo);
+    gl.uniform4fv(this._shaderProgram.u_slicesInfo, this._slicesInfo);
 
     // Draw the scene. This function takes the shader program so that the model's textures can be bound to the right inputs
     scene.draw(this._shaderProgram);

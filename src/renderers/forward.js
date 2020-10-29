@@ -9,6 +9,7 @@ import TextureBuffer from './textureBuffer';
 export default class ForwardRenderer {
   constructor() {
     // Create a texture to store light data
+    // each element (light) requires 8 packets of 32 bits or 8 packets of 4 bytes
     this._lightTexture = new TextureBuffer(NUM_LIGHTS, 8);
 
     // Initialize a shader program. The fragment shader source is compiled based on the number of lights

@@ -29,7 +29,7 @@ export default class ClusteredDeferredRenderer extends BaseRenderer {
       numLights: NUM_LIGHTS,
       numGBuffers: NUM_GBUFFERS,
     }), {
-      uniforms: ['u_gbuffers[0]', 'u_gbuffers[1]', 'u_gbuffers[2]', 'u_gbuffers[3]'],
+      uniforms: ['u_gbuffers[0]', 'u_gbuffers[1]', 'u_gbuffers[2]', 'u_gbuffers[3]', 'u_lightbuffer'],
       attribs: ['a_uv'],
     });
 
@@ -51,6 +51,7 @@ export default class ClusteredDeferredRenderer extends BaseRenderer {
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    // gl.UNSIGNED_SHORT = 16-bit unsignd integer
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.DEPTH_COMPONENT, width, height, 0, gl.DEPTH_COMPONENT, gl.UNSIGNED_SHORT, null);
     gl.bindTexture(gl.TEXTURE_2D, null);
 
@@ -154,6 +155,10 @@ export default class ClusteredDeferredRenderer extends BaseRenderer {
     gl.useProgram(this._progShade.glShaderProgram);
 
     // TODO: Bind any other shader inputs
+    // Set the light texture as a uniform input to the shader
+    gl.activeTexture(gl.TEXTURE2);
+    gl.bindTexture(gl.TEXTURE_2D, this._lightTexture.glTexture);
+    gl.uniform1i(this._progShade.u_lightbuffer, 2);
 
     // Bind g-buffers
     const firstGBufferBinding = 0; // You may have to change this if you use other texture slots

@@ -11,6 +11,9 @@ export default function(params) {
 
   // TODO: Read this buffer to determine the lights influencing a cluster
   uniform sampler2D u_clusterbuffer;
+  uniform mat4 u_viewMatrix;
+  uniform vec4 u_cameraInfo;
+  uniform vec4 u_slicesInfo;
 
   varying vec3 v_position;
   varying vec3 v_normal;
@@ -19,7 +22,9 @@ export default function(params) {
   vec3 applyNormalMap(vec3 geomnor, vec3 normap) {
     normap = normap * 2.0 - 1.0;
     vec3 up = normalize(vec3(0.001, 1, 0.001));
+    // surface tangent
     vec3 surftan = normalize(cross(geomnor, up));
+    // surface binormal
     vec3 surfbinor = cross(geomnor, surftan);
     return normap.y * surftan + normap.x * surfbinor + normap.z * geomnor;
   }
@@ -81,16 +86,67 @@ export default function(params) {
 
     vec3 fragColor = vec3(0.0);
 
+    // determine which lights have influence using the u_clusterbuffer
+    // xSlices, ySlices, zSlices
+    // camera orientation information: cam view matrix
+    // frustum information vFOV, aspectRatio, near, far
+    vec4 camSpacePos = u_viewMatrix * vec4(v_position, 1.0);
+    int xSlices = int(u_slicesInfo.x);
+    int ySlices = int(u_slicesInfo.y);
+    int zSlices = int(u_slicesInfo.z);
+    float vFOV = u_cameraInfo.x;
+    float aspectRatio = u_cameraInfo.y;
+    float near = u_cameraInfo.z;
+    float far = u_cameraInfo.w;
+
+    int zFrustum = int(camSpacePos.z - near) / zSlices;
+    int yFrustum = int(camSpacePos.y + camSpacePos.z * tan(vFOV / 2.0)) / ySlices;
+    float hFOV = 2.0 * atan((aspectRatio * far * tan(vFOV / 2.0)) / far);
+    int xFrustum = int(camSpacePos.x + camSpacePos.z * tan(hFOV / 2.0)) / xSlices;
+    int iFrustum = xFrustum + yFrustum * xSlices + zFrustum * xSlices * ySlices; // line 105
+    int imageWidth = xSlices * ySlices * zSlices;
+    // this will be the cluster index
+    float u = float(iFrustum + 1) / float(xSlices * ySlices * zSlices + 1);
+    // I HAVE HARD CODED IN THE IMAGE HEIGHT SO 
+    // THIS WILL LIKELY HAVE TO BE PASSED IN AS A PARAMETER
+    int imageHeight = int(ceil((100.0 + 1.0) / 4.0));
+    int lightsPerFrustum = int(texture2D(u_clusterbuffer, vec2(u, 1.0 / float(imageHeight + 1))).r);
+    // for (int p = 1; p < imageHeight; p++) {
+    //   float v = float(p + 1) / float(imageHeight + 1);
+    //   vec4 texel = texture2D(u_clusterbuffer, vec2(u, v));
+    // }
+
+    int nxtLight = 1;
+    int currentLight = int(ExtractFloat(u_clusterbuffer, imageWidth, imageHeight, iFrustum, nxtLight));
     for (int i = 0; i < ${params.numLights}; ++i) {
-      Light light = UnpackLight(i);
-      float lightDistance = distance(light.position, v_position);
-      vec3 L = (light.position - v_position) / lightDistance;
+      if (currentLight == i) {
+        Light light = UnpackLight(i);
+        float lightDistance = distance(light.position, v_position);
+        vec3 L = (light.position - v_position) / lightDistance;
 
-      float lightIntensity = cubicGaussian(2.0 * lightDistance / light.radius);
-      float lambertTerm = max(dot(L, normal), 0.0);
+        float lightIntensity = cubicGaussian(2.0 * lightDistance / light.radius);
+        float lambertTerm = max(dot(L, normal), 0.0);
 
-      fragColor += albedo * lambertTerm * light.color * vec3(lightIntensity);
+        fragColor += albedo * lambertTerm * light.color * vec3(lightIntensity);
+
+        if (nxtLight < lightsPerFrustum) {
+          currentLight = int(ExtractFloat(u_clusterbuffer, imageWidth, imageHeight, iFrustum, ++nxtLight));
+        } else {
+          break;
+        }
+      }
     }
+
+    // for (int i = 0; i < ${params.numLights}; ++i) {
+    //   Light light = UnpackLight(i);
+    //   float lightDistance = distance(light.position, v_position);
+    //   vec3 L = (light.position - v_position) / lightDistance;
+
+    //   float lightIntensity = cubicGaussian(2.0 * lightDistance / light.radius);
+    //   float lambertTerm = max(dot(L, normal), 0.0);
+
+    //   fragColor += albedo * lambertTerm * light.color * vec3(lightIntensity);
+    // }
 
     const vec3 ambientLight = vec3(0.025);
     fragColor += albedo * ambientLight;
