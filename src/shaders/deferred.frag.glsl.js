@@ -13,6 +13,11 @@ export default function(params) {
   uniform float u_ySlice;
   uniform float u_zSlice; 
 
+  uniform sampler2D u_lightbuffer;
+
+  // TODO: Read this buffer to determine the lights influencing a cluster
+  uniform sampler2D u_clusterbuffer;
+
   ${shadelightfunction}
   varying vec2 v_uv;
   //varying vec3 v_projection_position;
