@@ -248,11 +248,11 @@ export default class BaseRenderer {
             var lightCount = this._clusterTexture.buffer[this._clusterTexture.bufferIndex(i, 0)];
               
             if (frustum.intersectsSphere(lightSphere) && lightCount < MAX_LIGHTS_PER_CLUSTER) {
-              var slotInCluster = Math.floor((lightCount + 4.0) / 4.0); // Have to add 4 because the first index stores the number of light
+              var row = Math.floor((lightCount + 4.0) / 4.0); // Have to add 4 because the first index stores the number of light
               var elementInSlot = lightCount % 4;
 
               // Save the index of the light into the buffer
-              this._clusterTexture.buffer[this._clusterTexture.bufferIndex(i, slotInCluster) + elementInSlot] = l;
+              this._clusterTexture.buffer[this._clusterTexture.bufferIndex(i, row) + elementInSlot] = l;
               // Update the number of light count
               lightCount += 1;
               this._clusterTexture.buffer[this._clusterTexture.bufferIndex(i, 0) + 0] = lightCount;

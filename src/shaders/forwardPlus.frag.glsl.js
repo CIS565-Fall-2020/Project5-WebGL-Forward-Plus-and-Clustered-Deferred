@@ -103,12 +103,10 @@ export default function(params) {
     vec3 albedo = texture2D(u_colmap, v_uv).rgb;
     vec3 normap = texture2D(u_normap, v_uv).xyz;
     vec3 normal = applyNormalMap(v_normal, normap);
-    int slicesCount = u_slicesCount.x * u_slicesCount.y * u_slicesCount.z;
-    
     vec3 fragColor = vec3(0.0);
 
-    
     // Need to somehow determine the cluster for this fragment -------------------
+    int frustumCount = int(u_slicesCount.x * u_slicesCount.y * u_slicesCount.z);
     vec3 frustum = vec3(0.0);
     
     // Determine slice x and y
@@ -120,14 +118,13 @@ export default function(params) {
     vec4 farClip = pixelSpaceToWorldSpace(gl_FragCoord.xy, u_cameraFarClip);
     frustum.z = floor(u_slicesCount.z * (v_position.z - nearClip.z) / (farClip.z - nearClip.z));
 
-    float frustumIndex = (frustum.x + frustum.y * u_slicesCount.x + frustum.z * u_slicesCount.x * u_slicesCount.y) / slicesCount;
+    int frustumIndex = int((frustum.x + frustum.y * u_slicesCount.x + frustum.z * u_slicesCount.x * u_slicesCount.y) / float(frustumCount));
   
     // Get the number of light stored in this frustum
-    float uFrustum = float(frustumIndex + 1) / float(slicesCount + 1);
-    int lightCount = int((texture2D(u_clusterbuffer, vec2(u, 0.0))).x); // Similar to light position is determined within UnpackLight
+    int lightCount = int(ExtractFloat(u_clusterbuffer, frustumCount, ${params.clusterBufferTextureHeight}, frustumIndex, 0));
     
-    for (int i = 0; i < lightCount; ++i) {
-      int lightIndex = int(ExtractFloat(u_clusterbuffer, u_clusterbufferDimension.x, u_clusterbufferDimension.y, frustumIndex, 0));
+    for (int i = 1; i <= ${params.maxLightsPerCluster}; ++i) {
+      int lightIndex = int(ExtractFloat(u_clusterbuffer, frustumCount, ${params.clusterBufferTextureHeight}, frustumIndex, i));
 
       Light light = UnpackLight(lightIndex);
       float lightDistance = distance(light.position, v_position);
@@ -145,7 +142,7 @@ export default function(params) {
     gl_FragColor = vec4(fragColor, 1.0);
 
     //TEST ONLY
-    gl_FragColor = vec4(frustum.x / u_slicesCount.x, frustum.y / u_slicesCount.y, 0.0, 1.0);
+    // gl_FragColor = vec4(frustum.x / u_slicesCount.x, frustum.y / u_slicesCount.y, 0.0, 1.0);
   }
   `;
 }

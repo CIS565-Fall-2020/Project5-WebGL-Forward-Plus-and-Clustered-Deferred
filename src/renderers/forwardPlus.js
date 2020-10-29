@@ -5,7 +5,7 @@ import { NUM_LIGHTS } from '../scene';
 import vsSource from '../shaders/forwardPlus.vert.glsl';
 import fsSource from '../shaders/forwardPlus.frag.glsl.js';
 import TextureBuffer from './textureBuffer';
-import BaseRenderer from './base';
+import BaseRenderer, { MAX_LIGHTS_PER_CLUSTER } from './base';
 
 export default class ForwardPlusRenderer extends BaseRenderer {
   constructor(xSlices, ySlices, zSlices) {
@@ -15,10 +15,16 @@ export default class ForwardPlusRenderer extends BaseRenderer {
     this._lightTexture = new TextureBuffer(NUM_LIGHTS, 8);
     
     this._shaderProgram = loadShaderProgram(vsSource, fsSource({
-      numLights: NUM_LIGHTS,
+      numLights: NUM_LIGHTS, 
+      maxLightsPerCluster: MAX_LIGHTS_PER_CLUSTER,
+      clusterBufferTextureHeight: Math.ceil((MAX_LIGHTS_PER_CLUSTER + 1.0) / 4.0)
     }), {
-      uniforms: ['u_viewProjectionMatrix', 'u_colmap', 'u_normap', 'u_lightbuffer', 'u_clusterbuffer', 
-      'u_slicesCount', 'u_canvasDimension', 'u_cameraFarClip', 'u_cameraNearClip', 'u_viewProjectionMatrixInverse'],
+      uniforms: ['u_viewProjectionMatrix', 'u_viewProjectionMatrixInverse',
+      'u_colmap', 'u_normap', 
+      'u_lightbuffer', 'u_clusterbuffer', 
+      'u_slicesCount', 'u_canvasDimension', 
+      'u_cameraFarClip', 'u_cameraNearClip'  
+    ],
       attribs: ['a_position', 'a_normal', 'a_uv'],
     });
 
