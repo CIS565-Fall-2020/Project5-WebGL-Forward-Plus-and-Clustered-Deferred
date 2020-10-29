@@ -209,8 +209,8 @@ export default class BaseRenderer {
           var frustum = new Frustum(planeFar, planeNear, planeLeft, planeRight, planeUp, planeDown);
           
           // Iterates through all the lights to see which light intersects with this frustum (treat lights as point lights)
-          for (let l = 0; l < NUM_LIGHTS; ++l) {
-            var light = scene.lights[l];
+          for (let lightIndex = 0; lightIndex < NUM_LIGHTS; ++lightIndex) {
+            var light = scene.lights[lightIndex];
             var lightPos = new Vector3(light.position[0], light.position[1], light.position[2]);
             var lightSphere = new Sphere(lightPos, LIGHT_RADIUS);
             
@@ -218,11 +218,11 @@ export default class BaseRenderer {
             var lightCount = this._clusterTexture.buffer[this._clusterTexture.bufferIndex(i, 0)];
               
             if (frustum.intersectsSphere(lightSphere) && lightCount < MAX_LIGHTS_PER_CLUSTER) {
-              var row = Math.floor((lightCount + 4.0) / 4.0); // Have to add 4 because the first index stores the number of light
+              var row = Math.floor(1.0 + Math.floor(lightCount / 4.0)); // Have to add 4 because the first index stores the number of light
               var elementInSlot = lightCount % 4;
 
               // Save the index of the light into the buffer
-              this._clusterTexture.buffer[this._clusterTexture.bufferIndex(i, row) + elementInSlot] = l;
+              this._clusterTexture.buffer[this._clusterTexture.bufferIndex(i, row) + elementInSlot] = lightIndex;
               // Update the number of light count
               lightCount += 1;
               this._clusterTexture.buffer[this._clusterTexture.bufferIndex(i, 0) + 0] = lightCount;

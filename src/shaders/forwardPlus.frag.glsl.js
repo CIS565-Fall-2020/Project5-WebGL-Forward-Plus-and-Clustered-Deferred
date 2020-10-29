@@ -83,7 +83,7 @@ export default function(params) {
   }
 
   // From pixel space to world space
-  vec4 pixelSpaceToWorldSpace(vec2 pixel, float distance) {
+  vec3 pixelSpaceToWorldSpace(vec2 pixel, float distance) {
     vec4 res = vec4(pixel.x, pixel.y, distance, distance);
 
     // Pixel space to homogenized screen space
@@ -95,8 +95,8 @@ export default function(params) {
     res.y *= distance;
 
     // Unhomogenized screen space to world space
-    // res = u_viewProjectionMatrixInverse * res;
-    return res;
+    res = u_viewProjectionMatrixInverse * res;
+    return res.xyz;
   }
 
   void main() {
@@ -114,9 +114,9 @@ export default function(params) {
     frustum.y = floor(u_slicesCount.y * gl_FragCoord.y / u_canvasDimension.y);
     
     // Find the far clip and near clip point and near clip point
-    vec4 nearClip = pixelSpaceToWorldSpace(gl_FragCoord.xy, u_cameraNearClip);
-    vec4 farClip = pixelSpaceToWorldSpace(gl_FragCoord.xy, u_cameraFarClip);
-    frustum.z = floor(u_slicesCount.z * (v_position.z - nearClip.z) / (farClip.z - nearClip.z));
+    vec3 nearClip = pixelSpaceToWorldSpace(gl_FragCoord.xy, u_cameraNearClip);
+    vec3 farClip = pixelSpaceToWorldSpace(gl_FragCoord.xy, u_cameraFarClip);
+    frustum.z = floor(u_slicesCount.z * distance(v_position, nearClip) / distance(farClip, nearClip));
 
     int frustumIndex = int((frustum.x + frustum.y * u_slicesCount.x + frustum.z * u_slicesCount.x * u_slicesCount.y) / float(frustumCount));
   
@@ -142,7 +142,8 @@ export default function(params) {
     gl_FragColor = vec4(fragColor, 1.0);
 
     //TEST ONLY
-    // gl_FragColor = vec4(frustum.x / u_slicesCount.x, frustum.y / u_slicesCount.y, 0.0, 1.0);
+    //gl_FragColor = vec4(frustum.x / u_slicesCount.x, frustum.y / u_slicesCount.y, 0.0, 1.0);
+    gl_FragColor = vec4(frustum.z, frustum.z, frustum.z * 100.0, 1.0);
   }
   `;
 }
