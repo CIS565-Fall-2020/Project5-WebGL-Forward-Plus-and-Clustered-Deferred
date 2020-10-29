@@ -4,8 +4,10 @@ import { loadShaderProgram } from '../utils';
 import { NUM_LIGHTS } from '../scene';
 import vsSource from '../shaders/forwardPlus.vert.glsl';
 import fsSource from '../shaders/forwardPlus.frag.glsl.js';
+import dvsSource from '../shaders/depthMap.vert.glsl'
+import dfsSource from '../shaders/depthMap.frag.glsl.js'
 import TextureBuffer from './textureBuffer';
-import BaseRenderer from './base';
+import BaseRenderer, { MAX_LIGHTS_PER_CLUSTER } from './base';
 
 export default class ForwardPlusRenderer extends BaseRenderer {
   constructor(xSlices, ySlices, zSlices) {
@@ -17,7 +19,15 @@ export default class ForwardPlusRenderer extends BaseRenderer {
     this._shaderProgram = loadShaderProgram(vsSource, fsSource({
       numLights: NUM_LIGHTS,
     }), {
-      uniforms: ['u_viewProjectionMatrix', 'u_colmap', 'u_normap', 'u_lightbuffer', 'u_clusterbuffer'],
+      uniforms: ['u_viewProjectionMatrix', 'u_colmap', 'u_normap', 'u_lightbuffer', 'u_clusterbuffer', 
+                 'u_xSlices', 'u_ySlices', 'u_zSlice', 'u_width', 'u_height', 'u_far', 'u_near',
+                 'u_viewMat', 'u_clusterWidth', 'u_clusterHeight'],
+      attribs: ['a_position', 'a_normal', 'a_uv'],
+    });
+
+    this._depthShaderProgram = loadShaderProgram(dvsSource, dfsSource(), 
+    {
+      uniforms:['u_viewProjectionMatrix'],
       attribs: ['a_position', 'a_normal', 'a_uv'],
     });
 
@@ -32,6 +42,22 @@ export default class ForwardPlusRenderer extends BaseRenderer {
     mat4.invert(this._viewMatrix, camera.matrixWorld.elements);
     mat4.copy(this._projectionMatrix, camera.projectionMatrix.elements);
     mat4.multiply(this._viewProjectionMatrix, this._projectionMatrix, this._viewMatrix);
+    
+    // First Pass: Depth Map
+    // Create a new framebuffer for depth map
+    /*var depthFrameBuffer = gl.createFramebuffer();
+    gl.bindFramebuffer(gl.FRAMEBUFFER, depthFrameBuffer);
+    gl.viewport(0, 0, canvas.width, canvas.height);
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+    // Use depth shader program
+    gl.useProgram(this._depthShaderProgram.glShaderProgram);
+
+    // Set depth map variables
+    gl.uniformMatrix4fv(this._depthShaderProgram.u_viewProjectionMatrix, false, this._viewProjectionMatrix);
+
+    // Draw the scene. This function takes the shader program so that the model's textures can be bound to the right inputs
+    scene.draw(this._depthShaderProgram);*/
 
     // Update cluster texture which maps from cluster index to light list
     this.updateClusters(camera, this._viewMatrix, scene);
@@ -65,6 +91,22 @@ export default class ForwardPlusRenderer extends BaseRenderer {
     // Upload the camera matrix
     gl.uniformMatrix4fv(this._shaderProgram.u_viewProjectionMatrix, false, this._viewProjectionMatrix);
 
+    // Upload light culling uniform variables
+    gl.uniform1i(this._shaderProgram.u_xSlices, this._xSlices);
+    gl.uniform1i(this._shaderProgram.u_ySlices, this._ySlices);
+    gl.uniform1i(this._shaderProgram.u_zSlices, this._zSlices);
+
+    gl.uniform1f(this._shaderProgram.u_width, canvas.width);
+    gl.uniform1f(this._shaderProgram.u_height, canvas.height);
+
+    gl.uniform1f(this._shaderProgram.u_far, camera.far);
+    gl.uniform1f(this._shaderProgram.u_near, camera.near);
+
+    gl.uniformMatrix4fv(this._shaderProgram.u_viewMat, false, this._viewMatrix);
+    gl.uniform1i(this._shaderProgram.u_clusterWidth, this._xSlices * this._ySlices * this._zSlices);
+    gl.uniform1i(this._shaderProgram.u_clusterHeight, Math.ceil((MAX_LIGHTS_PER_CLUSTER + 1) / 4.0));
+
+
     // Set the light texture as a uniform input to the shader
     gl.activeTexture(gl.TEXTURE2);
     gl.bindTexture(gl.TEXTURE_2D, this._lightTexture.glTexture);
@@ -76,8 +118,6 @@ export default class ForwardPlusRenderer extends BaseRenderer {
     gl.uniform1i(this._shaderProgram.u_clusterbuffer, 3);
 
     // TODO: Bind any other shader inputs
-
-    // Draw the scene. This function takes the shader program so that the model's textures can be bound to the right inputs
     scene.draw(this._shaderProgram);
   }
 };

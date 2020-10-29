@@ -3,25 +3,53 @@ WebGL Forward+ and Clustered Deferred Shading
 
 **University of Pennsylvania, CIS 565: GPU Programming and Architecture, Project 5**
 
-* (TODO) YOUR NAME HERE
-* Tested on: (TODO) **Google Chrome 222.2** on
-  Windows 22, i7-2222 @ 2.22GHz 22GB, GTX 222 222MB (Moore 2222 Lab)
+* Xuecheng Sun
+* Tested on: (TODO) **Google Chrome 86.0.4240.111 64bits** on
+  Windows 10, R7 3700X @ 3.9GHz, 32GB, RTX 2070 super 8GB 
 
 ### Live Online
 
-[![](img/thumb.png)](http://TODO.github.io/Project5-WebGL-Forward-Plus-and-Clustered-Deferred)
+https://hehehaha12139.github.io/Project5-WebGL-Forward-Plus-and-Clustered-Deferred/
 
 ### Demo Video/GIF
 
-[![](img/video.png)](TODO)
+https://youtu.be/h7AgPwpVVl0
 
-### (TODO: Your README)
+### Features Implemented
 
-*DO NOT* leave the README to the last minute! It is a crucial part of the
-project, and we will not be able to grade you without a good README.
+Forward+ Rendering and Clustered Deferred Rendering
 
-This assignment has a considerable amount of performance analysis compared
-to implementation work. Complete the implementation early to leave time!
+Blinn-Phong Rendering
+
+Optimization 1: Pack Values together into vec4s 
+
+Optimization 2: Two-component Normals 
+
+Optimization 3: World Space Position Reconstruction
+
+
+
+### Benchmarks
+
+**Different Rendering Methods**
+
+![](./imgs/lightCount.png)
+
+In the benchmark, we can see that with the growth of light numbers, the performance gap between three methods are bigger and bigger.  It seems that Deferred rendering always have the best performance in speed.
+
+
+
+**Different Shadings with Deferred Rendering**
+
+![](./imgs/ShadingEffects.png)
+
+In this benchmark, I compare the performance between Phong shading and Blinn-Phong Shading. Because I add more computations in shader, the final performance always have a constant gap between two methods. Because the max frame rate is locked to 165Hz, so when the light count is 250 and 500, there is no gap between two methods.
+
+**Optimization**
+
+![](./imgs/Optimization.png)
+
+Because the max frame rate is 165Hz, it is unnecessary to compare performance when the light count is below 750.  In this benchmark, we can see optimized method always have a slight performance improvement compared to the unoptimized version.
 
 
 ### Credits
