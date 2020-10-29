@@ -1,5 +1,5 @@
-export default function(params) {
-  return `
+export default function (params) {
+    return `
   // TODO: This is pretty much just a clone of forward.frag.glsl.js
 
   #version 100
@@ -11,6 +11,18 @@ export default function(params) {
 
   // TODO: Read this buffer to determine the lights influencing a cluster
   uniform sampler2D u_clusterbuffer;
+
+  uniform int u_xSlices;
+  uniform int u_ySlices;
+  uniform int u_zSlices;
+
+  uniform mat4 u_viewMatrix;
+  uniform int u_clusterLightDim;
+
+  uniform float u_near;
+  uniform float u_far;
+  uniform float u_canvasHeight;
+  uniform float u_canvasWidth;
 
   varying vec3 v_position;
   varying vec3 v_normal;
@@ -63,6 +75,10 @@ export default function(params) {
     return light;
   }
 
+  int UnpackClusters(int totalClusters, int cid, int lid) {
+    return int(ExtractFloat(u_clusterbuffer, totalClusters, u_clusterLightDim, cid, lid));
+  }
+
   // Cubic approximation of gaussian curve so we falloff to exactly 0 at the light radius
   float cubicGaussian(float h) {
     if (h < 1.0) {
@@ -81,8 +97,26 @@ export default function(params) {
 
     vec3 fragColor = vec3(0.0);
 
-    for (int i = 0; i < ${params.numLights}; ++i) {
-      Light light = UnpackLight(i);
+    // Determine the cluster for this fragment
+    vec4 posInCamera = u_viewMatrix * vec4(v_position, 1.0);
+    int x = int(float(u_xSlices) * gl_FragCoord.x / u_canvasWidth);
+    int y = int(float(u_ySlices) * gl_FragCoord.y / u_canvasHeight);
+    int z = int(float(u_zSlices) * (-posInCamera.z - u_near) / (u_far - u_near));
+    int cid = z * u_xSlices * u_ySlices + y * u_xSlices + x;
+
+    // Read the number of lights in this cluster
+    int totalClusters = u_xSlices * u_ySlices * u_zSlices;
+    int lightsInCluster = UnpackClusters(totalClusters, cid, 0);
+    
+    for (int i = 0; i < ${params.numLights}; ++i) { // Cannot have dynamic loop
+      if (i >= lightsInCluster) {
+        continue;
+      }
+      // Read in the lights in that cluster
+      int lightIdx = UnpackClusters(totalClusters, cid, i + 1);
+      Light light = UnpackLight(lightIdx);
+   
+      // Do shading
       float lightDistance = distance(light.position, v_position);
       vec3 L = (light.position - v_position) / lightDistance;
 
