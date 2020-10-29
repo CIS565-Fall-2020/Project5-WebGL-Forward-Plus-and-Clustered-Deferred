@@ -19,11 +19,11 @@ WebGL Forward+ and Clustered Deferred Shading
 
 ### Demo Video/GIF
 
-[![](img/video.png)](TODO)
+[![](img/demo.gif)](TODO)
 
-### (TODO: Your README)
+### Intro
 
-
+In this project, we implement the deferred shading algorithm. Deferred shading basically refers to defer the shading stage until necessary. The shading could utilize the depth and light position distribution to cull unnecessary calculation. 
 
 #### Light Culling
 
@@ -77,7 +77,9 @@ To demonstrate the frustum assigning is implemented about right, here we show
 
 ![not_linear_frustum](./img/not_linear_frustum.png)
 
-2. The frustum normal. To see whether the normal is about right.
+2. The frustum normal. To see whether the normal is about right. 
+   - The red line shows the frustum edge.
+   - The green line shows the normal direction.
 
 ![not_linear_frustum](./img/normal.png)
 
@@ -98,15 +100,69 @@ The brighter the pixel is, the more light current pixel is applied
 
 
 
-#### Effect
+However, the current light culling algorithm wasn't implemented 100% accurate. 
+
+![Failed_frustum](./img/Failed_frustum.svg)
+
+In the **left most** image shows the forward rendered algorithm as ground truth.
+
+The **right most** shows the forward plus algorithm rendered by frustum cluster. 
+
+We noticed when we tried to turn up, the cluster start to miss the light. Since under other circumstances the results are mostly the same, we think this is most due to the intersection part, where we set `three.js plane` to construct the `three,frustum`. The internal implementation is different from what it demonstrates in documentation.
+
+### Effect
+
+##### Phong VS Blinn-Phong
+
+![Phong_Comparison](./img/Phong_Comparison.svg)
+
+**Phong reflection** is a local illumination model devised by **Bui Tuong Phong** and can produce a certain degree of realism in three-dimensional objects by combining three elements - diffuse, specular and ambient lighting for each considered point on a surface.
+
+Here we implement **Blinn-Phong**, Normal **Phong**. 
+
+- Theoretically, **Blinn Phong** takes less time to calculate. But this phenomenon does not appear that evident here. 
+- Visually, the original **Phong** looks more smooth and visually realistic then **Blinn-Phong** under the same parameter.
+
+Empirical evidence shows that **phong** did not introduce much calculation.
+
+### Optimizations & Performance
+
+##### Performance with different number of lights
+
+![FPS_performance](./img/FPS_performance.svg)
+
+Here we compare each method FPS w.r.t the number of lights in the scene. For fairness, the **Forward+** and **Deferred** shading both use `16 x 16 x 1` grid. 
+
+As showed in the diagram, when the number of light goes up, the fps shows Deferred > forward + > forward. 
+
+Compared to forward +, deferred shading takes a higher memory footprint. For example, it takes extra G-buffer to store the position, normal and albedo. The benefit is that from the depth pass we could filter out unnecessary shading calculation. 
+
+In general, the **forward plus** and **deferred shading** should be much faster than the forward algorithm. We think the main performance bottleneck lies in the light culling. 
+
+We would do sphere and frustum intersection  for each shape, which would neutralize the benefit from culling light into each frustum 
+
+```C++
+for each LightSphere S
+    for each Frustum F
+    	if Intersect(S, F):
+			....
+```
+
+###### Possible improvement
+
+We think the improvement could be we further divide the already divided frustums into several big chunks and do intersection.  
+
+##### G-buffer optimizations
+
+###### vec2 normal (vec3 -> vec2)
+
+We use the same technique as in our [project 4](https://github.com/Jack12xl/Project4-CUDA-Denoiser#1-gbuffer-optimization), which basically map the coordinate from sphere to oct. We implement its function in [optimize.glsl]().
 
 
 
+We do not witness a significant performance change from this. Theoretically, this would introduce more computation but could save memory for **G-buffer**. Also, we seam the encoded-normal to other G-buffer, which could even save more memory as it directly remove one vec4 G-buffer.
 
 
-### Reference:
-
-- Forward-Plus-Renderer
 
 
 
@@ -117,5 +173,4 @@ The brighter the pixel is, the more light current pixel is applied
 * [webgl-debug](https://github.com/KhronosGroup/WebGLDeveloperTools) by Khronos Group Inc.
 * [glMatrix](https://github.com/toji/gl-matrix) by [@toji](https://github.com/toji) and contributors
 * [minimal-gltf-loader](https://github.com/shrekshao/minimal-gltf-loader) by [@shrekshao](https://github.com/shrekshao)
-* Map NDC to clip space
-* 
+* [Map NDC to clip space](https://www.khronos.org/opengl/wiki/Compute_eye_space_from_window_space)

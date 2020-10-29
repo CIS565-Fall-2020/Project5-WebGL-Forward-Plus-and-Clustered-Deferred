@@ -43,7 +43,7 @@ gui.add(params, 'renderer', [FORWARD, FORWARD_PLUS, CLUSTERED, NORMAL, ALBEDO]).
 
 const scene = new Scene();
 scene.loadGLTF('models/sponza/sponza.gltf');
-
+//scene.loadGLTF('models/ironman_helmet/scene.gltf');
 // LOOK: The Wireframe class is for debugging.
 // It lets you draw arbitrary lines in the scene.
 // This may be helpful for visualizing your frustum clusters so you can make

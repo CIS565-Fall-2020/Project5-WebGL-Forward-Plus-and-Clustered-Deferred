@@ -3,7 +3,7 @@ import {Sphere, Frustum, Vector3, Matrix4, Vector4, Plane, Matrix3} from 'three'
 import Scene, { NUM_LIGHTS } from '../scene';
 import { vec3 ,vec4 } from 'gl-matrix';
 import Wireframe from '../wireframe';
-export const MAX_LIGHTS_PER_CLUSTER = 512;
+export const MAX_LIGHTS_PER_CLUSTER = 1024;
 
 const draw_line = false;
 export default class BaseRenderer {

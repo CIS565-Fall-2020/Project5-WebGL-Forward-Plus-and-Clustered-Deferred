@@ -1,4 +1,5 @@
 import shadelightfunction from './shadelight.glsl'
+import optimizFunc from './optimize.glsl'
 
 export default function(params) {
   return `
@@ -22,6 +23,7 @@ export default function(params) {
   uniform sampler2D u_clusterbuffer;
 
   ${shadelightfunction}
+  ${optimizFunc}
 
   varying vec2 v_uv;
   //varying vec3 v_projection_position;
@@ -128,7 +130,7 @@ export default function(params) {
       gl_FragColor = vec4(fragColor, 1.0);
     }
     else if (u_DEBUG == 1){
-      vec3 vis_normal = (normal.xyz + 1.0) / 2.0;
+      vec3 vis_normal = (oct_to_float32x3(float32x3_to_oct(normal.xyz)) + 1.0) / 2.0;
       gl_FragColor = vec4(vis_normal.xyz, 1.0);
     }
     else if (u_DEBUG == 2){
