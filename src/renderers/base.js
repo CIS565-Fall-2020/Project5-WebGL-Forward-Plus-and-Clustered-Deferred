@@ -64,7 +64,7 @@ export default class BaseRenderer {
 
     var depth = (depthMax - camera.near);
     var dz = depth / this._zSlices;
-    var tanHalfFov = Math.tan(camera.fov * Math.PI / 180);
+    var tanHalfFov = Math.tan(camera.fov / 2 * Math.PI / 180);
 
     for (let z = 0; z < this._zSlices; ++z) {
       var zmin = z * dz + camera.near;
@@ -115,7 +115,6 @@ export default class BaseRenderer {
                                                           lightRadius );
               if (intersect)
               {
-                //debugger;
                 lightCnt++;
                 var index = this._clusterTexture.bufferIndex(i, Math.floor(lightCnt / 4)) + lightCnt % 4;
                 this._clusterTexture.buffer[index] = lid;

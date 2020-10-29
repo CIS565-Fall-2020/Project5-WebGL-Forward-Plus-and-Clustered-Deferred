@@ -92,7 +92,7 @@ export default class ForwardPlusRenderer extends BaseRenderer {
     gl.uniform1i(this._shaderProgram.u_screenWidth, canvas.width);
     gl.uniform1i(this._shaderProgram.u_screenHeight, canvas.height);
     gl.uniform1f(this._shaderProgram.u_zminView, camera.near);
-    gl.uniform1f(this._shaderProgram.u_zmaxView, this.depthMax);
+    gl.uniform1f(this._shaderProgram.u_zmaxView, this._depthMax);
 
     gl.uniform2iv(this._shaderProgram.u_clusterSize, this._clusterSize);
     

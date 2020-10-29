@@ -15,8 +15,8 @@ varying float v_viewDepth;
 
 void main() {
     gl_Position = u_viewProjectionMatrix * vec4(a_position, 1.0);
-    vec4 positionView = u_viewMatrix * vec4(a_position, 1.0);
-    v_viewDepth = positionView.z;
+    vec4 view = u_viewMatrix * vec4(a_position, 1.0);
+    v_viewDepth = -view.z;
     v_position = a_position;
     v_normal = a_normal;
     v_uv = a_uv;

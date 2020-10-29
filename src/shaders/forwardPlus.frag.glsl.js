@@ -96,7 +96,7 @@ export default function(params) {
     int cz = int(float(u_zSlices) * (v_viewDepth - u_zminView) / (u_zmaxView - u_zminView));
     int cid = cz * u_xSlices * u_ySlices + cy * u_xSlices + cx;
 
-    int lightNum = int(ExtractFloat(u_clusterbuffer, u_clusterSize.x, u_clusterSize.y, cid, 0));
+    int lightNum = int(ExtractFloat(u_clusterbuffer, u_clusterSize.x, u_clusterSize.y, cid, 0) + 0.5);
     int sum = 0;
     for (int i = 1; i <= ${params.numLights}; ++i)
     {
@@ -120,7 +120,7 @@ export default function(params) {
     fragColor += albedo * ambientLight;
 
     gl_FragColor = vec4(fragColor, 1.0);
-    //gl_FragColor = vec4(float(u_clusterSize.x) /2.0, 0, 0, 1);
+    //gl_FragColor = vec4(float(lightNum)/50.0, 0, 0, 1);
   }
   `;
 }
