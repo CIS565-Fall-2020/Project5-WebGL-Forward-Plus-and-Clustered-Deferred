@@ -5,6 +5,7 @@ import { NUM_LIGHTS } from '../scene';
 import vsSource from '../shaders/forward.vert.glsl';
 import fsSource from '../shaders/forward.frag.glsl.js';
 import TextureBuffer from './textureBuffer';
+import Wireframe from '../wireframe';
 
 export default class ForwardRenderer {
   constructor() {
@@ -19,6 +20,8 @@ export default class ForwardRenderer {
       attribs: ['a_position', 'a_normal', 'a_uv'],
     });
 
+    this._wireFramer = new Wireframe();
+
     this._projectionMatrix = mat4.create();
     this._viewMatrix = mat4.create();
     this._viewProjectionMatrix = mat4.create();
@@ -30,6 +33,8 @@ export default class ForwardRenderer {
     mat4.invert(this._viewMatrix, camera.matrixWorld.elements);
     mat4.copy(this._projectionMatrix, camera.projectionMatrix.elements);
     mat4.multiply(this._viewProjectionMatrix, this._projectionMatrix, this._viewMatrix);
+    
+    // no update cluster here
 
     // Update the buffer used to populate the texture packed with light data
     for (let i = 0; i < NUM_LIGHTS; ++i) {

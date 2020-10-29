@@ -22,14 +22,30 @@ export default class Wireframe {
     this._positions = [];
     this._colors = [];
     this._vertexAttributes;
+
+    this._lock = false;
   }
 
   addLineSegment(startPosition, endPosition, color) {
+    if (this._lock){
+      return;
+    }
     this._positions.push(startPosition.slice()); // copy the input arrays
     this._positions.push(endPosition.slice());
     this._colors.push(color.slice());
     this._colors.push(color.slice());
     this._attributesNeedUpdate = true;
+  }
+
+  reset(){
+    // Jack12 removes all the line in current frame 
+    if (this._lock){
+      return;
+    }
+    this._attributesNeedUpdate = true;
+    this._positions = [];
+    this._colors = [];
+    this._vertexAttributes;
   }
 
   _updateVertexData() {

@@ -2,12 +2,18 @@ import { makeRenderLoop, camera, cameraControls, gui, gl } from './init';
 import ForwardRenderer from './renderers/forward';
 import ForwardPlusRenderer from './renderers/forwardPlus';
 import ClusteredDeferredRenderer from './renderers/clusteredDeferred';
+// Jack12 add normal renderer
+import NormalRenderer from './renderers/debugNormal';
+
 import Scene from './scene';
 import Wireframe from './wireframe';
 
 const FORWARD = 'Forward';
 const FORWARD_PLUS = 'Forward+';
 const CLUSTERED = 'Clustered Deferred';
+// Jack12 add debug view
+const NORMAL = 'Normal';
+const ALBEDO = 'Albedo';
 
 const params = {
   renderer: FORWARD_PLUS,
@@ -22,19 +28,22 @@ function setRenderer(renderer) {
       params._renderer = new ForwardRenderer();
       break;
     case FORWARD_PLUS:
-      params._renderer = new ForwardPlusRenderer(15, 15, 15);
+      params._renderer = new ForwardPlusRenderer(16, 16, 1);
       break;
     case CLUSTERED:
-      params._renderer = new ClusteredDeferredRenderer(15, 15, 15);
+      params._renderer = new ClusteredDeferredRenderer(16, 16, 1);
+      break;
+    case NORMAL:
+      params._renderer = new NormalRenderer();
       break;
   }
 }
 
-gui.add(params, 'renderer', [FORWARD, FORWARD_PLUS, CLUSTERED]).onChange(setRenderer);
+gui.add(params, 'renderer', [FORWARD, FORWARD_PLUS, CLUSTERED, NORMAL, ALBEDO]).onChange(setRenderer);
 
 const scene = new Scene();
 scene.loadGLTF('models/sponza/sponza.gltf');
-
+//scene.loadGLTF('models/ironman_helmet/scene.gltf');
 // LOOK: The Wireframe class is for debugging.
 // It lets you draw arbitrary lines in the scene.
 // This may be helpful for visualizing your frustum clusters so you can make
@@ -54,13 +63,14 @@ gl.enable(gl.DEPTH_TEST);
 function render() {
   scene.update();  
   params._renderer.render(camera, scene);
-
   // LOOK: Render wireframe "in front" of everything else.
   // If you would like the wireframe to render behind and in front
   // of objects based on relative depths in the scene, comment out /
   //the gl.disable(gl.DEPTH_TEST) and gl.enable(gl.DEPTH_TEST) lines.
   gl.disable(gl.DEPTH_TEST);
-  wireframe.render(camera);
+  params._renderer._wireFramer.render(camera);
+  params._renderer._wireFramer.reset();
+  //wireframe.render(camera);
   gl.enable(gl.DEPTH_TEST);
 }
 

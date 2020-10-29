@@ -17,7 +17,10 @@ export default class ForwardPlusRenderer extends BaseRenderer {
     this._shaderProgram = loadShaderProgram(vsSource, fsSource({
       numLights: NUM_LIGHTS,
     }), {
-      uniforms: ['u_viewProjectionMatrix', 'u_colmap', 'u_normap', 'u_lightbuffer', 'u_clusterbuffer'],
+      uniforms: ['u_viewProjectionMatrix', 'u_colmap', 'u_normap', 'u_lightbuffer', 'u_clusterbuffer',
+    'u_xSlice', 'u_ySlice', 'u_zSlice', 'u_maxLights','u_DEBUG', 'u_view_pos',
+    'u_projectionMatrix'
+    ],
       attribs: ['a_position', 'a_normal', 'a_uv'],
     });
 
@@ -29,6 +32,7 @@ export default class ForwardPlusRenderer extends BaseRenderer {
   render(camera, scene) {
     // Update the camera matrices
     camera.updateMatrixWorld();
+    
     mat4.invert(this._viewMatrix, camera.matrixWorld.elements);
     mat4.copy(this._projectionMatrix, camera.projectionMatrix.elements);
     mat4.multiply(this._viewProjectionMatrix, this._projectionMatrix, this._viewMatrix);
@@ -64,7 +68,18 @@ export default class ForwardPlusRenderer extends BaseRenderer {
 
     // Upload the camera matrix
     gl.uniformMatrix4fv(this._shaderProgram.u_viewProjectionMatrix, false, this._viewProjectionMatrix);
-
+    // Jack12 add other variable
+    gl.uniformMatrix4fv(this._shaderProgram.u_projectionMatrix, false, this._viewProjectionMatrix);
+    
+    gl.uniform1i(this._shaderProgram.u_DEBUG, 0);
+    gl.uniform1i(this._shaderProgram.u_maxLights, NUM_LIGHTS);
+    // stupid three.js, why not trigger warning when I access 
+    // with camera.position[0]
+    gl.uniform3f(this._shaderProgram.u_view_pos, camera.position.x, camera.position.y, camera.position.z);
+    
+    gl.uniform1f(this._shaderProgram.u_xSlice, this._xSlices);
+    gl.uniform1f(this._shaderProgram.u_ySlice, this._ySlices);
+    gl.uniform1f(this._shaderProgram.u_zSlice, this._zSlices);
     // Set the light texture as a uniform input to the shader
     gl.activeTexture(gl.TEXTURE2);
     gl.bindTexture(gl.TEXTURE_2D, this._lightTexture.glTexture);
@@ -75,8 +90,8 @@ export default class ForwardPlusRenderer extends BaseRenderer {
     gl.bindTexture(gl.TEXTURE_2D, this._clusterTexture.glTexture);
     gl.uniform1i(this._shaderProgram.u_clusterbuffer, 3);
 
+    
     // TODO: Bind any other shader inputs
-
     // Draw the scene. This function takes the shader program so that the model's textures can be bound to the right inputs
     scene.draw(this._shaderProgram);
   }
