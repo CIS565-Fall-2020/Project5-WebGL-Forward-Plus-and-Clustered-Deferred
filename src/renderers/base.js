@@ -69,7 +69,7 @@ export default class BaseRenderer {
     var v0 = vec3.create();
     var v1 = vec3.create();
     vec3.subtract(v0, point2, point1);
-    vec3.subtract(v0, point0, point1);
+    vec3.subtract(v1, point0, point1);
    
     // normal: the normal of the plane (normalized)
     var normal = vec3.create();
@@ -101,8 +101,6 @@ export default class BaseRenderer {
   //  pointWorldSpace (Vector3): treating the tileWorldSpace as on camera's far clip (highest possible value), want to find
   //    the corresponding point to slice z value (aka scale down from far clip and away from near clip)
   getSliceWorldSpaceFromTileWorldSpace(pointFarClip, pointNearClip, numSlices, pointSliceSpace) {
-    var sliceScaleX = pointSliceSpace[0] / numSlices[0];
-    var sliceScaleX = pointSliceSpace[1] / numSlices[0];
     var sliceScaleZ = pointSliceSpace[2] / numSlices[2];
     
     var vNearClipToFarClip = vec3.create();
@@ -120,18 +118,6 @@ export default class BaseRenderer {
   }
 
   updateClusters(camera, viewMatrix, scene) {
-    // TODO TESTONLY DELETE
-    var testLight = false;
-    var testClip = false;
-    var testSubFrustum = false;
-
-    camera.far = 50;
-    camera.updateProjectionMatrix();
-    // if (this._firstCall > 0) {
-    //   return [];
-    // }
-    
-
     // TODO: Update the cluster texture with the count and indices of the lights in each cluster
     // This will take some time. The math is nontrivial... 
 
@@ -221,27 +207,11 @@ export default class BaseRenderer {
 
           // // Create a frustum out of the planes
           var frustum = new Frustum(planeFar, planeNear, planeLeft, planeRight, planeUp, planeDown);
-
-          if (testLight) {
-            var lightCount = this._clusterTexture.buffer[this._clusterTexture.bufferIndex(i, 0)];
-            for (let l = 0; l < 10; ++l) {
-              var slotInCluster = Math.floor((lightCount + 4.0) / 4.0); // Have to add 4 because the first index stores the number of light
-              var elementInSlot = lightCount % 4;
-
-              // Save the index of the light into the buffer
-              this._clusterTexture.buffer[this._clusterTexture.bufferIndex(i, slotInCluster) + elementInSlot] = l;
-              // Update the number of light count
-              lightCount += 1;
-              this._clusterTexture.buffer[this._clusterTexture.bufferIndex(i, 0) + 0] = lightCount;
-            }
-            
-            this._clusterTexture.buffer[this._clusterTexture.bufferIndex(i, 0)] = 0;
-          }
           
           // Iterates through all the lights to see which light intersects with this frustum (treat lights as point lights)
           for (let l = 0; l < NUM_LIGHTS; ++l) {
             var light = scene.lights[l];
-            var lightPos = new Vector3(light.position.x, light.position.y, light.position.z);
+            var lightPos = new Vector3(light.position[0], light.position[1], light.position[2]);
             var lightSphere = new Sphere(lightPos, LIGHT_RADIUS);
             
             // Light count is store in the first index & element of this buffer
@@ -258,6 +228,7 @@ export default class BaseRenderer {
               this._clusterTexture.buffer[this._clusterTexture.bufferIndex(i, 0) + 0] = lightCount;
             }
           }
+          var m = 2;
         }
       }
     }
