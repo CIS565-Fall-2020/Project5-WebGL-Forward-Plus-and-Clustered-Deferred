@@ -1,11 +1,12 @@
-import { canvas, gl } from '../init';
+import { gl } from '../init';
 import { mat4, vec4, vec3 } from 'gl-matrix';
 import { loadShaderProgram } from '../utils';
 import { NUM_LIGHTS } from '../scene';
 import vsSource from '../shaders/forwardPlus.vert.glsl';
 import fsSource from '../shaders/forwardPlus.frag.glsl.js';
 import TextureBuffer from './textureBuffer';
-import BaseRenderer, { MAX_LIGHTS_PER_CLUSTER } from './base';
+import BaseRenderer from './base';
+import { MAX_LIGHTS_PER_CLUSTER } from './base';
 
 export default class ForwardPlusRenderer extends BaseRenderer {
   constructor(xSlices, ySlices, zSlices) {
@@ -25,11 +26,7 @@ export default class ForwardPlusRenderer extends BaseRenderer {
       resolutionWidth: canvas.width,
       resolutionHeight: canvas.height
     }), {
-      uniforms: ['u_viewProjectionMatrix',
-      'u_colmap', 'u_normap', 
-      'u_lightbuffer', 'u_clusterbuffer', 
-      'u_farClip'  
-    ],
+      uniforms: ['u_viewProjectionMatrix', 'u_colmap', 'u_normap', 'u_lightbuffer', 'u_clusterbuffer', 'u_farClip', 'u_nearClip'],
       attribs: ['a_position', 'a_normal', 'a_uv'],
     });
 
@@ -45,7 +42,6 @@ export default class ForwardPlusRenderer extends BaseRenderer {
     mat4.copy(this._projectionMatrix, camera.projectionMatrix.elements);
     mat4.multiply(this._viewProjectionMatrix, this._projectionMatrix, this._viewMatrix);
 
-    // TODO: DELETE var points = (TEST ONLY)
     // Update cluster texture which maps from cluster index to light list
     var points = this.updateClusters(camera, this._viewMatrix, scene);
     
@@ -90,6 +86,7 @@ export default class ForwardPlusRenderer extends BaseRenderer {
 
     // TODO: Bind any other shader inputs
     gl.uniform1f(this._shaderProgram.u_farClip, camera.far);
+    gl.uniform1f(this._shaderProgram.u_nearClip, camera.near);
 
     // Draw the scene. This function takes the shader program so that the model's textures can be bound to the right inputs
     scene.draw(this._shaderProgram);
