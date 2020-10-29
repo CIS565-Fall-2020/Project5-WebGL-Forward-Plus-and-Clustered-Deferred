@@ -21,9 +21,7 @@ WebGL Forward+ and Clustered Deferred Shading
 
 https://drive.google.com/file/d/1e5ZsRN7bboK-4Bq249mDDDxN7u5Ogs0Q/view?usp=sharing
 
-### (TODO: Your README)
-
-Performance Analysis:
+### Performance Analysis:
 
 The Forward Plus Renderer fram rate varied drastically with a frame rate in between 90 and 110 for close up scenes that do not show much geometry to frame rates in between 38 and 57 for far away scenes that show a lot of the scene.
 
