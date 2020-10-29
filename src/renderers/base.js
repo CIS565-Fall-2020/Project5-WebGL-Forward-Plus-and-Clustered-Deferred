@@ -1,23 +1,15 @@
 import TextureBuffer from './textureBuffer';
 import { NUM_LIGHTS } from '../scene.js';
-import { mat4, vec4 } from 'gl-matrix';
-import Scene from '../scene.js';
-import { PerspectiveCamera } from 'three';
+import { vec4 } from 'gl-matrix';
 
-export const MAX_LIGHTS_PER_CLUSTER = 100;
+export const MAX_LIGHTS_PER_CLUSTER = 300;
 
-// The effective range is [0, numSlices - 1], possible returns [-1, numSlices].
-function getSliceIndex(value, min, max, numSlices) {
-  let stride = (max - min) / numSlices;
-  let index =  Math.floor((value - min) / stride);
-  if (index < 0) {
-    return 0;
-  }
-  if (index >= numSlices ) {
-    return numSlices - 1;
-  }
-  return index;
-}
+
+const getSliceIndex = (value, min, max, numSlices) => {
+  const stride = (max - min) / numSlices;
+  const index = Math.floor((value - min) / stride)
+  return index < 0 ? 0 : index >= numSlices ? numSlices - 1 : index;
+};
 
 export default class BaseRenderer {
   constructor(xSlices, ySlices, zSlices) {
@@ -29,9 +21,6 @@ export default class BaseRenderer {
   }
 
   updateClusters(camera, viewMatrix, scene) {
-    // TODO: Update the cluster texture with the count and indices of the lights in each cluster
-    // This will take some time. The math is nontrivial...
-
     for (let z = 0; z < this._zSlices; ++z) {
       for (let y = 0; y < this._ySlices; ++y) {
         for (let x = 0; x < this._xSlices; ++x) {
@@ -42,58 +31,52 @@ export default class BaseRenderer {
       }
     }
 
+
     for (let lightIdx = 0; lightIdx < NUM_LIGHTS; lightIdx++) {
       const light = scene.lights[lightIdx];
 
-      let lightWorldPos = vec4.fromValues(
+      const lightWorldPos = vec4.fromValues(
         light.position[0],
         light.position[1],
         light.position[2],
         1.0
       );
 
-      let lightCameraPos = vec4.create();
+      const lightCameraPos = vec4.create();
       vec4.transformMat4(lightCameraPos, lightWorldPos, viewMatrix);
 
-      let lightX = lightCameraPos[0],
-          lightY = lightCameraPos[1],
-          lightZ = -lightCameraPos[2];
+      const lightX = lightCameraPos[0],
+            lightY = lightCameraPos[1],
+            lightZ = -lightCameraPos[2];
 
-      const maxLightZ = lightZ + light.radius;
-      const minLightZ = lightZ - light.radius;
-      const maxLightX = lightX + light.radius * 1.2;
-      const minLightX = lightX - light.radius * 1.2;
-      const maxLightY = lightY + light.radius * 1.2;
-      const minLightY = lightY - light.radius * 1.2;
+      const offsetRadius = light.radius * 1.2;
+      const maxZ = lightZ + offsetRadius,
+            minZ = lightZ - offsetRadius;
+      const maxX = lightX + offsetRadius,
+            minX = lightX - offsetRadius;
+      const maxY = lightY + offsetRadius,
+            minY = lightY - offsetRadius;
 
-      let minClusterZidx = getSliceIndex(minLightZ, camera.near, camera.far, this._zSlices);
-      let maxClusterZidx = getSliceIndex(maxLightZ, camera.near, camera.far, this._zSlices);
-      minClusterZidx = minClusterZidx < 0 ? 0 : minClusterZidx;
-      maxClusterZidx = maxClusterZidx >= this._zSlices - 1 ? this._zSlices : maxClusterZidx;
+      const frustumZ = Math.max(minZ, camera.near); 
+      const yRange = frustumZ * Math.tan(camera.fov * 0.5 * (Math.PI / 180));
+      const xRange = yRange * camera.aspect;
 
-       // frustum width and height at light z
-      let frustumZ = minLightZ < camera.near ? camera.near : minLightZ;
-      let yRange = frustumZ * Math.tan(camera.fov * 0.5 * (Math.PI / 180));
-      let xRange = yRange * camera.aspect;
-
-      let minClusterXidx = getSliceIndex(minLightX, -xRange, xRange, this._xSlices);
-      let maxClusterXidx = getSliceIndex(maxLightX, -xRange, xRange, this._xSlices);
-      let minClusterYidx = getSliceIndex(minLightY, -yRange, yRange, this._ySlices);
-      let maxClusterYidx = getSliceIndex(maxLightY, -yRange, yRange, this._ySlices);
-      minClusterXidx = minClusterXidx < 0 ? 0 : minClusterXidx;
-      maxClusterXidx = maxClusterXidx >= this._xSlices ? this._xSlices - 1 : maxClusterXidx;
-      minClusterYidx = minClusterYidx < 0 ? 0 : minClusterYidx;
-      maxClusterYidx = maxClusterYidx >= this._ySlices ? this._ySlices - 1 : maxClusterYidx;
+      const minClusterZidx = Math.max(getSliceIndex(minZ, camera.near, camera.far, this._zSlices), 0),
+            maxClusterZidx = Math.min(getSliceIndex(maxZ, camera.near, camera.far, this._zSlices), this._zSlices - 1),
+            minClusterXidx = Math.max(getSliceIndex(minX, -xRange, xRange, this._xSlices), 0),
+            maxClusterXidx = Math.min(getSliceIndex(maxX, -xRange, xRange, this._xSlices), this._xSlices - 1),
+            minClusterYidx = Math.max(getSliceIndex(minY, -yRange, yRange, this._ySlices), 0),
+            maxClusterYidx = Math.min(getSliceIndex(maxY, -yRange, yRange, this._ySlices), this._ySlices - 1);
 
       for (let z = minClusterZidx; z <= maxClusterZidx; z++) {
         for (let y = minClusterYidx; y <= maxClusterYidx; y++) {
           for (let x = minClusterXidx; x <= maxClusterXidx; x++) {
-            let i = x + y * this._xSlices + z * this._xSlices * this._ySlices;
+            const i = x + y * this._xSlices + z * this._xSlices * this._ySlices;
             let count = this._clusterTexture.buffer[this._clusterTexture.bufferIndex(i, 0)];
             count++;
             this._clusterTexture.buffer[this._clusterTexture.bufferIndex(i, 0)];
-            let component = Math.floor(count / 4);
-            let offset = count - component * 4;
+            const component = Math.floor(count / 4);
+            const offset = count - component * 4;
             this._clusterTexture.buffer[this._clusterTexture.bufferIndex(i, 0)] = count;
             this._clusterTexture.buffer[this._clusterTexture.bufferIndex(i, component) + offset] = lightIdx;
           }

@@ -1,5 +1,5 @@
 import { gl, WEBGL_draw_buffers, canvas } from '../init';
-import { mat4, vec4 } from 'gl-matrix';
+import { mat4 } from 'gl-matrix';
 import { loadShaderProgram, renderFullscreenQuad } from '../utils';
 import { NUM_LIGHTS } from '../scene';
 import toTextureVert from '../shaders/deferredToTexture.vert.glsl';
@@ -33,7 +33,7 @@ export default class ClusteredDeferredRenderer extends BaseRenderer {
       xSlices,
       ySlices,
       zSlices,
-      blinnPhong: false,
+      blinnPhong: true,
     }), {
       uniforms: [
         'u_gbuffers[0]', 'u_gbuffers[1]', 'u_gbuffers[2]', 'u_gbuffers[3]',
@@ -162,8 +162,7 @@ export default class ClusteredDeferredRenderer extends BaseRenderer {
 
     // Use this shader program
     gl.useProgram(this._progShade.glShaderProgram);
-    
-  // TODO: Bind any other shader inputs
+
     // Set the light texture as a uniform input to the shader
     gl.activeTexture(gl.TEXTURE2);
     gl.bindTexture(gl.TEXTURE_2D, this._lightTexture.glTexture);

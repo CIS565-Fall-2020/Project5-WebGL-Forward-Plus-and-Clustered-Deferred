@@ -76,16 +76,15 @@ export default function(params) {
      vec3 albedo = gb0.xyz;
      vec3 position = gb1.xyz;
      
-     /* 2-component normal */
-     // decode normal
-     vec2 enc = vec2(gb0.w, gb1.w) * 2.0 - 1.0;
-     vec4 nn = vec4(enc, 1.0, -1.0);
+     // 2-component normal
+     vec2 tmp = vec2(gb0.w, gb1.w) * 2.0 - 1.0;
+     vec4 nn = vec4(tmp, 1.0, -1.0);
      float l = dot(nn.xyz, -nn.xyw);
      nn.z = l;
      nn.xy *= sqrt(l);
      vec3 normal = nn.xyz * 2.0 + vec3(0.0, 0.0, -1.0);
 
-     /* 3-component normal */
+     // 3-component normal
      // vec4 gb2 = texture2D(u_gbuffers[2], v_uv);
      // vec4 gb3 = texture2D(u_gbuffers[3], v_uv);
      // vec3 normal = gb2.xyz;
@@ -120,7 +119,6 @@ export default function(params) {
 
       fragColor += albedo * lambertTerm * light.color * vec3(lightIntensity);
 
-      // Blinn-Phong shading
       if (${params.blinnPhong}) {
         vec3 V = normalize(u_cameraPosition - position);
         vec3 H = normalize(L + V);
