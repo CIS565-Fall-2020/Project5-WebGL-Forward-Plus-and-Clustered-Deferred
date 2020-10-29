@@ -21,6 +21,21 @@ WebGL Forward+ and Clustered Deferred Shading
 
 [![](img/demo.gif)](TODO)
 
+#### Features:
+
+- Forward+ and clustered deferred rendering
+  - Light frustum Culling
+  - Phong / Blinn-Phong shading
+
+- Debug views
+  - Frustum visualization
+  - Light assigning visualization
+
+- Optimization
+  - Normal encoding
+
+
+
 ### Intro
 
 In this project, we implement the deferred shading algorithm. Deferred shading basically refers to defer the shading stage until necessary. The shading could utilize the depth and light position distribution to cull unnecessary calculation. 
