@@ -1,7 +1,5 @@
 export default function(params) {
   return `
-  // TODO: This is pretty much just a clone of forward.frag.glsl.js
-
   #version 100
   precision highp float;
 
@@ -75,14 +73,27 @@ export default function(params) {
   }
 
   void main() {
+    float fragX = gl_FragCoord.x / float(${params.width});
+    float fragY = gl_FragCoord.y/ float(${params.height});
+    float fragZ = (gl_FragCoord.z / gl_FragCoord.w) / 50.0; //${params.cameraFar};
+
+    int dimX = int(fragX * float(${params.xSlices}));
+    int dimY = int(fragY * float(${params.ySlices}));
+    int dimZ = int(fragZ * float(${params.zSlices}));
+    int bufIdx = dimX + dimY * ${params.xSlices} + dimZ * ${params.xSlices} * ${params.ySlices};
+
+    float n_lights = ExtractFloat(u_clusterbuffer, ${params.xSlices * params.ySlices * params.zSlices}, int(${Math.ceil((params.numLights + 1)/4)}), bufIdx, 0);
+
     vec3 albedo = texture2D(u_colmap, v_uv).rgb;
     vec3 normap = texture2D(u_normap, v_uv).xyz;
     vec3 normal = applyNormalMap(v_normal, normap);
 
     vec3 fragColor = vec3(0.0);
 
-    for (int i = 0; i < ${params.numLights}; ++i) {
-      Light light = UnpackLight(i);
+    for (int i = 0; i < ${params.numLights}; i++) {
+      if (i >= int(n_lights)) { break; }
+      int lightIdx = int(ExtractFloat(u_clusterbuffer, ${params.xSlices * params.ySlices * params.zSlices}, int(${Math.ceil((params.numLights + 1)/4)}), bufIdx, i+1));
+      Light light = UnpackLight(lightIdx);
       float lightDistance = distance(light.position, v_position);
       vec3 L = (light.position - v_position) / lightDistance;
 
@@ -94,7 +105,9 @@ export default function(params) {
 
     const vec3 ambientLight = vec3(0.025);
     fragColor += albedo * ambientLight;
-
+    // fragColor = vec3(1.0-fragZ, 1.0-fragZ, 1.0-fragZ);
+    // fragColor = vec3(fragX, fragY, 0);
+    // fragColor = vec3(float(n_lights) / 100.0);
     gl_FragColor = vec4(fragColor, 1.0);
   }
   `;
