@@ -3,25 +3,27 @@ WebGL Forward+ and Clustered Deferred Shading
 
 **University of Pennsylvania, CIS 565: GPU Programming and Architecture, Project 5**
 
-* (TODO) YOUR NAME HERE
-* Tested on: (TODO) **Google Chrome 222.2** on
-  Windows 22, i7-2222 @ 2.22GHz 22GB, GTX 222 222MB (Moore 2222 Lab)
+NAME: CHETAN PARTIBAN 
+Browser: Google Chrome 
+Tested on Ubuntu 18.4, i7-6700HQ @ 2.60 GHz 16Gb, integrated graphics (Personal Laptop) 
 
-### Live Online
+### Demo Image and GIF
 
-[![](img/thumb.png)](http://TODO.github.io/Project5-WebGL-Forward-Plus-and-Clustered-Deferred)
+![](imgs/running.gif)
 
-### Demo Video/GIF
+### Project Summary
 
-[![](img/video.png)](TODO)
+In this project, I have implemented Forward+ and Deferred Cluster style rendering via WebGL to explore how clustering can be used to reduce computational intensity for scenes with lots of geometry and lighting. I also implemented som optimizations such as improved memory reads and gbuffer optimizations such as reducing memory size to Bytes from Floats and reducing the number of buffers by squeezing in extra values. I found that most of the improvements came from improving the algorithm as opposed to micro-improvements within the algorithm. Here is a quick summary of the performance of the different implementations when compared to a standard forward renderring pipeline:
 
-### (TODO: Your README)
+![](imgs/relativePerformance.png)
 
-*DO NOT* leave the README to the last minute! It is a crucial part of the
-project, and we will not be able to grade you without a good README.
+I have also examined the performance of Forward, Forward+, and Deferred Cluster shading at different numbers of lights. We can see that Forward+ and Deferred Clusterred rendering scale much better with the number of lights than a naive forward implementation. Further, we can see that defferred cluster seems to do better than Forward+ especially for situations with multiple lights.
 
-This assignment has a considerable amount of performance analysis compared
-to implementation work. Complete the implementation early to leave time!
+![](imgs/timePerFrame.png)
+
+I also implemented Blin-Phong specular reflections that can be utilized in the clustered-deferred implementation at significant computational cost (since it requires extra computation for every light at every pixel). With it enabled, I see framerates drop from ~40 fps to ~36. We can see it in this picture, where the nearby surfaces contain a strong shiny reflectance:
+
+![](imgs/bP.png)
 
 
 ### Credits
