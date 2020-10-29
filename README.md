@@ -7,13 +7,9 @@ NAME: CHETAN PARTIBAN
 Browser: Google Chrome 
 Tested on Ubuntu 18.4, i7-6700HQ @ 2.60 GHz 16Gb, integrated graphics (Personal Laptop) 
 
-### Live Online
+### Demo Image and GIF
 
-![](imgs/sample.png)
-
-### Demo Video/GIF
-
-[![](img/video.png)](TODO)
+![](imgs/running.gif)
 
 ### Project Summary
 
