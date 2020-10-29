@@ -8,6 +8,7 @@ uniform sampler2D u_normap;
 varying vec3 v_position;
 varying vec3 v_normal;
 varying vec2 v_uv;
+varying vec3 v_projection_position;
 
 vec3 applyNormalMap(vec3 geomnor, vec3 normap) {
     normap = normap * 2.0 - 1.0;
@@ -25,5 +26,5 @@ void main() {
     gl_FragData[0] = vec4(v_position, 1);
     gl_FragData[1] = vec4(norm, 0);
     gl_FragData[2] = vec4(col, 1);
-    //gl_FragData[3] = ??
+    gl_FragData[3] = vec4(v_projection_position ,1);
 }

@@ -172,7 +172,7 @@ export default class ClusteredDeferredRenderer extends BaseRenderer {
     gl.uniform1f(this._progShade.u_ySlice, this._ySlices);
     gl.uniform1f(this._progShade.u_zSlice, this._zSlices);
     
-    gl.uniform1i(this._progShade.u_DEBUG, 4);
+    gl.uniform1i(this._progShade.u_DEBUG, 0);
     gl.uniform1i(this._progShade.u_maxLights, NUM_LIGHTS);
     // Bind g-buffers
     // 0 ,1 for color map, normal map 

@@ -86,7 +86,7 @@ export default function(params) {
         i + 1
       ));
       Light light = UnpackLight(l_idx);
-      //fragColor += shaderLight(albedo, normal, light, shiness, k_s, v_position);
+      fragColor += shaderLight(albedo, normal, light, shiness, k_s, v_position);
     }
 
     const vec3 ambientLight = vec3(0.025);
@@ -113,16 +113,16 @@ export default function(params) {
 
   void main() {
     // TODO: extract data from g buffers and do lighting
-    vec4 v_position = texture2D(u_gbuffers[0], v_uv);
+    vec4 world_position = texture2D(u_gbuffers[0], v_uv);
     vec4 normal = texture2D(u_gbuffers[1], v_uv);
     vec4 albedo = texture2D(u_gbuffers[2], v_uv);
-    // vec4 gb3 = texture2D(u_gbuffers[3], v_uv);
-    vec3 cluster_idx = p2ClusterIdx(v_position.xyz);
+    vec4 projection_position = texture2D(u_gbuffers[3], v_uv);
+    vec3 cluster_idx = p2ClusterIdx(projection_position.xyz);
 
     const float k_s = 0.75, shiness = 64.0;
     vec3 fragColor = vec3(0.0);
 
-    fragColor += deferredShader(cluster_idx, v_position.xyz, albedo.xyz, normal.xyz, k_s, shiness);
+    fragColor += deferredShader(cluster_idx, world_position.xyz, albedo.xyz, normal.xyz, k_s, shiness);
 
     if (u_DEBUG == 0){
       gl_FragColor = vec4(fragColor, 1.0);
