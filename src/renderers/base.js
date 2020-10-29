@@ -1,10 +1,6 @@
 import { Math as threeMath, Vector4, Vector3 } from 'three';
-import PerspectiveOffCenterFrustum from "cesium/Source/Core/PerspectiveOffCenterFrustum"
-import BoundingSphere from "cesium/Source/Core/BoundingSphere"
 import TextureBuffer from './textureBuffer';
-import { Cartesian3, Cartesian4, PerspectiveFrustum } from 'cesium';
 import { NUM_LIGHTS } from '../scene';
-import Intersect from 'cesium/Source/Core/Intersect';
 import {mat4, vec4} from 'gl-matrix';
 
 export const MAX_LIGHTS_PER_CLUSTER = 300;
