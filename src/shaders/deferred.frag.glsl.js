@@ -105,16 +105,16 @@ export default function(params) {
       Light light = UnpackLight(lightIdx);
       float lightDistance = distance(light.position, v_position);
       vec3 L = (light.position - v_position) / lightDistance;
-      // vec3 H = normalize(light.position + u_camerapos);
-      // float specularTerm = max(dot(H, normal), 0.0);
-      // specularTerm = specularTerm * specularTerm;
-      // specularTerm = specularTerm * specularTerm * specularTerm;
+      vec3 H = normalize(light.position + u_camerapos);
+      float specularTerm = max(dot(H, normal), 0.0);
+      specularTerm = specularTerm * specularTerm;
+      specularTerm = specularTerm * specularTerm * specularTerm;
       
       float lightIntensity = cubicGaussian(2.0 * lightDistance / light.radius);
       float lambertTerm = max(dot(L, normal), 0.0);
 
       fragColor += albedo * lambertTerm * light.color * vec3(lightIntensity);
-      // fragColor += 1.0 * specularTerm * vec3(1,1,1) * vec3(lightIntensity);
+      fragColor += 1.0 * specularTerm * vec3(1,1,1) * vec3(lightIntensity);
     }
 
     const vec3 ambientLight = vec3(0.025);
