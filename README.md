@@ -3,25 +3,32 @@ WebGL Forward+ and Clustered Deferred Shading
 
 **University of Pennsylvania, CIS 565: GPU Programming and Architecture, Project 5**
 
-* (TODO) YOUR NAME HERE
-* Tested on: (TODO) **Google Chrome 222.2** on
-  Windows 22, i7-2222 @ 2.22GHz 22GB, GTX 222 222MB (Moore 2222 Lab)
+* Szeyu Chan
+  * [LinkedIn](https://www.linkedin.com/in/szeyuchan11/)
+* Tested on: Windows 10, i7-10510U @ 1.80GHz 16GB, MX250 2048MB (Personal Laptop)
 
 ### Live Online
 
-[![](img/thumb.png)](http://TODO.github.io/Project5-WebGL-Forward-Plus-and-Clustered-Deferred)
+![](img/thumb.png)
+https://asteriskchan.github.io/Project5-WebGL-Forward-Plus-and-Clustered-Deferred/
 
-### Demo Video/GIF
+### GIF
 
-[![](img/video.png)](TODO)
+![](img/thumb.gif)
 
-### (TODO: Your README)
+### Features
+* Forward+ Rendering
+* Clustered Deferred Renderring
+* Deferred Blinn-Phong shading
 
-*DO NOT* leave the README to the last minute! It is a crucial part of the
-project, and we will not be able to grade you without a good README.
+### Performance
+#### Light Number
+![](img/lightnum.png)  
+We can find that with the increase of light number, the clustered deferred method has a better performance. It is mainly because when the total light number is big, the light number in each cluster also increases, which is still expensive for forward+ rendering. While when the light number is small, the cost of sending buffers cannot be negligible in deferred rendering, so its performance is worse than forward+ rendering.
 
-This assignment has a considerable amount of performance analysis compared
-to implementation work. Complete the implementation early to leave time!
+#### Blinn-Phong Shading
+![](img/shading.png)  
+We test lambert shading and Blinn-Phong shading using clustered deferred rendering. Lambert shading can always be more efficiency because of its less computation. 
 
 
 ### Credits
