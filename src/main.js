@@ -4,13 +4,21 @@ import ForwardPlusRenderer from './renderers/forwardPlus';
 import ClusteredDeferredRenderer from './renderers/clusteredDeferred';
 import Scene from './scene';
 import Wireframe from './wireframe';
+import { NUM_LIGHTS } from './scene';
+import { MAX_LIGHTS_PER_CLUSTER } from './scene';
 
 const FORWARD = 'Forward';
 const FORWARD_PLUS = 'Forward+';
 const CLUSTERED = 'Clustered Deferred';
 
+const Lambertian = 'Lambertian';
+
+
 const params = {
   renderer: FORWARD_PLUS,
+  numLights:NUM_LIGHTS,
+  maxLightsPerCluster: MAX_LIGHTS_PER_CLUSTER,
+  ShadingModel: Lambertian,
   _renderer: null,
 };
 
@@ -59,9 +67,9 @@ function render() {
   // If you would like the wireframe to render behind and in front
   // of objects based on relative depths in the scene, comment out /
   //the gl.disable(gl.DEPTH_TEST) and gl.enable(gl.DEPTH_TEST) lines.
-  gl.disable(gl.DEPTH_TEST);
-  wireframe.render(camera);
-  gl.enable(gl.DEPTH_TEST);
+  //gl.disable(gl.DEPTH_TEST);
+  //wireframe.render(camera);
+  //gl.enable(gl.DEPTH_TEST);
 }
 
 makeRenderLoop(render)();
