@@ -9,11 +9,18 @@ WebGL Forward+ and Clustered Deferred Shading
 
 ### Live Online
 
+**Forward Plus Renders**
 ![](img/forward+0.png)
 
 ![](img/forward+1.png)
 
+**Cluster Deffered Renders**
+
+Blooper Image caused by accidentally overwriting light texture:
+
 ![](img/cluster_deferred0.png)
+
+Final Render
 
 ### Demo Video/GIF
 
