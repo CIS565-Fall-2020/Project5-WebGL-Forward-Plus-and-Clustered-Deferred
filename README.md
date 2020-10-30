@@ -34,11 +34,11 @@ We can defer the shading stage by first storing the scene information to g-buffe
 The number of lights now has different influences on these three rendering methods.
 
 | Number of Lights | 60 | 125 | 250 |
-|---|---|---|
+|---|---|---|---|
 | Forward | 53ms | 100ms | 213ms |
-|---|---|---|
+|---|---|---|---|
 | Forward+ | 60ms | 154ms | 318ms |
-|---|---|---|
+|---|---|---|---|
 | Clustered Deferred | 26ms | 67ms | 113ms |
 
 
