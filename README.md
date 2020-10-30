@@ -69,12 +69,27 @@ contribute to the scene. This approach is similar to forward plus.
  
 ## Performance Analysis  
 
+Comparison of implementations of Forward+ and Clustered Deferred shading and analysis of their differences.
+
+* <img src= "img/perf1.png" alt = "perf 1"> 
+
+* <img src= "img/perf2.png" alt = "perf 1"> 
+
+* <img src= "img/perf3.png" alt = "perf 1"> 
+
+* <img src= "img/perf4.png" alt = "perf 1"> 
+
+* <img src= "img/perf5.png" alt = "perf 1"> 
+
+
+
+
 
 ### Bloopers 
 
-* <img src= "img/bloop1" alt = "bloop 1" height = "30" width = "30"> 
+* <img src= "img/bloop1.png" alt = "bloop 1" height = "300" width = "300"> 
 
-* <img src= "img/bloop2" alt = "bloop 2" height = "30" width = "30"> 
+* <img src= "img/bloop2.png" alt = "bloop 2" height = "300" width = "300"> 
 
 ### Credits
 
