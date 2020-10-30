@@ -21,13 +21,9 @@ GPU : NVIDIA GeForce RTX 2060
 
 ## Output 
 
-### Live Online
-
-[![](img/thumb.png)](https://sireesha-upenn.github.io/Project5-WebGL-Forward-Plus-and-Clustered-Deferred/)
-
 ### Demo Video/GIF
 
-[![](img/video.png)](TODO)
+![](img/fwd.gif)
 
 ## Overview 
 
@@ -69,12 +65,41 @@ contribute to the scene. This approach is similar to forward plus.
  
 ## Performance Analysis  
 
+Comparison of implementations of Forward+ and Clustered Deferred shading and analysis of their differences.
+
+* This first graph shows the comparision of timing between the 3 methods. We can clearly see that clustered deferred gives the best performance. 
+
+<img src= "img/perf1.png" alt = "perf 1"> 
+
+* This graph is similar to the first one, but compares the methods by their output fps. We can see that clustered deferred gives the highest fps 
+
+<img src= "img/perf2.png" alt = "perf 1"> 
+
+* As the number of lights go up in a scene, the number of computations in the for loops inside the forward shader go up very quickly. We can see 
+that at lesser number of lights per scene, there isn't a significant difference between the 3 methods. Once the number of lights starts scaling
+up, we see a drastic change in performance. Since our loop inside forward+ only checks a pixel against the lights inside the number, the number
+of checks needed to be performed comes down. The graph below depicts the time taken by these methods at different number of lights in the scene.
+
+<img src= "img/perf3.png" alt = "perf 1"> 
+
+* Next, we compare the performance enchancement due to usage of packed GBuffers. We pack our normal into the last component of the position and 
+color vec4s and pass it into the shaders. We compute the third component of the normal inside the shader itself. This gives the benefit of memory 
+bandwidth optimization. It also improves the time taken slightly. The graph below depicts this.  
+
+<img src= "img/perf4.png" alt = "perf 1"> 
+
+* Lastly, we look at the effect of using Blinn Phong shading model in our shader. I did not observe much of a performance difference with or without
+this effect. The reason could be that adding this shading model only requires few extra lines of code in our fragment shader. As these shaders run parallely
+on our gpu, this wouldn't affect the performance. 
+ 
+<img src= "img/perf5.png" alt = "perf 1"> 
+
 
 ### Bloopers 
 
-* <img src= "img/bloop1" alt = "bloop 1" height = "30" width = "30"> 
+* <img src= "img/bloop1.png" alt = "bloop 1"> 
 
-* <img src= "img/bloop2" alt = "bloop 2" height = "30" width = "30"> 
+* <img src= "img/bloop2.png" alt = "bloop 2"> 
 
 ### Credits
 

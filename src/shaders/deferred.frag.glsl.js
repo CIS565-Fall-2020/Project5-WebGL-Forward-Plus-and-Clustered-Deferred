@@ -129,7 +129,7 @@ export default function(params) {
       float specularIntensity = max(pow(dot(lightToPoint, normal), 5.0), 0.0); 
 
       fragColor += albedo * lambertTerm * light.color * vec3(lightIntensity);
-      //fragColor += (specularIntensity * light.color * 0.01); 
+      fragColor += (specularIntensity * light.color * 0.01); 
 
     }
     const vec3 ambientLight = vec3(0.025);
