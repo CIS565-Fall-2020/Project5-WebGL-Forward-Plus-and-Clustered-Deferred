@@ -10,11 +10,12 @@ WebGL Forward+ and Clustered Deferred Shading
 **This repo contains a WebGL implementation of a basic Forward Plus Rendering and Clustered Deferred Rendering.**
 
 ## Live Online
-https://youtu.be/xHVpaft3udE
+
+[![](img/thumb.png)](http://TODO.github.io/Project5-WebGL-Forward-Plus-and-Clustered-Deferred)
 
 ## Demo Video/GIF
 
-[YouTube](https://youtu.be/xHVpaft3udE)
+![](./img/demo.gif)
 
 ## Features
 1. Forward+ Rendering

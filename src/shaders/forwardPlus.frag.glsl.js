@@ -123,7 +123,12 @@ export default function (params) {
       float lightIntensity = cubicGaussian(2.0 * lightDistance / light.radius);
       float lambertTerm = max(dot(L, normal), 0.0);
 
-      fragColor += albedo * lambertTerm * light.color * vec3(lightIntensity);
+      vec3 viewInCamera = -normalize(posInCamera.xyz);
+      vec3 normalInCamera = normalize(vec3(u_viewMatrix * vec4(normal, 0)));
+      vec3 H = normalize(viewInCamera + normalize(vec3(u_viewMatrix * vec4(L, 0))));
+      float blinnTerm = pow(max(dot(normalInCamera, H), 0.0), 5.0);
+
+      fragColor += albedo * (lambertTerm + blinnTerm) * light.color * vec3(lightIntensity);
     }
 
     const vec3 ambientLight = vec3(0.025);
