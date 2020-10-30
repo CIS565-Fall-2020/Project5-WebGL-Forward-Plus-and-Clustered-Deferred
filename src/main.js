@@ -54,7 +54,7 @@ wireframe.addLineSegment([-14.0, 1.0, -6.0], [14.0, 21.0, 6.0], [0.0, 1.0, 1.0])
 // create test frustum
 var x_size = canvas.clientWidth / params._renderer._xSlices;
 var y_size = canvas.clientHeight / params._renderer._ySlices;
-var z_size = 500 / params._renderer._zSlices; // hardcode 200 - maybe change it later
+var z_size = 10 / params._renderer._zSlices; // hardcode 200 - maybe change it later
 
 // Frustum plane normals
 //var nor_top = new Vector3(0, -1, 0);
@@ -86,75 +86,105 @@ var proj_mat = mat4.fromValues(camera.projectionMatrix.elements[0], camera.proje
 /*var proj_mat = mat4.fromValues(1.0 / (camera.aspect * Math.tan(camera.fov / 2)), 0, 0, 0,
                                0, 1.0 / Math.tan(camera.fov / 2), 0, 0,
                                0, 0, camera.far / (camera.far - camera.near), 1.0,
-                               0, 0, -(camera.far * camera.near) / (camera.far - camera.near), 0);*/
-var view_proj = mat4.multiply(mat4.create(), proj_mat, view_mat);
-for (let z = -(params._renderer._zSlices / 2) * z_size; z < (params._renderer._zSlices / 2) * z_size - z_size; z += z_size) {
-  for (let y = -(params._renderer._ySlices / 2) * y_size; y < (params._renderer._ySlices / 2) * y_size - y_size; y += y_size) {
-    for (let x = -(params._renderer._xSlices / 2) * x_size; x < (params._renderer._xSlices / 2) * x_size - x_size; x += x_size) {
+                               0, 0, -(camera.far * camera.near) / (camera.far - camera.near), 0);*/                             
+var proj_mat_inv = mat4.invert(mat4.create(), proj_mat);
+var view_mat_inv = mat4.invert(mat4.create(), view_mat);
+for (let z = 0; z < 10 - z_size; z += z_size) {
+  for (let y = 0; y < canvas.clientHeight - y_size; y += y_size) {
+    for (let x = 0; x < canvas.clientWidth - x_size; x += x_size) {
+      // screen space coordinates
+      var sx0 = (x / canvas.clientWidth) * 2 - 1;
+      var sy0 = 1 - (y / canvas.clientHeight) * 2;
+      var sx1 = ((x + x_size) / canvas.clientWidth) * 2 - 1;
+      var sy1 = 1 - ((y + y_size) / canvas.clientHeight) * 2;
       // bottom edges
-      var segment0 = vec3.fromValues(x, y, z);
-      var segment1 = vec3.fromValues(x, y, z + z_size);
-      //segment0 = vec3.transformMat4(vec3.fromValues(0, 0, 0), segment0, view_proj);
-      //segment1 = vec3.transformMat4(vec3.fromValues(0, 0, 0), segment1, view_proj);
-      wireframe.addLineSegment([segment0[0], segment0[1], segment0[2]], [segment1[0], segment1[1], segment1[2]], [0.0, 1.0, 0.0]);
-      segment0 = vec3.fromValues(x + x_size, y, z);
-      segment1 = vec3.fromValues(x + x_size, y, z + z_size);
-      //segment0 = vec3.transformMat4(vec3.fromValues(0, 0, 0), segment0, view_proj);
-      //segment1 = vec3.transformMat4(vec3.fromValues(0, 0, 0), segment1, view_proj);
-      wireframe.addLineSegment([segment0[0], segment0[1], segment0[2]], [segment1[0], segment1[1], segment1[2]], [0.0, 1.0, 0.0]);
-      segment0 = vec3.fromValues(x, y, z);
-      segment1 = vec3.fromValues(x + x_size, y, z);
-      //segment0 = vec3.transformMat4(vec3.fromValues(0, 0, 0), segment0, view_proj);
-      //segment1 = vec3.transformMat4(vec3.fromValues(0, 0, 0), segment1, view_proj);
-      wireframe.addLineSegment([segment0[0], segment0[1], segment0[2]], [segment1[0], segment1[1], segment1[2]], [0.0, 1.0, 0.0]);
-      segment0 = vec3.fromValues(x, y, z + z_size);
-      segment1 = vec3.fromValues(x + x_size, y, z + z_size);
-      //segment0 = vec3.transformMat4(vec3.fromValues(0, 0, 0), segment0, view_proj);
-      //segment1 = vec3.transformMat4(vec3.fromValues(0, 0, 0), segment1, view_proj);
-      wireframe.addLineSegment([segment0[0], segment0[1], segment0[2]], [segment1[0], segment1[1], segment1[2]], [0.0, 1.0, 0.0]);
+      var segment0 = vec3.fromValues(sx0, sy0, z);
+      var segment1 = vec3.fromValues(sx0, sy0, z + z_size);
+      segment0 = vec3.transformMat4(vec3.fromValues(0, 0, 0), segment0, proj_mat_inv);
+      segment0 = vec3.transformMat4(vec3.fromValues(0, 0, 0), segment0, view_mat_inv);
+      segment1 = vec3.transformMat4(vec3.fromValues(0, 0, 0), segment1, proj_mat_inv);
+      segment1 = vec3.transformMat4(vec3.fromValues(0, 0, 0), segment1, view_mat_inv);
+      wireframe.addLineSegment([segment0[0], segment0[1], segment0[2]], [segment1[0], segment1[1], segment1[2]], [1.0, 1.0, 0.0]);
+      segment0 = vec3.fromValues(sx1, sy0, z);
+      segment1 = vec3.fromValues(sx1, sy0, z + z_size);
+      segment0 = vec3.transformMat4(vec3.fromValues(0, 0, 0), segment0, proj_mat_inv);
+      segment0 = vec3.transformMat4(vec3.fromValues(0, 0, 0), segment0, view_mat_inv);
+      segment1 = vec3.transformMat4(vec3.fromValues(0, 0, 0), segment1, proj_mat_inv);
+      segment1 = vec3.transformMat4(vec3.fromValues(0, 0, 0), segment1, view_mat_inv);
+      wireframe.addLineSegment([segment0[0], segment0[1], segment0[2]], [segment1[0], segment1[1], segment1[2]], [1.0, 1.0, 0.0]);
+      segment0 = vec3.fromValues(sx0, sy0, z);
+      segment1 = vec3.fromValues(sx1, sy0, z);
+      segment0 = vec3.transformMat4(vec3.fromValues(0, 0, 0), segment0, proj_mat_inv);
+      segment0 = vec3.transformMat4(vec3.fromValues(0, 0, 0), segment0, view_mat_inv);
+      segment1 = vec3.transformMat4(vec3.fromValues(0, 0, 0), segment1, proj_mat_inv);
+      segment1 = vec3.transformMat4(vec3.fromValues(0, 0, 0), segment1, view_mat_inv);
+      wireframe.addLineSegment([segment0[0], segment0[1], segment0[2]], [segment1[0], segment1[1], segment1[2]], [1.0, 1.0, 0.0]);
+      segment0 = vec3.fromValues(sx0, sy0, z + z_size);
+      segment1 = vec3.fromValues(sx1, sy0, z + z_size);
+      segment0 = vec3.transformMat4(vec3.fromValues(0, 0, 0), segment0, proj_mat_inv);
+      segment0 = vec3.transformMat4(vec3.fromValues(0, 0, 0), segment0, view_mat_inv);
+      segment1 = vec3.transformMat4(vec3.fromValues(0, 0, 0), segment1, proj_mat_inv);
+      segment1 = vec3.transformMat4(vec3.fromValues(0, 0, 0), segment1, view_mat_inv);
+      wireframe.addLineSegment([segment0[0], segment0[1], segment0[2]], [segment1[0], segment1[1], segment1[2]], [1.0, 1.0, 0.0]);
       
       // sides
-      segment0 = vec3.fromValues(x, y, z);
-      segment1 = vec3.fromValues(x, y + y_size, z);
-      //segment0 = vec3.transformMat4(vec3.fromValues(0, 0, 0), segment0, view_proj);
-      //segment1 = vec3.transformMat4(vec3.fromValues(0, 0, 0), segment1, view_proj);
-      wireframe.addLineSegment([segment0[0], segment0[1], segment0[2]], [segment1[0], segment1[1], segment1[2]], [0.0, 1.0, 0.0]);
-      segment0 = vec3.fromValues(x, y, z + z_size);
-      segment1 = vec3.fromValues(x, y + y_size, z + z_size);
-      //segment0 = vec3.transformMat4(vec3.fromValues(0, 0, 0), segment0, view_proj);
-      //segment1 = vec3.transformMat4(vec3.fromValues(0, 0, 0), segment1, view_proj);
-      wireframe.addLineSegment([segment0[0], segment0[1], segment0[2]], [segment1[0], segment1[1], segment1[2]], [0.0, 1.0, 0.0]);
-      segment0 = vec3.fromValues(x + x_size, y, z);
-      segment1 = vec3.fromValues(x + x_size, y + y_size, z);
-      //segment0 = vec3.transformMat4(vec3.fromValues(0, 0, 0), segment0, view_proj);
-      //segment1 = vec3.transformMat4(vec3.fromValues(0, 0, 0), segment1, view_proj);
-      wireframe.addLineSegment([segment0[0], segment0[1], segment0[2]], [segment1[0], segment1[1], segment1[2]], [0.0, 1.0, 0.0]);
-      segment0 = vec3.fromValues(x + x_size, y, z + z_size);
-      segment1 = vec3.fromValues(x + x_size, y + y_size, z + z_size);
-      //segment0 = vec3.transformMat4(vec3.fromValues(0, 0, 0), segment0, view_proj);
-      //segment1 = vec3.transformMat4(vec3.fromValues(0, 0, 0), segment1, view_proj);
-      wireframe.addLineSegment([segment0[0], segment0[1], segment0[2]], [segment1[0], segment1[1], segment1[2]], [0.0, 1.0, 0.0]);
+      segment0 = vec3.fromValues(sx0, sy0, z);
+      segment1 = vec3.fromValues(sx0, sy1, z);
+      segment0 = vec3.transformMat4(vec3.fromValues(0, 0, 0), segment0, proj_mat_inv);
+      segment0 = vec3.transformMat4(vec3.fromValues(0, 0, 0), segment0, view_mat_inv);
+      segment1 = vec3.transformMat4(vec3.fromValues(0, 0, 0), segment1, proj_mat_inv);
+      segment1 = vec3.transformMat4(vec3.fromValues(0, 0, 0), segment1, view_mat_inv);
+      wireframe.addLineSegment([segment0[0], segment0[1], segment0[2]], [segment1[0], segment1[1], segment1[2]], [1.0, 0.0, 1.0]);
+      segment0 = vec3.fromValues(sx0, sy0, z + z_size);
+      segment1 = vec3.fromValues(sx0, sy1, z + z_size);
+      segment0 = vec3.transformMat4(vec3.fromValues(0, 0, 0), segment0, proj_mat_inv);
+      segment0 = vec3.transformMat4(vec3.fromValues(0, 0, 0), segment0, view_mat_inv);
+      segment1 = vec3.transformMat4(vec3.fromValues(0, 0, 0), segment1, proj_mat_inv);
+      segment1 = vec3.transformMat4(vec3.fromValues(0, 0, 0), segment1, view_mat_inv);
+      wireframe.addLineSegment([segment0[0], segment0[1], segment0[2]], [segment1[0], segment1[1], segment1[2]], [1.0, 0.0, 1.0]);
+      segment0 = vec3.fromValues(sx1, sy0, z);
+      segment1 = vec3.fromValues(sx1, sy1, z);
+      segment0 = vec3.transformMat4(vec3.fromValues(0, 0, 0), segment0, proj_mat_inv);
+      segment0 = vec3.transformMat4(vec3.fromValues(0, 0, 0), segment0, view_mat_inv);
+      segment1 = vec3.transformMat4(vec3.fromValues(0, 0, 0), segment1, proj_mat_inv);
+      segment1 = vec3.transformMat4(vec3.fromValues(0, 0, 0), segment1, view_mat_inv);
+      wireframe.addLineSegment([segment0[0], segment0[1], segment0[2]], [segment1[0], segment1[1], segment1[2]], [1.0, 0.0, 1.0]);
+      segment0 = vec3.fromValues(sx1, sy0, z + z_size);
+      segment1 = vec3.fromValues(sx1, sy1, z + z_size);
+      segment0 = vec3.transformMat4(vec3.fromValues(0, 0, 0), segment0, proj_mat_inv);
+      segment0 = vec3.transformMat4(vec3.fromValues(0, 0, 0), segment0, view_mat_inv);
+      segment1 = vec3.transformMat4(vec3.fromValues(0, 0, 0), segment1, proj_mat_inv);
+      segment1 = vec3.transformMat4(vec3.fromValues(0, 0, 0), segment1, view_mat_inv);
+      wireframe.addLineSegment([segment0[0], segment0[1], segment0[2]], [segment1[0], segment1[1], segment1[2]], [1.0, 0.0, 1.0]);
 
       // top edges
-      segment0 = vec3.fromValues(x, y + y_size, z);
-      segment1 = vec3.fromValues(x, y + y_size, z + z_size);
-      //segment0 = vec3.transformMat4(vec3.fromValues(0, 0, 0), segment0, view_proj);
-      //segment1 = vec3.transformMat4(vec3.fromValues(0, 0, 0), segment1, view_proj);
+      segment0 = vec3.fromValues(sx0, sy1, z);
+      segment1 = vec3.fromValues(sx0, sy1, z + z_size);
+      segment0 = vec3.transformMat4(vec3.fromValues(0, 0, 0), segment0, proj_mat_inv);
+      segment0 = vec3.transformMat4(vec3.fromValues(0, 0, 0), segment0, view_mat_inv);
+      segment1 = vec3.transformMat4(vec3.fromValues(0, 0, 0), segment1, proj_mat_inv);
+      segment1 = vec3.transformMat4(vec3.fromValues(0, 0, 0), segment1, view_mat_inv);
       wireframe.addLineSegment([segment0[0], segment0[1], segment0[2]], [segment1[0], segment1[1], segment1[2]], [0.0, 1.0, 0.0]);
-      segment0 = vec3.fromValues(x + x_size, y + y_size, z);
-      segment1 = vec3.fromValues(x + x_size, y + y_size, z + z_size);
-      //segment0 = vec3.transformMat4(vec3.fromValues(0, 0, 0), segment0, view_proj);
-      //segment1 = vec3.transformMat4(vec3.fromValues(0, 0, 0), segment1, view_proj);
+      segment0 = vec3.fromValues(sx1, sy1, z);
+      segment1 = vec3.fromValues(sx1, sy1, z + z_size);
+      segment0 = vec3.transformMat4(vec3.fromValues(0, 0, 0), segment0, proj_mat_inv);
+      segment0 = vec3.transformMat4(vec3.fromValues(0, 0, 0), segment0, view_mat_inv);
+      segment1 = vec3.transformMat4(vec3.fromValues(0, 0, 0), segment1, proj_mat_inv);
+      segment1 = vec3.transformMat4(vec3.fromValues(0, 0, 0), segment1, view_mat_inv);
       wireframe.addLineSegment([segment0[0], segment0[1], segment0[2]], [segment1[0], segment1[1], segment1[2]], [0.0, 1.0, 0.0]);
-      segment0 = vec3.fromValues(x, y + y_size, z);
-      segment1 = vec3.fromValues(x + x_size, y + y_size, z);
-      //segment0 = vec3.transformMat4(vec3.fromValues(0, 0, 0), segment0, view_proj);
-      //segment1 = vec3.transformMat4(vec3.fromValues(0, 0, 0), segment1, view_proj);
+      segment0 = vec3.fromValues(sx0, sy1, z);
+      segment1 = vec3.fromValues(sx1, sy1, z);
+      segment0 = vec3.transformMat4(vec3.fromValues(0, 0, 0), segment0, proj_mat_inv);
+      segment0 = vec3.transformMat4(vec3.fromValues(0, 0, 0), segment0, view_mat_inv);
+      segment1 = vec3.transformMat4(vec3.fromValues(0, 0, 0), segment1, proj_mat_inv);
+      segment1 = vec3.transformMat4(vec3.fromValues(0, 0, 0), segment1, view_mat_inv);
       wireframe.addLineSegment([segment0[0], segment0[1], segment0[2]], [segment1[0], segment1[1], segment1[2]], [0.0, 1.0, 0.0]);
-      segment0 = vec3.fromValues(x, y + y_size, z + z_size);
-      segment1 = vec3.fromValues(x + x_size, y + y_size, z + z_size);
-      //segment0 = vec3.transformMat4(vec3.fromValues(0, 0, 0), segment0, view_proj);
-      //segment1 = vec3.transformMat4(vec3.fromValues(0, 0, 0), segment1, view_proj);
+      segment0 = vec3.fromValues(sx0, sy1, z + z_size);
+      segment1 = vec3.fromValues(sx1, sy1, z + z_size);
+      segment0 = vec3.transformMat4(vec3.fromValues(0, 0, 0), segment0, proj_mat_inv);
+      segment0 = vec3.transformMat4(vec3.fromValues(0, 0, 0), segment0, view_mat_inv);
+      segment1 = vec3.transformMat4(vec3.fromValues(0, 0, 0), segment1, proj_mat_inv);
+      segment1 = vec3.transformMat4(vec3.fromValues(0, 0, 0), segment1, view_mat_inv);
       wireframe.addLineSegment([segment0[0], segment0[1], segment0[2]], [segment1[0], segment1[1], segment1[2]], [0.0, 1.0, 0.0]);
     }
   }
