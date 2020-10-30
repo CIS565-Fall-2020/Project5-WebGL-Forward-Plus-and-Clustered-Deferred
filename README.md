@@ -23,7 +23,7 @@ GPU : NVIDIA GeForce RTX 2060
 
 ### Demo Video/GIF
 
-![](img/fwd.png)](demo)
+![](img/fwd.gif)
 
 ## Overview 
 
