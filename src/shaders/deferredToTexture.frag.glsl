@@ -22,8 +22,14 @@ void main() {
     vec3 col = vec3(texture2D(u_colmap, v_uv));
 
     // TODO: populate your g buffer
-    // gl_FragData[0] = ??
-    // gl_FragData[1] = ??
-    // gl_FragData[2] = ??
-    // gl_FragData[3] = ??
+norm = norm / 2.0 + 0.5;
+/*
+// optimize 1 -- Use 2-component normals and reduce number of properties passed via g-buffer
+	gl_FragData[0] = vec4(norm.xy, 0.0, v_position.z);
+	gl_FragData[1] = vec4(col.xyz, 0.0);
+*/
+// optimize 2 -- Use 3-component normals and reduce number of properties passed via g-buffer
+	gl_FragData[0] = vec4(norm.xy, 0.0,v_position.z);
+	gl_FragData[1] = vec4(col.xyz, 0.0);
+
 }
