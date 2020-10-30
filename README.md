@@ -9,20 +9,23 @@ WebGL Forward+ and Clustered Deferred Shading
 
 ### Live Online
 
-[![](img/thumb.png)](http://TODO.github.io/Project5-WebGL-Forward-Plus-and-Clustered-Deferred)
+[![](img/thumb.png)](http://j9liu.github.io/Project5-WebGL-Forward-Plus-and-Clustered-Deferred)
 
 ### Demo Video/GIF
 
 [![](img/video.png)](TODO)
 
-### (TODO: Your README)
+## Performance Analysis Methods
 
-*DO NOT* leave the README to the last minute! It is a crucial part of the
-project, and we will not be able to grade you without a good README.
+had to use debug window because otherwise this was too fast to substantially analyze
 
-This assignment has a considerable amount of performance analysis compared
-to implementation work. Complete the implementation early to leave time!
+## Forward+
 
+### Per-Frustum Iteration (Naive)
+
+### Per-Light Iteration (Optimized)
+
+## Clustered Deferred
 
 ### Credits
 
@@ -31,3 +34,9 @@ to implementation work. Complete the implementation early to leave time!
 * [webgl-debug](https://github.com/KhronosGroup/WebGLDeveloperTools) by Khronos Group Inc.
 * [glMatrix](https://github.com/toji/gl-matrix) by [@toji](https://github.com/toji) and contributors
 * [minimal-gltf-loader](https://github.com/shrekshao/minimal-gltf-loader) by [@shrekshao](https://github.com/shrekshao)
+
+**Math References**
+
+* [Plane equations](http://www.songho.ca/math/plane/plane.html?fbclid=IwAR0qZN0UzxIcByyhQivKEInBdeMxfxHjyu_jUPumApHeQe9-R2-IPrc_Y04) by Song Ho Ahn
+* [Frustum and sphere intersection](https://www.flipcode.com/archives/Frustum_Culling.shtml) by Dion Picco
+* [Help with screen to world transformations](https://gamedev.stackexchange.com/questions/56725/calculate-object-coordinates-from-window-coordinates-using-inverse-projection-ma) by Daniel Flassig
