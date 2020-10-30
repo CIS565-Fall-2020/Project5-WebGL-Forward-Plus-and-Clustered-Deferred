@@ -47,9 +47,34 @@ var segmentColor = [1.0, 0.0, 0.0];
 // wireframe.addLineSegment(segmentStart, segmentEnd, segmentColor);
 // wireframe.addLineSegment([-14.0, 1.0, -6.0], [14.0, 21.0, 6.0], [0.0, 1.0, 0.0]);
 
+// xyz axes
 wireframe.addLineSegment([0.0, 0.0, 0.0], [5.0, 0.0, 0.0], [1.0, 0.0, 0.0]);
 wireframe.addLineSegment([0.0, 0.0, 0.0], [0.0, 5.0, 0.0], [0.0, 1.0, 0.0]);
 wireframe.addLineSegment([0.0, 0.0, 0.0], [0.0, 0.0, 5.0], [0.0, 0.0, 1.0]);
+
+// frustum bounds
+let far = camera.far / 100.0;
+let near = camera.near;
+let aspectRatio = camera.aspect;
+let vFOV = camera.fov * Math.PI / 180.0;
+let hFOV = 2.0 * Math.atan((aspectRatio * far * Math.tan(vFOV / 2.0)) / far);
+wireframe.addLineSegment([0.0, 0.0, 0.0], [-Math.tan(hFOV / 2.0) * far, 0.0, far], [1.0, 1.0, 1.0]);
+wireframe.addLineSegment([0.0, 0.0, 0.0], [Math.tan(hFOV / 2.0) * far, 0.0, far], [1.0, 1.0, 1.0]);
+wireframe.addLineSegment([Math.tan(hFOV / 2.0) * far, 0.0, far], [-Math.tan(hFOV / 2.0) * far, 0.0, far], [1.0, 1.0, 1.0]);
+
+let zSliceThickness = (far - near) / 15;
+// sub-frustums
+for (let z = 0; z < 15; ++z) {
+  for (let y = 0; y < 15; ++y) {
+    for (let x = 0; x < 15; ++x) {
+      let i = x + y * this._xSlices + z * this._xSlices * this._ySlices;
+      let iFrontPlaneDist = z * zSliceThickness + near;
+      wireframe.addLineSegment([-Math.tan(hFOV / 2.0) * iFrontPlaneDist, 0.0, Math.tan(hFOV / 2.0) * iFrontPlaneDist], [iFrontPlaneDist, 0.0, iFrontPlaneDist], [1.0, 1.0, 1.0]);
+    }
+  }
+}
+
+
 
 camera.position.set(-10, 8, 0);
 cameraControls.target.set(0, 2, 0);

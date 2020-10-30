@@ -156,12 +156,20 @@ export default class ClusteredDeferredRenderer extends BaseRenderer {
 
     // TODO: Bind any other shader inputs
     // Set the light texture as a uniform input to the shader
+    // my light information was not getting to my shader because i didnt
+    // realize that other textures (g-buffers) were being set after i set
+    // the light texture. i figured this out because i noticed that the 
+    // lightDist was returning something like depth so i figured something
+    // was wrong with how light information was sent over to the shaders
+    // to make sure that the texture was not overwritten, i set 
+    // firstGBufferBinding from 0 to 3 so that gl.TEXTURE2 was reserved
+    // for light information
     gl.activeTexture(gl.TEXTURE2);
     gl.bindTexture(gl.TEXTURE_2D, this._lightTexture.glTexture);
     gl.uniform1i(this._progShade.u_lightbuffer, 2);
 
     // Bind g-buffers
-    const firstGBufferBinding = 0; // You may have to change this if you use other texture slots
+    const firstGBufferBinding = 3; // You may have to change this if you use other texture slots
     for (let i = 0; i < NUM_GBUFFERS; i++) {
       gl.activeTexture(gl[`TEXTURE${i + firstGBufferBinding}`]);
       gl.bindTexture(gl.TEXTURE_2D, this._gbuffers[i]);

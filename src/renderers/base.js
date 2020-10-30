@@ -29,6 +29,8 @@ export default class BaseRenderer {
       let pTmp = vec4.create();
       vec4.transformMat4(pTmp, pos, viewMatrix);
       camSpaceLightPos.push(pTmp);
+      // we set the w-component to zero to make sure it does not contribute
+      // to the dot product later on
       camSpaceLightPos[camSpaceLightPos.length - 1][3] = 0;
     }
 
@@ -106,7 +108,7 @@ export default class BaseRenderer {
             let isInBottom = 0;
             // i back plane
             let lPos = camSpaceLightPos[l];
-            let distToPlane = vec4.dot(lPos, iBackPlaneNor) + backPlaneDist;
+            let distToPlane = vec4.dot(lPos, iBackPlaneNor) + iBackPlaneDist;
             if (distToPlane < -r){
               // on the opposite side of the plane that the normal is on
               // outside of frustum's back plane
@@ -122,7 +124,7 @@ export default class BaseRenderer {
               isInBack = 1;
             }
             // i front plane
-            distToPlane = vec4.dot(lPos, iFrontPlaneNor) + frontPlaneDist;
+            distToPlane = vec4.dot(lPos, iFrontPlaneNor) + iFrontPlaneDist;
             if (distToPlane < -r){
               isInFront = -1;
               continue;

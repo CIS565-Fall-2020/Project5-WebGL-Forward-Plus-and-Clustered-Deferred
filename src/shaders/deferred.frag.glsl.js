@@ -83,6 +83,7 @@ export default function(params) {
 
       // really cool for visualizing depth
       test += 1.0 / (lightDistance * 100.0);
+      // test += lightIntensity / 100.0;
 
       fragColor += albedo * lambertTerm * light.color * vec3(lightIntensity);
     }
