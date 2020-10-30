@@ -4,6 +4,8 @@ WebGL Forward+ and Clustered Deferred Shading
 **University of Pennsylvania, CIS 565: GPU Programming and Architecture, Project 5**
 
 * Spencer Webster-Bass
+* This is a WebGL and Javascript project showcasing different rasterizing techniques. These techniques are
+  forward, forwrd plus, and clustered deferre shading.
 * Tested on: **Google Chrome Version 86.0.4240.111 (Official Build) (64-bit)** on
   Windows Processor	Intel(R) Core(TM) i7-8565U CPU @ 1.80GHz, 1992 Mhz, 4 Core(s), 8 Logical Processor(s)
 
@@ -14,13 +16,16 @@ WebGL Forward+ and Clustered Deferred Shading
 
 ![](img/forward+1.png)
 
+Visual debugging with frustum indices as inputs:
+![](img/frustum_debug2.png)
+
 **Cluster Deffered Renders**
 
 Blooper Image caused by accidentally overwriting light texture:
-
 ![](img/cluster_deferred0.png)
 
-Final Render
+Final Render:
+![](img/cluster_deferred1.png)
 
 ### Demo Video/GIF
 
