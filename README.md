@@ -45,6 +45,12 @@ Blinn-Phong shading is calculated in camera space so we don't need extra informa
 ![](./img/compareBlinn.png)
 
 ### G-buffer Optimization
+I packed the normal into two float numbers and utilized the alpha value of a vec4, which produces a g-buffer with two vec4 compared with a naive implementation's three vec4. As you can see below, this simple optimization has reduced the execution time for each frace a little bit.
+
+| Timing in milliseconds for each frame | --- |
+|---|---|
+| 3 vec4 | 26ms |
+| 2 vec4 (optimized g-buffer) | 24ms |
 
 ## Limitations
 The number of clusters is now hard-coded. As a result, it may require knowledge about the radius of lights to make it more efficient. No frustum-sphere intersection checking is used here, and this should be further optimized to better suit scenes with large radius lights and small clusters.
