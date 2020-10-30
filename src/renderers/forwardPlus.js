@@ -32,7 +32,7 @@ export default class ForwardPlusRenderer extends BaseRenderer {
     this._ySlices = ySlices;
     this._zSlices = zSlices;
     this._clusterSize = vec2.fromValues(this._xSlices * this._ySlices * this._zSlices, 
-                                        Math.ceil((MAX_LIGHTS_PER_CLUSTER + 1) / 4))
+                                        Math.ceil((MAX_LIGHTS_PER_CLUSTER + 1) / 4));
   }
 
   render(camera, scene) {
@@ -93,7 +93,6 @@ export default class ForwardPlusRenderer extends BaseRenderer {
     gl.uniform1i(this._shaderProgram.u_screenHeight, canvas.height);
     gl.uniform1f(this._shaderProgram.u_zminView, camera.near);
     gl.uniform1f(this._shaderProgram.u_zmaxView, this._depthMax);
-
     gl.uniform2iv(this._shaderProgram.u_clusterSize, this._clusterSize);
     
     // Draw the scene. This function takes the shader program so that the model's textures can be bound to the right inputs

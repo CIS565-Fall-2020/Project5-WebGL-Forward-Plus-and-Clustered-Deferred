@@ -6,6 +6,17 @@ export default function(params) {
   uniform sampler2D u_gbuffers[${params.numGBuffers}];
   uniform sampler2D u_lightbuffer;
   uniform sampler2D u_clusterbuffer;
+
+  uniform mat4 u_viewMatrix;
+
+  uniform int u_xSlices;
+  uniform int u_ySlices;
+  uniform int u_zSlices;
+  uniform int u_screenWidth;
+  uniform int u_screenHeight;
+  uniform float u_zminView;
+  uniform float u_zmaxView;
+  uniform ivec2 u_clusterSize;
   
   varying vec2 v_uv;
 
@@ -68,8 +79,24 @@ export default function(params) {
 
     vec3 fragColor = vec3(0.0);
 
-    for (int i = 0; i < ${params.numLights}; ++i) {
-      Light light = UnpackLight(i);
+    // Calculate cluster index
+    vec4 view = u_viewMatrix * vec4(pos, 1.0);
+    float viewDepth = -view.z;
+
+    int cx = int(float(u_xSlices) * gl_FragCoord.x / float(u_screenWidth));
+    int cy = int(float(u_ySlices) * gl_FragCoord.y / float(u_screenHeight));
+    int cz = int(float(u_zSlices) * (viewDepth - u_zminView) / (u_zmaxView - u_zminView));
+    int cid = cz * u_xSlices * u_ySlices + cy * u_xSlices + cx;
+
+    int lightNum = int(ExtractFloat(u_clusterbuffer, u_clusterSize.x, u_clusterSize.y, cid, 0) + 0.5);
+    for (int i = 1; i <= ${params.numLights}; ++i)
+    {
+      if (i > lightNum)
+      {
+        break;
+      }
+      int lightid = int(ExtractFloat(u_clusterbuffer, u_clusterSize.x, u_clusterSize.y, cid, i) + 0.1);
+      Light light = UnpackLight(lightid);
       float lightDistance = distance(light.position, pos);
       vec3 L = (light.position - pos) / lightDistance;
 

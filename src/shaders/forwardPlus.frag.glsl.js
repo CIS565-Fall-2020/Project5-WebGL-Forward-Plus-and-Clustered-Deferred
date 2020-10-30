@@ -97,7 +97,6 @@ export default function(params) {
     int cid = cz * u_xSlices * u_ySlices + cy * u_xSlices + cx;
 
     int lightNum = int(ExtractFloat(u_clusterbuffer, u_clusterSize.x, u_clusterSize.y, cid, 0) + 0.5);
-    int sum = 0;
     for (int i = 1; i <= ${params.numLights}; ++i)
     {
       if (i > lightNum)
@@ -105,7 +104,6 @@ export default function(params) {
         break;
       }
       int lightid = int(ExtractFloat(u_clusterbuffer, u_clusterSize.x, u_clusterSize.y, cid, i) + 0.1);
-      sum ++;
       Light light = UnpackLight(lightid);
       float lightDistance = distance(light.position, v_position);
       vec3 L = (light.position - v_position) / lightDistance;
