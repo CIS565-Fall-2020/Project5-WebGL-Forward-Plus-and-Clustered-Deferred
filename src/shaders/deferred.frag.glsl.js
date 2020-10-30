@@ -100,22 +100,19 @@ export default function(params) {
       vec3 L = (light.position - position) / lightDistance;
 
       float lightIntensity = cubicGaussian(2.0 * lightDistance / light.radius);
-      float lambertTerm = max(dot(L, normal), 0.0);
-
+      float lambertTerm = floor(max(dot(L, normal), 0.0) * 5.0) / 5.0;
       fragColor += albedo * lambertTerm * light.color * vec3(lightIntensity);
-
-      /* Calculate Blinn Phong
-      vec3 hVector = (camVector + normalize(L)) / 2.0;
-
-      // Calculate specular intensity
-      float specularIntensity = clamp(pow(dot(hVector, normal), 1.5), 0.0, 1.0);
-      fragColor += specularIntensity / float(2 * numLights);*/
 
     }
 
     const vec3 ambientLight = vec3(0.025);
     fragColor += albedo * ambientLight;
 
+    // POST-PROCESS: TOON SHADER (lines)
+    float grey = 0.21 * fragColor.x + 0.72 * fragColor.y + 0.07 * fragColor.z;
+    if(grey < 0.2) {
+      fragColor *= 1.0 + sin(v_uv.x * float(${params.width}) + v_uv.y * float(${params.height}));
+    }
     gl_FragColor = vec4(fragColor, 1.0);
   }
   `;
