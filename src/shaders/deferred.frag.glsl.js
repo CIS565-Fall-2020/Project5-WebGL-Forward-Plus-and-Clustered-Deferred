@@ -17,6 +17,7 @@ export default function(params) {
   uniform float u_zminView;
   uniform float u_zmaxView;
   uniform ivec2 u_clusterSize;
+  uniform vec3 u_cameraPos;
   
   varying vec2 v_uv;
 
@@ -100,17 +101,21 @@ export default function(params) {
       float lightDistance = distance(light.position, pos);
       vec3 L = (light.position - pos) / lightDistance;
 
+      vec3 V = normalize(u_cameraPos - pos);
+      vec3 H = normalize(L + V);
+      float specularTerm = max(pow(dot(H, norm), 2.0), 0.0);
+
       float lightIntensity = cubicGaussian(2.0 * lightDistance / light.radius);
       float lambertTerm = max(dot(L, norm), 0.0);
-
-      fragColor += col * lambertTerm * light.color * vec3(lightIntensity);
+      // fragColor += col * (lambertTerm) * light.color * vec3(lightIntensity);
+      fragColor += col * (lambertTerm + specularTerm) * light.color * vec3(lightIntensity);
     }
 
     const vec3 ambientLight = vec3(0.025);
     fragColor += col * ambientLight;
 
     gl_FragColor = vec4(fragColor, 1.0);
-
+    //gl_FragColor = vec4(u_cameraPos, 1.0);
   }
   `;
 }

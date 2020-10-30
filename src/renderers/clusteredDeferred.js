@@ -1,5 +1,5 @@
 import { gl, WEBGL_draw_buffers, canvas } from '../init';
-import { mat4, vec4, vec2 } from 'gl-matrix';
+import { mat4, vec4, vec3, vec2 } from 'gl-matrix';
 import { loadShaderProgram, renderFullscreenQuad } from '../utils';
 import { NUM_LIGHTS } from '../scene';
 import toTextureVert from '../shaders/deferredToTexture.vert.glsl';
@@ -33,7 +33,7 @@ export default class ClusteredDeferredRenderer extends BaseRenderer {
       uniforms: ['u_gbuffers[0]', 'u_gbuffers[1]', 'u_gbuffers[2]', 'u_gbuffers[3]',
                  'u_lightbuffer', 'u_clusterbuffer', 'u_viewMatrix', 
                  'u_xSlices', 'u_ySlices', 'u_zSlices', 'u_screenWidth', 'u_screenHeight',
-                 'u_zminView', 'u_zmaxView', 'u_clusterSize'],
+                 'u_zminView', 'u_zmaxView', 'u_clusterSize', 'u_cameraPos'],
       attribs: ['a_uv'],
     });
 
@@ -173,6 +173,7 @@ export default class ClusteredDeferredRenderer extends BaseRenderer {
     gl.uniform1f(this._progShade.u_zminView, camera.near);
     gl.uniform1f(this._progShade.u_zmaxView, this._depthMax);
     gl.uniform2iv(this._progShade.u_clusterSize, this._clusterSize);
+    gl.uniform3fv(this._progShade.u_cameraPos, [camera.position.x, camera.position.y, camera.position.z]);
 
     // Set the light texture as a uniform input to the shader
     gl.activeTexture(gl.TEXTURE2);
