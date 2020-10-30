@@ -36,11 +36,20 @@ The number of lights now has different influences on these three rendering metho
 | Number of Lights | 60 | 125 | 250 |
 |---|---|---|---|
 | Forward | 53ms | 100ms | 213ms |
-|---|---|---|---|
 | Forward+ | 60ms | 154ms | 318ms |
-|---|---|---|---|
 | Clustered Deferred | 26ms | 67ms | 113ms |
 
+### Blinn-Phong Shading
+Blinn-Phong shading is calculated in camera space so we don't need extra information to feed to the shader. It adds more highlight to the surface.
+
+![](./img/compareBlinn.png)
+
+### G-buffer Optimization
+
+## Limitations
+The number of clusters is now hard-coded. As a result, it may require knowledge about the radius of lights to make it more efficient. No frustum-sphere intersection checking is used here, and this should be further optimized to better suit scenes with large radius lights and small clusters.
+
+Also, as a naive estimation, no shadow map is used here so it might be inaccurate for scenes with many tiny objects blocking the light source.
 
 ## Credits
 
