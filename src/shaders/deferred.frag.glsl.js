@@ -10,8 +10,13 @@ export default function(params) {
   uniform mat4 u_viewMatrix;
   uniform vec2 u_nearFarPlane;
   uniform vec2 u_canvasSize;
+  uniform vec3 u_cameraPos;
   
   varying vec2 v_uv;
+
+  #define BLINNPHONG 0
+
+  #define TWO_COMPONENT_NORMAL 0
 
   struct Light {
     vec3 position;
@@ -64,9 +69,25 @@ export default function(params) {
   }
 
   void main() {
+
+#if TWO_COMPONENT_NORMAL
+    vec4 texture0 = texture2D(u_gbuffers[0], v_uv);
+    vec4 texture1 = texture2D(u_gbuffers[1], v_uv);
+    vec3 albedo = texture0.xyz;
+    vec3 position = texture1.xyz;
+    
+    // decode normal
+    vec4 nn = vec4(texture0.w * 2.0 - 1.0, texture1.w * 2.0 - 1.0, 1.0, -1.0);
+    float l = dot(nn.xyz, -nn.xyw);
+    nn.z = l;
+    nn.xy *= sqrt(l);
+    vec3 normal = nn.xyz * 2.0 + vec3(0.0, 0.0, -1.0);
+
+#else
     vec3 albedo = texture2D(u_gbuffers[0], v_uv).xyz;
     vec3 position = texture2D(u_gbuffers[1], v_uv).xyz;
     vec3 normal = texture2D(u_gbuffers[2], v_uv).xyz;
+#endif
 
     vec3 fragColor = vec3(0.0);
 
@@ -78,8 +99,8 @@ export default function(params) {
 
     vec4 vpos = u_viewMatrix * vec4(position, 1.0);
 
-    int x = int(gl_FragCoord.x * xSlices / u_canvasSize.x);
-    int y = int(gl_FragCoord.y * ySlices / u_canvasSize.y);
+    int x = int(v_uv.x * xSlices);
+    int y = int(v_uv.y * ySlices);
     int z = int((-vpos.z - u_nearFarPlane.x) / (u_nearFarPlane.y - u_nearFarPlane.x) * zSlices);
 
     int clusterId = x + y * ${params.xSlices} + z * ${params.xSlices} * ${params.ySlices};
@@ -99,10 +120,19 @@ export default function(params) {
       float lambertTerm = max(dot(L, normal), 0.0);
 
       fragColor += albedo * lambertTerm * light.color * vec3(lightIntensity);
+
+#if BLINNPHONG
+      //vec3 H = 0.5 * (L + normalize(viewPos - position));
+      vec3 H = 0.5 * (L + normalize( u_cameraPos - position));
+      vec3 specular = vec3(pow(dot(normalize(normal), normalize(H)), 10.0));
+      fragColor += albedo * clamp(specular, vec3(0.0), vec3(1.0)) * light.color * vec3(lightIntensity);
+#endif
     }
 
     const vec3 ambientLight = vec3(0.025);
     fragColor += albedo * ambientLight;
+
+    fragColor = clamp(fragColor, vec3(0.0), vec3(1.0));
 
     gl_FragColor = vec4(fragColor, 1.0);
 

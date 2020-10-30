@@ -1,4 +1,4 @@
-import { gl, WEBGL_draw_buffers, canvas } from '../init';
+import { gl, WEBGL_draw_buffers, canvas, camera } from '../init';
 import { mat4, vec4 } from 'gl-matrix';
 import { loadShaderProgram, renderFullscreenQuad } from '../utils';
 import { NUM_LIGHTS } from '../scene';
@@ -9,7 +9,7 @@ import fsSource from '../shaders/deferred.frag.glsl.js';
 import TextureBuffer from './textureBuffer';
 import BaseRenderer from './base';
 
-export const NUM_GBUFFERS = 4;
+export const NUM_GBUFFERS = 3;
 
 export default class ClusteredDeferredRenderer extends BaseRenderer {
   constructor(xSlices, ySlices, zSlices) {
@@ -34,7 +34,8 @@ export default class ClusteredDeferredRenderer extends BaseRenderer {
     }), {
       uniforms: ['u_gbuffers[0]', 'u_gbuffers[1]', 'u_gbuffers[2]', 'u_gbuffers[3]',
                   'u_lightbuffer',
-                  'u_clusterbuffer', 'u_viewMatrix', 'u_nearFarPlane', 'u_canvasSize'],
+                  'u_clusterbuffer', 'u_viewMatrix', 'u_nearFarPlane', 'u_canvasSize',
+                  'u_cameraPos'],
       attribs: ['a_uv'],
     });
 
@@ -149,9 +150,6 @@ export default class ClusteredDeferredRenderer extends BaseRenderer {
     // Update the light texture
     this._lightTexture.update();
 
-    // Update the clusters for the frame
-    this.updateClusters(camera, this._viewMatrix, scene);
-
     // Bind the default null framebuffer which is the screen
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
 
@@ -170,6 +168,9 @@ export default class ClusteredDeferredRenderer extends BaseRenderer {
 
     // Upload the near far plane
     gl.uniform2f(this._progShade.u_nearFarPlane, camera.near, camera.far);
+
+    // Upload the canvas size
+    gl.uniform3f(this._progShade.u_cameraPos, camera.position.x, camera.position.y, camera.position.z);
 
     // Set the light texture as a uniform input to the shader
     gl.activeTexture(gl.TEXTURE0);
