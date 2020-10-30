@@ -85,7 +85,7 @@ export default function(params) {
 
     //Bring point to camera space 
     vec4 transformedPos = u_viewMatrix * vec4(v_position, 1.0); 
-    float depth = u_farClip - u_nearClip; 
+    float depth = 50.0 - u_nearClip; 
 
     //cluster indices about x, y and z
     int cl_X = int(floor(gl_FragCoord.x * float(u_xSlices) / u_width)); 
@@ -93,16 +93,15 @@ export default function(params) {
     int cl_Z = int((-transformedPos.z - u_nearClip) * float(u_zSlices) / depth); 
 
     int clusterIdx_1D = int(cl_X + (u_xSlices * cl_Y) + (u_xSlices * u_ySlices * cl_Z)); 
-    //int clusterCount = u_xSlices * u_ySlices * u_zSlices; 
     int pixPerElem = int(float(u_maxLightsPerCluster + 1) / 4.0) + 1; 
-    int numLights = int(ExtractFloat(u_clusterbuffer, u_texElemCount, pixPerElem, clusterIdx_1D, 0));
+    int numLights = int(ExtractFloat(u_clusterbuffer, u_texElemCount, u_pixelsPerElem, clusterIdx_1D, 0));
 
     for (int i = 0; i < ${params.numLights}; ++i) {
       if(i >= numLights)
       {
         break; 
       }
-      int l = int(ExtractFloat(u_clusterbuffer, u_texElemCount, pixPerElem, clusterIdx_1D, i + 1)); 
+      int l = int(ExtractFloat(u_clusterbuffer, u_texElemCount, u_pixelsPerElem, clusterIdx_1D, i + 1)); 
       Light light = UnpackLight(l);
       float lightDistance = distance(light.position, v_position);
       vec3 L = (light.position - v_position) / lightDistance;
