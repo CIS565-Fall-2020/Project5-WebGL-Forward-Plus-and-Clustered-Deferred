@@ -21,13 +21,9 @@ GPU : NVIDIA GeForce RTX 2060
 
 ## Output 
 
-### Live Online
-
-[![](img/thumb.png)](https://sireesha-upenn.github.io/Project5-WebGL-Forward-Plus-and-Clustered-Deferred/)
-
 ### Demo Video/GIF
 
-[![](img/video.png)](TODO)
+![](img/fwd.png)](demo)
 
 ## Overview 
 
