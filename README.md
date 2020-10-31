@@ -40,19 +40,19 @@ I use 2-component normal for the G-Buffer and pack the values together with `pos
 
 ### Performance Analysis
 
-##### Forward, Forward+ and Clustered Deferred Shading
+#### Forward, Forward+ and Clustered Deferred Shading
 
 ![](img/performance1.png)
 
 The figure shows the performance of Forward, Forward+ and Clustered Deferred shading based on different number of light source. The profiling is done with the cluster count of 15x15x15. As can be seen, Clustered Deferred is the best one among the three.
 
-##### How Cluster Size affect performance
+#### How Cluster Size affect performance
 
 ![](img/performance3.png)
 
 The figure shows how the cluster size affect performance. The profiling is done with `lightCount = 500`. When there are more cluster, more time it takes to locate each light in the cluster, and a larger texture is needed to store the cluster. When there are less light, one cluster contains more light, so more iteration it needs to compute the contribution of all the lights. As can be seen, the best performance appears when the cluster size is close to 5x5x5. 
 
-##### G-Buffer Optimizaition
+#### G-Buffer Optimizaition
 
 ![](img/performance2.png)
 
