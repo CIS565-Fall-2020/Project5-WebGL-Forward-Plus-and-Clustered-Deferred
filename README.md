@@ -19,7 +19,7 @@ This project tackles various methods of shading a scene with numerous moving lig
 
 Outside debug mode, my computer runs all three modes extremely fast (each renderer runs with 1-3ms, as indicated by the window in the top left corner), so I have to use debug mode in order to get substantial analyses. To analyze this data, I used Google Chrome's built-in performance tools, which allows me to view the function calls in a `tick()` of the program.
 
-![](img/performance_analysis)
+![](img/performance_analysis.png)
 
 This allows me to throttle my CPU for a 6x slowdown, which helps expose the time differences between the different methods. I average the times of the first ten `tick()` calls to estimate the average of the whole run.
 
@@ -45,7 +45,7 @@ Clearly, this is inefficient because there will be frustums that do not intersec
 
 The optimized method uses the spherical shape of the light to determine it's axis-aligned bounding box. This bounding box can be taken from world space into screen space, and then sorted into the frustums that directly intersect it. Only the frustums that intersect the bounding box of these lights will be checked against this light in the shader.
 
-Indeed, this showed dramatic improvement from the per-frustum method; while it took a range of 45-50 ms for one tick to finish with the naive method, it only took 5-7 ms for the optimized method's tick.
+Indeed, this showed dramatic improvement from the per-frustum method; while it took a range of **45-50 ms** for one tick to finish with the naive method, it only took **5-7 ms** for the optimized method's tick.
 
 ## Clustered Deferred Shading
 
@@ -59,7 +59,7 @@ Indeed, this showed dramatic improvement from the per-frustum method; while it t
 
 ![](img/graph.png)
 
-Surprisingly, the Forward+ renderer did *worse* than the Forward render. The CPU overhead of putting the lights into clusters must not be worth the saved time on the GPU. I believe this is because in my implementation, I iterate over all of the slices twice — once to initialize their lists of lights, and once to push all the lights into the buffer for shading. If I were to compress this into a better looping system, perhaps I could reduce the CPU time enough to make it on par with, if not better than the regular Forward render.
+Surprisingly, the Forward+ renderer did *worse* than the Forward render. The CPU overhead of putting the lights into clusters must not be worth the saved time on the GPU. I believe this is because in my implementation, I iterate over all of the slices twice — once to initialize their lists of lights, and once to push all the lights into the buffer for shading. If I were to compress this into a better looping system, perhaps I could reduce the CPU time enough to make it on par with, if not better than, the regular Forward render.
 
 As expected, though, the Clustered Deferred renderer worked significantly better than both the Forward and Forward+ renderers.
 
@@ -67,7 +67,21 @@ As expected, though, the Clustered Deferred renderer worked significantly better
 
 ![](img/toon.gif)
 
-I created a toon shader by mapping the Lambertian product to a five-tone map, then applying diagonal lines over darker areas of the image to simulate cross-hatching. Because this is essentially a post-processing shader that does not rely on the number of lights in the scene, the added workload is a constant factor.
+I created a toon shader by mapping the Lambertian product to a five-tone map, then applying diagonal lines over darker areas of the image to simulate cross-hatching. Because this is essentially a post-processing shader that does not rely on the number of lights in the scene, the added workload is a constant factor. A performance comparison of the renderer with and without the shader shows only a slight difference in tick times.
+
+![](img/graph2.png)
+
+## Clustered Deferred Buffer Optimization
+
+To decrease the storage that the Clustered Deferred renderer uses, I reduced the number of buffers it needed from three to two with the following steps:
+* **Two-Component normals:** Based on [this paper](http://jcgt.org/published/0003/02/01/paper.pdf), I packed the three-component normals into just two components, which reduces normal storage by one float.
+* **Packed vec4s:** Now that the normals are packed into two floats, they can be stored in the fourth components of the vec4s in the buffer, eliminating the need for a third bffer.
+
+The results of these changes on the Clustered Deferred renderer (with toon shading) are as follows:
+
+![](img/graph3.png)
+
+
 
 ### Credits
 

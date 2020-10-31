@@ -65,10 +65,27 @@ export default function(params) {
     }
   }
   
+  vec2 signNotZero(vec2 v) {
+    return vec2((v.x >= 0.0) ? +1.0 : -1.0, (v.y >= 0.0) ? +1.0 : -1.0);
+  }
+
+
+  vec3 twoComponentToVec3(vec2 tc) {
+    vec3 v = vec3(tc.xy, 1.0 - abs(tc.x) - abs(tc.y));
+    if (v.z < 0.0) { 
+      v.xy = (1.0 - abs(v.yx)) * signNotZero(v.xy);
+    }
+    return normalize(v);
+  }
+  
   void main() {
-    vec3 position = vec3(texture2D(u_gbuffers[0], v_uv));
-    vec3 albedo = vec3(texture2D(u_gbuffers[2], v_uv));
-    vec3 normal = vec3(texture2D(u_gbuffers[1], v_uv));
+    vec4 posVec4 = texture2D(u_gbuffers[0], v_uv);
+    vec4 colVec4 = texture2D(u_gbuffers[1], v_uv);
+    vec3 position = vec3(posVec4);
+    vec3 albedo = vec3(colVec4);
+    vec2 twoComponentNorm = vec2(posVec4.w, colVec4.w);
+
+    vec3 normal = twoComponentToVec3(twoComponentNorm);
 
     vec3 fragColor = vec3(0.0);
 

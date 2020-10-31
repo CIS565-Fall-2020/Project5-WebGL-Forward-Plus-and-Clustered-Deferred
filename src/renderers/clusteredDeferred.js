@@ -9,7 +9,7 @@ import fsSource from '../shaders/deferred.frag.glsl.js';
 import TextureBuffer from './textureBuffer';
 import BaseRenderer from './base';
 
-export const NUM_GBUFFERS = 4;
+export const NUM_GBUFFERS = 2;
 
 export default class ClusteredDeferredRenderer extends BaseRenderer {
   constructor(xSlices, ySlices, zSlices) {
@@ -37,14 +37,13 @@ export default class ClusteredDeferredRenderer extends BaseRenderer {
     }), {
       uniforms: ['u_viewMatrix',
                  'u_viewProjectionMatrix',
+                 'u_inverseViewProjection',
                  'u_camPos',
                  'u_zDist',
                  'u_lightbuffer',
                  'u_clusterbuffer',
                  'u_gbuffers[0]',
-                 'u_gbuffers[1]',
-                 'u_gbuffers[2]',
-                 'u_gbuffers[3]'],
+                 'u_gbuffers[1]'],
       attribs: ['a_uv'],
     });
 
@@ -123,6 +122,8 @@ export default class ClusteredDeferredRenderer extends BaseRenderer {
     mat4.invert(this._viewMatrix, camera.matrixWorld.elements);
     mat4.copy(this._projectionMatrix, camera.projectionMatrix.elements);
     mat4.multiply(this._viewProjectionMatrix, this._projectionMatrix, this._viewMatrix);
+    let inverseVP = mat4.create();
+    mat4.invert(inverseVP, this._viewProjectionMatrix);
 
     // Render to the whole screen
     gl.viewport(0, 0, canvas.width, canvas.height);
@@ -137,6 +138,7 @@ export default class ClusteredDeferredRenderer extends BaseRenderer {
     gl.useProgram(this._progCopy.glShaderProgram);
 
     gl.uniformMatrix4fv(this._progCopy.u_viewProjectionMatrix, false, this._viewProjectionMatrix);
+    gl.uniformMatrix4fv(this._progCopy.u_inverseViewProjection, false, inverseVP);
 
     // Draw the scene. This function takes the shader program so that the model's textures can be bound to the right inputs
     scene.draw(this._progCopy);
