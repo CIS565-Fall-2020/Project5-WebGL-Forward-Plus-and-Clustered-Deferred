@@ -18,6 +18,14 @@ export default function(params) {
 
   varying vec2 v_uv;
   
+  float getZ(float dx, float dy)
+{
+  float x = v_uv.x + dx / float(u_dimensions[0]);
+  float y = v_uv.y + dy / float(u_dimensions[1]);
+  vec3 pos = texture2D(u_gbuffers[0], vec2(x, y)).xyz;
+  vec4 pos_view = u_viewMatrix * vec4(pos, 1.0);
+  return pos_view.z;
+}
 
   struct Light {
     vec3 position;
@@ -103,7 +111,30 @@ export default function(params) {
 
     int num_lights = int(ExtractFloat(u_clusterbuffer, num_clusters, texture_height, index, 0));
 
-    
+    // Toon shading
+    // Edge derection: https://gist.github.com/Hebali/6ebfc66106459aacee6a9fac029d0115
+    float z0 = getZ(-1.0, -1.0);
+    float z1 = getZ(0.0, -1.0);
+    float z2 = getZ(1.0, -1.0);
+    float z3 = getZ(-1.0, 0.0);
+    float z4 = getZ(0.0, 0.0);
+    float z5 = getZ(1.0, 0.0);
+    float z6 = getZ(-1.0, 1.0);
+    float z7 = getZ(0.0, 1.0);
+    float z8 = getZ(1.0, 1.0);
+
+    float sobel_h = z2 + (2.0 * z5) + z8 - (z0 + (2.0 * z3) + z6);
+    float sobel_v = z0 + (2.0 * z1) + z2 - (z6 + (2.0 * z7) + z8);
+
+    float sobel = sqrt((sobel_h * sobel_h) + (sobel_v * sobel_v));
+
+    vec3 lineColor = vec3(1.0, 0.0, 0.0);
+
+   if(sobel > 0.9) {
+      gl_FragColor = vec4(lineColor, 1.0);
+      return;
+    }
+
     for (int i = 0; i < ${params.numLights}; ++i) {
       
       if(i >= num_lights) {
@@ -123,12 +154,31 @@ export default function(params) {
       float dotMax = pow(dotProduct, 50.0);
       float spectacularIntensity = max(dotMax, 0.0);
 
-      fragColor += albedo * (lambertTerm + spectacularIntensity)  * light.color * vec3(lightIntensity);
+
+      float intensity = 0.6 * lambertTerm + 0.4 * spectacularIntensity;
+/*
+// toon shading
+
+      if (intensity > 0.9) {
+        intensity = 1.1;
+      }
+      else if (intensity > 0.5) {
+        intensity = 0.7;
+      }
+      else {
+        intensity = 0.5;
+     }
+
+      fragColor += albedo * intensity  * light.color * vec3(lightIntensity);
+      */
+
+      fragColor += albedo * intensity  * light.color * vec3(lightIntensity);
+
     }
+
 
     const vec3 ambientLight = vec3(0.025);
     fragColor += albedo * ambientLight;
-    //fragColor = vec3(ss, 0.0, 0.0);
     gl_FragColor = vec4(fragColor, 1.0);
   }
   `;

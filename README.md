@@ -15,6 +15,10 @@ WebGL Forward+ and Clustered Deferred Shading
 
 ![](img/demo2.gif)
 
+### Introduction
+
+In this project, I implemented the foward+ and deferred shading. These two methods are optimized with the clustering method. In terms of the number of ligths in the scene, light radius and tile size, each method has its limitations. In addition, I implemented the Blinn-Phong and toon shading for interesting visulization. I also used 2-component normal to reduce the number of gbuffers.
+
 ### Features
 **Clustered Rendering**
 
@@ -43,6 +47,12 @@ final color = ambient  + S
 No Blinn-Phong            |  Blinn-Phong
 :-------------------------:|:-------------------------:
 ![](img/nobf.png) | ![](img/bf.png)
+
+**Toon shading**
+
+I tried toon shading. It has two parts: ramp shading and edge detection. I use sobel filter to convolve depth to find the edge. If the current fragment is an edge, it will be colored line color, otherwise, it should be rendered a ramp color. I followed this [repo](https://github.com/mchamberlain/Cel-Shader) to ramp the color.
+
+![](img/toon.png)
 
 **2-component Normal**
 
@@ -81,8 +91,6 @@ F wins this time. F is not impacted by the radius of light but F+ and DC are gre
 The optimized 2-component normal is slightly better than the 3-component one. Although we can save some memory space and data transfer time, it will cost some time to do the float-pointing computation. I just use a straightforward method to compute the z value from x and y using square root. So the result is a little bit blotchy. I could use a more complex encoding and decoding algorithm and I guesss this will cost more time.
 
 ![](img/normal.png)
-
-### Bloopers
 
 
 
