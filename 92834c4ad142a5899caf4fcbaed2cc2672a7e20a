@@ -1,0 +1,92 @@
+[33mcommit 68388017d3203cb9550402e8886607ed93829b46[m[33m ([m[1;36mHEAD -> [m[1;32mmaster[m[33m)[m
+Author: lindayukeyi <keyiyu@outlook.com>
+Date:   Fri Oct 30 21:14:40 2020 -0400
+
+    readme
+
+[33mcommit 9a43ab04b16382dbd0e7ed0cc7c403fd7b187919[m
+Author: lindayukeyi <keyiyu@outlook.com>
+Date:   Fri Oct 30 20:59:06 2020 -0400
+
+    readme
+
+[33mcommit 92834c4ad142a5899caf4fcbaed2cc2672a7e20a[m
+Author: lindayukeyi <keyiyu@outlook.com>
+Date:   Fri Oct 30 20:53:01 2020 -0400
+
+    readme
+
+[33mcommit 60ec8a9836cc8e71205bdb37af2f3c37b7f2ab06[m[33m ([m[1;31morigin/master[m[33m, [m[1;31morigin/HEAD[m[33m)[m
+Author: lindayukeyi <keyiyu@outlook.com>
+Date:   Fri Oct 30 14:37:47 2020 -0400
+
+    finish
+
+[33mcommit 1e22370c3457f2d4f79951bcf7bcd36585b05674[m
+Author: Kangning Li <likangning93@gmail.com>
+Date:   Wed Oct 21 11:37:00 2020 -0400
+
+    clarify gh-pages instructions
+
+[33mcommit b4078bce43ee5d0da0840423b5150817c89aa3b7[m
+Author: Kangning Li <likangning93@gmail.com>
+Date:   Wed Oct 21 11:19:12 2020 -0400
+
+    add wireframe class for visual debugging
+
+[33mcommit 135113b667520e0373c833b8a588f27271a981d8[m
+Author: Kangning Li <likangning93@gmail.com>
+Date:   Tue Oct 20 20:22:38 2020 -0400
+
+    update some terminology, pin packages
+
+[33mcommit 22ed7d5ea573c698bc4345dbd2a8a39aa6e3e44a[m
+Author: Kangning Li <gary@cesium.com>
+Date:   Tue Oct 20 17:11:28 2020 -0400
+
+    add Hannah Bollar's updates for fall 2019 npm webpacks
+
+[33mcommit 621051d440edd592d1f03f8403ec08c57eaf521f[m
+Author: Ottavio M. Hartman <omh1280@gmail.com>
+Date:   Wed Oct 17 13:29:11 2018 -0400
+
+    Update Instructions
+
+[33mcommit 32ba1b6ed5b0bc8966dd54b5cf2f2500da0cc642[m
+Merge: e0e02e2 59445f2
+Author: Ottavio M. Hartman <omh1280@gmail.com>
+Date:   Tue Oct 16 23:30:36 2018 -0400
+
+    Merge pull request #1 from CIS565-Fall-2018/update_2018
+    
+    Update filenames, instructions, and variables with clearer language
+
+[33mcommit 59445f2bbcd5061355d824e0fe69c85c1db48a26[m
+Author: Ottavio Hartman <omh1280@gmail.com>
+Date:   Tue Oct 16 23:25:25 2018 -0400
+
+    Update filenames, instructions, and variables with clearer language
+
+[33mcommit e0e02e20d7ea8a421e12274e67cd237de81737c8[m
+Author: Austin Eng <213reeses@gmail.com>
+Date:   Thu Oct 19 15:38:08 2017 -0400
+
+    Update build system for production
+
+[33mcommit c5cdb49e83aed951e631da86d16e090aaf34e24a[m
+Author: Austin Eng <213reeses@gmail.com>
+Date:   Thu Oct 19 12:38:09 2017 -0400
+
+    Add due date
+
+[33mcommit d7caa9574ffcb66d4dcf9839bacb7128522cdb03[m
+Author: Austin Eng <213reeses@gmail.com>
+Date:   Thu Oct 19 12:32:48 2017 -0400
+
+    Add README.md
+
+[33mcommit 5476fb233088810bcbc983c5faa3ecf513df5d6d[m
+Author: Austin Eng <213reeses@gmail.com>
+Date:   Thu Oct 19 12:29:08 2017 -0400
+
+    Initial base code
