@@ -1,5 +1,5 @@
-import { gl } from '../init';
-import { mat4, vec4, vec3 } from 'gl-matrix';
+import { canvas, gl } from '../init';
+import { mat4 } from 'gl-matrix';
 import { loadShaderProgram } from '../utils';
 import { NUM_LIGHTS } from '../scene';
 import vsSource from '../shaders/forwardPlus.vert.glsl';
@@ -16,8 +16,12 @@ export default class ForwardPlusRenderer extends BaseRenderer {
     
     this._shaderProgram = loadShaderProgram(vsSource, fsSource({
       numLights: NUM_LIGHTS,
+      xSlices: xSlices,
+      ySlices: ySlices,
+      zSlices: zSlices,
     }), {
-      uniforms: ['u_viewProjectionMatrix', 'u_colmap', 'u_normap', 'u_lightbuffer', 'u_clusterbuffer'],
+      uniforms: ['u_viewProjectionMatrix', 'u_colmap', 'u_normap', 'u_lightbuffer', 'u_clusterbuffer', 
+                , 'u_viewMatrix', 'u_nearFarPlane', 'u_canvasSize'],
       attribs: ['a_position', 'a_normal', 'a_uv'],
     });
 
@@ -64,6 +68,15 @@ export default class ForwardPlusRenderer extends BaseRenderer {
 
     // Upload the camera matrix
     gl.uniformMatrix4fv(this._shaderProgram.u_viewProjectionMatrix, false, this._viewProjectionMatrix);
+
+    // Upload the view matrix
+    gl.uniformMatrix4fv(this._shaderProgram.u_viewMatrix, false, this._viewMatrix);
+
+    // Upload the canvas size
+    gl.uniform2f(this._shaderProgram.u_canvasSize, canvas.width, canvas.height);
+
+    // Upload the near far plane
+    gl.uniform2f(this._shaderProgram.u_nearFarPlane, camera.near, camera.far);
 
     // Set the light texture as a uniform input to the shader
     gl.activeTexture(gl.TEXTURE2);
