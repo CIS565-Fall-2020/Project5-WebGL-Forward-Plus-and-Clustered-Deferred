@@ -4,6 +4,7 @@ import { loadShaderProgram } from '../utils';
 import { NUM_LIGHTS } from '../scene';
 import vsSource from '../shaders/forward.vert.glsl';
 import fsSource from '../shaders/forward.frag.glsl.js';
+import QuadVertSource from '../shaders/quad.vert.glsl';
 import TextureBuffer from './textureBuffer';
 
 export default class ForwardRenderer {
@@ -18,6 +19,7 @@ export default class ForwardRenderer {
       uniforms: ['u_viewProjectionMatrix', 'u_colmap', 'u_normap', 'u_lightbuffer'],
       attribs: ['a_position', 'a_normal', 'a_uv'],
     });
+
 
     this._projectionMatrix = mat4.create();
     this._viewMatrix = mat4.create();
