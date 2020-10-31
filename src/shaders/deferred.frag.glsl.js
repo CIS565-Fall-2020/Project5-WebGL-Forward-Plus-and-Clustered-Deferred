@@ -126,7 +126,7 @@ export default function (params) {
     const vec3 ambientLight = vec3(0.025);
     fragColor += albedo * ambientLight;
     gl_FragColor = vec4(fragColor, 1.0);
-/*
+
     // Toon shading
     float toonStep = 5.0;
     vec3 color = gl_FragColor.xyz * toonStep;
@@ -163,7 +163,7 @@ export default function (params) {
     }
     color /= sqrt(Gx * Gx + Gy * Gy);
     gl_FragColor = vec4(color.xyz, 1.0);
- */   
+  
   }
   `;
 }
