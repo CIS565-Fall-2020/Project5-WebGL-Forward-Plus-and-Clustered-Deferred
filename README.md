@@ -13,13 +13,11 @@ Feature:
 - Clustered Deferred
 - Effects
 - Optimizations
-
-[![](img/thumb.png)](http://TODO.github.io/Project5-WebGL-Forward-Plus-and-Clustered-Deferred)
 <img src="img/forwardPlus500lights.PNG" width="450">
 <img src="img/toon.PNG" width="450">
 
 ### Live Online
-
+[![](img/forwardPlus500lights.PNG)](http://zhengliii.github.io/Project5-WebGL-Forward-Plus-and-Clustered-Deferred)
 
 
 ### Demo Video/GIF
