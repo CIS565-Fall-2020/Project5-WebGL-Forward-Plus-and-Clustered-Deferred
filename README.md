@@ -74,14 +74,14 @@ I created a toon shader by mapping the Lambertian product to a five-tone map, th
 ## Clustered Deferred Buffer Optimization
 
 To decrease the storage that the Clustered Deferred renderer uses, I reduced the number of buffers it needed from three to two with the following steps:
-* **Two-Component normals:** Based on [this paper](http://jcgt.org/published/0003/02/01/paper.pdf), I packed the three-component normals into just two components, which reduces normal storage by one float.
+* **Two-component normals:** Based on [this paper](http://jcgt.org/published/0003/02/01/paper.pdf), I packed the three-component normals into just two components, which reduces normal storage by one float.
 * **Packed vec4s:** Now that the normals are packed into two floats, they can be stored in the fourth components of the vec4s in the buffer, eliminating the need for a third bffer.
 
 The results of these changes on the Clustered Deferred renderer (with toon shading) are as follows:
 
 ![](img/graph3.png)
 
-
+Overall, having one less buffer makes a noticable (though still small) change in shader performance. The decreased data also reduces the time the program takes to transfer it to the next stage for shading.
 
 ### Credits
 
@@ -99,3 +99,5 @@ The results of these changes on the Clustered Deferred renderer (with toon shadi
 
 **Toon Shader References**
 * [Unity Toon Shader Tutorial](https://roystan.net/articles/toon-shader.html)
+
+* [Two-component normals](http://jcgt.org/published/0003/02/01/paper.pdf)
