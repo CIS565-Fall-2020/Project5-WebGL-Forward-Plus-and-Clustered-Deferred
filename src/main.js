@@ -22,10 +22,10 @@ function setRenderer(renderer) {
       params._renderer = new ForwardRenderer();
       break;
     case FORWARD_PLUS:
-      params._renderer = new ForwardPlusRenderer(15, 15, 15);
+          params._renderer = new ForwardPlusRenderer(25, 25, 25);
       break;
     case CLUSTERED:
-      params._renderer = new ClusteredDeferredRenderer(15, 15, 15);
+          params._renderer = new ClusteredDeferredRenderer(25, 25, 25);
       break;
   }
 }
@@ -59,9 +59,9 @@ function render() {
   // If you would like the wireframe to render behind and in front
   // of objects based on relative depths in the scene, comment out /
   //the gl.disable(gl.DEPTH_TEST) and gl.enable(gl.DEPTH_TEST) lines.
-  gl.disable(gl.DEPTH_TEST);
+  //gl.disable(gl.DEPTH_TEST);
   wireframe.render(camera);
-  gl.enable(gl.DEPTH_TEST);
+  //gl.enable(gl.DEPTH_TEST);
 }
 
 makeRenderLoop(render)();
