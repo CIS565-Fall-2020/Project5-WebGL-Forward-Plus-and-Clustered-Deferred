@@ -76,6 +76,8 @@ export default function(params) {
 
     vec3 fragColor = vec3(0.0);
 
+    float test = 0.0;
+
     for (int i = 0; i < ${params.numLights}; ++i) {
       Light light = UnpackLight(i);
       float lightDistance = distance(light.position, v_position);
@@ -84,6 +86,8 @@ export default function(params) {
       float lightIntensity = cubicGaussian(2.0 * lightDistance / light.radius);
       float lambertTerm = max(dot(L, normal), 0.0);
 
+      test += 1.0 / (lightDistance * 100.0);
+
       fragColor += albedo * lambertTerm * light.color * vec3(lightIntensity);
     }
 
@@ -91,6 +95,8 @@ export default function(params) {
     fragColor += albedo * ambientLight;
 
     gl_FragColor = vec4(fragColor, 1.0);
+
+    gl_FragColor = vec4(vec3(test), 1.0);
   }
   `;
 }

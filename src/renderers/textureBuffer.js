@@ -16,8 +16,16 @@ export default class TextureBuffer {
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
 
     // The texture stores 4 values in each "pixel". Thus, the texture we create is elementCount x ceil(elementSize / 4)
+    // a pixel has 4 channels (RGBA) to store information in
+    // elementSize is how much information you want to store per element in bytes or bits or something
+    // pixelsPerElement is the necessary amount of information each color channel must be able to store
+    // in order for the desired amount of information of a single element (elementSize) to be stored 
+    // in a single pixel
+    // elementSize could also be the number of pixels per element to store all of the information
+    // for an element. so this allows for multiple pixels to store the information of a single element
     this._pixelsPerElement = Math.ceil(elementSize / 4);
     this._elementCount = elementCount;
+    //                      internal format  image width   image height               format
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, elementCount, this._pixelsPerElement, 0, gl.RGBA, gl.FLOAT, null);
     gl.bindTexture(gl.TEXTURE_2D, null);
 

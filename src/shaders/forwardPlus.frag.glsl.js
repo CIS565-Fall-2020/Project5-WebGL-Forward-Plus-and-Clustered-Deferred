@@ -11,6 +11,10 @@ export default function(params) {
 
   // TODO: Read this buffer to determine the lights influencing a cluster
   uniform sampler2D u_clusterbuffer;
+  uniform mat4 u_viewMatrix;
+  // the vFOV is in degrees, so make sure to convert radians for trig functions
+  uniform vec4 u_cameraInfo;
+  uniform vec4 u_slicesInfo;
 
   varying vec3 v_position;
   varying vec3 v_normal;
@@ -19,7 +23,9 @@ export default function(params) {
   vec3 applyNormalMap(vec3 geomnor, vec3 normap) {
     normap = normap * 2.0 - 1.0;
     vec3 up = normalize(vec3(0.001, 1, 0.001));
+    // surface tangent
     vec3 surftan = normalize(cross(geomnor, up));
+    // surface binormal
     vec3 surfbinor = cross(geomnor, surftan);
     return normap.y * surftan + normap.x * surfbinor + normap.z * geomnor;
   }
@@ -81,21 +87,106 @@ export default function(params) {
 
     vec3 fragColor = vec3(0.0);
 
+    // determine which lights have influence using the u_clusterbuffer
+    // xSlices, ySlices, zSlices
+    // camera orientation information: cam view matrix
+    // frustum information vFOV, aspectRatio, near, far
+    vec4 camSpacePos = u_viewMatrix * vec4(v_position, 1.0);
+    int xSlices = int(u_slicesInfo.x);
+    int ySlices = int(u_slicesInfo.y);
+    int zSlices = int(u_slicesInfo.z);
+    float vFOV = radians(u_cameraInfo.x);
+    float aspectRatio = u_cameraInfo.y;
+    float near = u_cameraInfo.z;
+    float far = u_cameraInfo.w;
+    float hFOV = 2.0 * atan((aspectRatio * far * tan(vFOV / 2.0)) / far);
+    float zSliceThickness = (far - near) / float(zSlices);
+    float ySliceThickness = (2.0 * camSpacePos.z * tan(vFOV / 2.0)) / float(ySlices);
+    float xSliceThickness = (2.0 * camSpacePos.z * tan(hFOV / 2.0)) / float(xSlices);
+
+    // int zFrustum = int(camSpacePos.z - near) / zSlices;
+    int zFrustum = int(floor((camSpacePos.z - near) / zSliceThickness));
+    // int yFrustum = int(camSpacePos.y + camSpacePos.z * tan(vFOV / 2.0)) / ySlices;
+    int yFrustum = int(floor((camSpacePos.y + camSpacePos.z * tan(vFOV / 2.0)) / ySliceThickness));
+    // int xFrustum = int(camSpacePos.x + camSpacePos.z * tan(hFOV / 2.0)) / xSlices;
+    int xFrustum = int(floor((camSpacePos.x + camSpacePos.z * tan(hFOV / 2.0)) / xSliceThickness));
+    int iFrustum = xFrustum + yFrustum * xSlices + zFrustum * xSlices * ySlices;
+    int imageWidth = xSlices * ySlices * zSlices;
+    // this will be the cluster index
+    float u = float(iFrustum + 1) / float(xSlices * ySlices * zSlices + 1);
+    // I HAVE HARD CODED IN THE IMAGE HEIGHT SO 
+    // THIS WILL LIKELY HAVE TO BE PASSED IN AS A PARAMETER
+    int imageHeight = int(ceil((100.0 + 1.0) / 4.0));
+    vec4 fstPix = texture2D(u_clusterbuffer, vec2(u, 1.0 / float(imageHeight + 1)));
+    int lightsPerFrustum = int(fstPix.x);
+    // int lightIndices[${params.numLights}];
+    // for (int l = 1; l < ${params.numLights}; l++) {
+    //   if (l >= lightsPerFrustum)
+    //     break;
+    //   int lite = int(ExtractFloat(u_clusterbuffer, imageWidth, imageHeight, iFrustum, l));
+    //   lightIndices[l - 1] = lite;
+    // }
+
+
+    float test = 0.0;
+
+    // go back to the old format, this is causing huuuge slow downs
+    // this format assumes that the order in which you encounter lights in the
+    // texture is the same as the order in which they are stored in the frustum
+    int lightIdx = 1;
+    int currentLight = int(ExtractFloat(u_clusterbuffer, imageWidth, imageHeight, iFrustum, lightIdx));
     for (int i = 0; i < ${params.numLights}; ++i) {
-      Light light = UnpackLight(i);
-      float lightDistance = distance(light.position, v_position);
-      vec3 L = (light.position - v_position) / lightDistance;
+      // // do a linear search on the lights in this frustum
+      // bool found = false;
+      // for (int j = 0; j < ${params.numLights}; j++) {
+      //   if (j >= lightsPerFrustum)
+      //     break;
+      //   if (lightIndices[j] == i) {
+      //     found = true;
+      //     break;
+      //   }
+      // }
+      // if (found) {
+      if (currentLight == i) {
+        Light light = UnpackLight(i);
+        float lightDistance = distance(light.position, v_position);
+        vec3 L = (light.position - v_position) / lightDistance;
 
-      float lightIntensity = cubicGaussian(2.0 * lightDistance / light.radius);
-      float lambertTerm = max(dot(L, normal), 0.0);
+        float lightIntensity = cubicGaussian(2.0 * lightDistance / light.radius);
+        float lambertTerm = max(dot(L, normal), 0.0);
 
-      fragColor += albedo * lambertTerm * light.color * vec3(lightIntensity);
+        test += 1.0 / (lightDistance * 100.0);
+
+        fragColor += albedo * lambertTerm * light.color * vec3(lightIntensity);
+
+        if (lightIdx < lightsPerFrustum) {
+          currentLight = int(ExtractFloat(u_clusterbuffer, imageWidth, imageHeight, iFrustum, ++lightIdx));
+        } else {
+          break;
+        }
+      }
     }
+
+    // for (int i = 0; i < ${params.numLights}; ++i) {
+    //   Light light = UnpackLight(i);
+    //   float lightDistance = distance(light.position, v_position);
+    //   vec3 L = (light.position - v_position) / lightDistance;
+
+    //   float lightIntensity = cubicGaussian(2.0 * lightDistance / light.radius);
+    //   float lambertTerm = max(dot(L, normal), 0.0);
+
+    //   fragColor += albedo * lambertTerm * light.color * vec3(lightIntensity);
+    // }
 
     const vec3 ambientLight = vec3(0.025);
     fragColor += albedo * ambientLight;
 
     gl_FragColor = vec4(fragColor, 1.0);
+
+    // gl_FragColor = vec4(float(xFrustum) / 15.0, float(yFrustum) / 15.0, float(zFrustum) / 15.0, 1.0);
+    // gl_FragColor = vec4(0.0, 0.0, float(14 - zFrustum) / 15.0, 1.0);
+    // gl_FragColor = vec4(vec3(test), 1.0);
+    // vs code lines (0) and debug lines (-1)
   }
   `;
 }

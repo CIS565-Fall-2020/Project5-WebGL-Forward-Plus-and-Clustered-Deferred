@@ -1,0 +1,17 @@
+Break Statements in GLSL
+https://www.shaderific.com/glsl-statements
+
+GLSL built-in functions directory
+https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/
+
+GLSL varying variables
+https://jameshfisher.com/2017/10/19/glsl-varying/#:~:text=GLSL%20varying%20variables%20Above%20you%20see%20a%20square,draw%20call%2C%20with%20four%20vertices%3A%20the%20four%20corners.
+
+Javascript Math Library
+https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Math
+
+The coordinate axes in OpenGL are right handed
+Fingers curl in direction of shortest distance from x to y and thumbpoints in z direction. Axis orientation verified by sgments drawn to the screen.
+
+Three.js Cameras, PerspectiveCamera, and very detailed info on frustums
+https://threejsfundamentals.org/threejs/lessons/threejs-cameras.html
