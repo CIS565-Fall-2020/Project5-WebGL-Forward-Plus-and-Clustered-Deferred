@@ -16,8 +16,18 @@ export default class ForwardPlusRenderer extends BaseRenderer {
     
     this._shaderProgram = loadShaderProgram(vsSource, fsSource({
       numLights: NUM_LIGHTS,
+      width: canvas.width,
+      height: canvas.height,
+      numXSlices: xSlices,
+      numYSlices: ySlices,
+      numZSlices: zSlices,
+      numClusters: xSlices * ySlices * zSlices
     }), {
-      uniforms: ['u_viewProjectionMatrix', 'u_colmap', 'u_normap', 'u_lightbuffer', 'u_clusterbuffer'],
+      uniforms: ['u_viewMatrix',
+                 'u_viewProjectionMatrix',
+                 'u_zDist',
+                 'u_colmap', 'u_normap',
+                 'u_lightbuffer', 'u_clusterbuffer'],
       attribs: ['a_position', 'a_normal', 'a_uv'],
     });
 
@@ -34,7 +44,7 @@ export default class ForwardPlusRenderer extends BaseRenderer {
     mat4.multiply(this._viewProjectionMatrix, this._projectionMatrix, this._viewMatrix);
 
     // Update cluster texture which maps from cluster index to light list
-    this.updateClusters(camera, this._viewMatrix, scene);
+    this.updateClusters(camera, this._viewMatrix, this._viewProjectionMatrix, scene);
     
     // Update the buffer used to populate the texture packed with light data
     for (let i = 0; i < NUM_LIGHTS; ++i) {
@@ -63,7 +73,10 @@ export default class ForwardPlusRenderer extends BaseRenderer {
     gl.useProgram(this._shaderProgram.glShaderProgram);
 
     // Upload the camera matrix
+    gl.uniformMatrix4fv(this._shaderProgram.u_viewMatrix, false, this._viewMatrix);
     gl.uniformMatrix4fv(this._shaderProgram.u_viewProjectionMatrix, false, this._viewProjectionMatrix);
+
+    gl.uniform1f(this._shaderProgram.u_zDist, camera.far - camera.near);
 
     // Set the light texture as a uniform input to the shader
     gl.activeTexture(gl.TEXTURE2);

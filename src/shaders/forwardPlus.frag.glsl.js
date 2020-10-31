@@ -5,11 +5,15 @@ export default function(params) {
   #version 100
   precision highp float;
 
+  uniform mat4 u_viewMatrix;
+  uniform mat4 u_viewProjectionMatrix;
+
   uniform sampler2D u_colmap;
   uniform sampler2D u_normap;
   uniform sampler2D u_lightbuffer;
 
-  // TODO: Read this buffer to determine the lights influencing a cluster
+  uniform float u_zDist;
+
   uniform sampler2D u_clusterbuffer;
 
   varying vec3 v_position;
@@ -81,8 +85,30 @@ export default function(params) {
 
     vec3 fragColor = vec3(0.0);
 
-    for (int i = 0; i < ${params.numLights}; ++i) {
-      Light light = UnpackLight(i);
+    // calculate frustum index
+    int frustumX = int(gl_FragCoord.x / float(${params.width}) * float(${params.numXSlices}));
+    int frustumY = int(gl_FragCoord.y / float(${params.height}) * float(${params.numYSlices}));
+    int frustumZ = int((u_viewMatrix * vec4(v_position, 1)).z / u_zDist * float(${params.numZSlices}));
+    int frustumIndex = frustumX + frustumY * ${params.numXSlices} + frustumZ * ${params.numXSlices} * ${params.numYSlices};
+
+    int textHeight = int(ceil(float(${params.numLights + 1}) / 4.0));
+
+    int numLights = int(ExtractFloat(u_clusterbuffer,
+                                      ${params.numClusters},
+                                      textHeight,
+                                      frustumIndex,
+                                      0));
+
+    for(int i = 0; i < ${params.numLights}; i++) {
+      if(i >= numLights) break;
+      int lightIndex = int(ExtractFloat(u_clusterbuffer,
+                                        ${params.numClusters},
+                                        textHeight,
+                                        frustumIndex,
+                                        i + 1));
+
+      Light light = UnpackLight(lightIndex);
+
       float lightDistance = distance(light.position, v_position);
       vec3 L = (light.position - v_position) / lightDistance;
 
@@ -95,6 +121,15 @@ export default function(params) {
     const vec3 ambientLight = vec3(0.025);
     fragColor += albedo * ambientLight;
 
+    //////// DEBUGGING COLORS ////////
+    // debug the X/Y slices of the frustums
+    //fragColor = vec3(0, float(frustumY) / float(${params.numYSlices}), float(frustumX) / float(${params.numXSlices}));
+    // debug the Z slices of the frustums (set camera.far to be lower)
+    //fragColor = vec3(float(frustumZ) / float(${params.numZSlices}));
+    // debug the number of lights
+    //fragColor = vec3(float(numLights) / float(${params.numLights}), float(numLights) / float(${params.numLights}), 0);
+    //////////////////////////////////
+    //fragColor = vec3(float(li));
     gl_FragColor = vec4(fragColor, 1.0);
   }
   `;
