@@ -80,10 +80,7 @@ export default function(params) {
     float a = n1 - n2;
     float b = n1 + n2;
     float n3 = sqrt(1.0 - a * a - b * b);
-<<<<<<< HEAD
     vec3 normal = vec3(n1, n2, n3);
-=======
->>>>>>> 60ec8a9836cc8e71205bdb37af2f3c37b7f2ab06
 */
     vec3 normal = texture2D(u_gbuffers[2], v_uv).xyz;
 
