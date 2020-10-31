@@ -13,9 +13,9 @@ WebGL Forward+ and Clustered Deferred Shading
 
 ## Project Description ##
 
-This project focuses on implementing different rendering techniques to improve efficiency for scenes with many dynamic light sources. Due to time constraints, this project is still in the works but I will be sharing my progress so far through this README.
+This project focuses on implementing different rendering techniques to improve efficiency for scenes with many dynamic light sources. Due to time constraints, this project is still in the works but I will be submitting my progress so far.
 
-### Features
+### Features (In progress)
 
 * Forward Rendering
 * Forward+ Rendering
