@@ -3,9 +3,9 @@ WebGL Forward+ and Clustered Deferred Shading
 
 **University of Pennsylvania, CIS 565: GPU Programming and Architecture, Project 5**
 
-* (TODO) YOUR NAME HERE
-* Tested on: (TODO) **Google Chrome 222.2** on
-  Windows 22, i7-2222 @ 2.22GHz 22GB, GTX 222 222MB (Moore 2222 Lab)
+* Li Zheng
+  * [LinkedIn](https://www.linkedin.com/in/li-zheng-1955ba169)
+* Tested on: Windows CUDA10, i5-3600 @ 3.59GHz 16GB, RTX 2060 6GB (personal computer)
 
 ### Live Online
 
@@ -15,14 +15,18 @@ WebGL Forward+ and Clustered Deferred Shading
 
 [![](img/video.png)](TODO)
 
-### (TODO: Your README)
+### Performance & Analysis
+#### Compare Forward+ and Clustered Deferred shading
+Forward+ is faster if there are few lights and culled fragments. Otherwise, Clustered Deferred shading is faster. Farward+ shades all fragments. Clustered Deferred only shade fragments passing depth test. So the scene with large number of lights and culled fragments should have a better performance using Clustered Deferred shading. But Clustered Deferred takes more passes of texture to store geometries, witch result in relatively bad performance with few lights. Also, Clustered Deferred shading has limitations of material flexibility, no translucency and MSAA requires high memory usage. 
 
-*DO NOT* leave the README to the last minute! It is a crucial part of the
-project, and we will not be able to grade you without a good README.
+#### New Effect Features
+I analyze the performance of shading with varying number of lights and tile size. For the Clustered Deferred shading, I implement a post processing of Toon shading.  
+![](img/numOfLights.PNG)  
+The figure show the time (ms) per frame of three different shading methods with increasing number of lights. Cluster Deferred Shading has the best performance. Forward+ comes next.
+The time of original Forward Shading increases proportionally with number of lights.
 
-This assignment has a considerable amount of performance analysis compared
-to implementation work. Complete the implementation early to leave time!
-
+![](img/tileSize.PNG.PNG)   
+![](img/toonShader.PNG)  
 
 ### Credits
 
