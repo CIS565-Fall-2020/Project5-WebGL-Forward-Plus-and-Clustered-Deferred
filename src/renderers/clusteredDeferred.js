@@ -21,7 +21,7 @@ export default class ClusteredDeferredRenderer extends BaseRenderer {
     this._lightTexture = new TextureBuffer(NUM_LIGHTS, 8);
     
     this._progCopy = loadShaderProgram(toTextureVert, toTextureFrag, {
-      uniforms: ['u_viewProjectionMatrix', 'u_colmap', 'u_normap'],
+      uniforms: ['u_viewProjectionMatrix', 'u_colmap', 'u_normap', 'u_lightbuffer'],
       attribs: ['a_position', 'a_normal', 'a_uv'],
     });
 
@@ -154,6 +154,10 @@ export default class ClusteredDeferredRenderer extends BaseRenderer {
     gl.useProgram(this._progShade.glShaderProgram);
 
     // TODO: Bind any other shader inputs
+    // Set the light texture as a uniform input to the shader
+    gl.activeTexture(gl.TEXTURE2);
+    gl.bindTexture(gl.TEXTURE_2D, this._lightTexture.glTexture);
+    gl.uniform1i(this._progShade.u_lightbuffer, 2);
 
     // Bind g-buffers
     const firstGBufferBinding = 0; // You may have to change this if you use other texture slots
