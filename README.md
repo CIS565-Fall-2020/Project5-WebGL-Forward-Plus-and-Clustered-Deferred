@@ -17,7 +17,22 @@ WebGL Forward+ and Clustered Deferred Shading
   * Clustered Deferred Shading
   * Blinn Phong Shading
   * Optimize G-Buffer Format - 2-component normal
+  
+  
+### Forward+
+<img src="img/Screenshot (65).png" width="500">
+  
+  
+###  Clustered Deferred
+Position          |   Normal
+:-------------------------:|:-------------------------:
+<img src="img/Screenshot (73).png" width="500">| <img src="img/Screenshot (75).png" width="500"> |
 
+### Performance Analysis
+
+
+### Bloopers and Debug Images
+<img src="img/Screenshot (63).png" width="300">| <img src="img/Screenshot (66).png" width="300"> | <img src="img/Screenshot (68).png" width="300">
 
 ### Credits
 
