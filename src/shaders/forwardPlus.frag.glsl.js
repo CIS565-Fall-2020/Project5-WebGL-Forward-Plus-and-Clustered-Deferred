@@ -1,6 +1,5 @@
 export default function(params) {
   return `
-  // TODO: This is pretty much just a clone of forward.frag.glsl.js
 
   #version 100
   precision highp float;
@@ -8,6 +7,9 @@ export default function(params) {
   uniform sampler2D u_colmap;
   uniform sampler2D u_normap;
   uniform sampler2D u_lightbuffer;
+
+  uniform vec2 u_canvasSize;
+  uniform vec2 u_nearFarPlane;
 
   // TODO: Read this buffer to determine the lights influencing a cluster
   uniform sampler2D u_clusterbuffer;
@@ -81,8 +83,23 @@ export default function(params) {
 
     vec3 fragColor = vec3(0.0);
 
-    for (int i = 0; i < ${params.numLights}; ++i) {
-      Light light = UnpackLight(i);
+    int clustersNum = ${params.xSlices} * ${params.ySlices} * ${params.zSlices};
+    int componentsNum = int(ceil(float(${params.numLights} + 1) / 4.0));
+
+    int x = int(floor(gl_FragCoord.x / float(u_canvasSize.x ) * float(${params.xSlices})));
+    int y = int(floor(gl_FragCoord.y / float(u_canvasSize.y) * float(${params.ySlices})));
+    int z = int(floor((gl_FragCoord.z - u_nearFarPlane.x) / (u_nearFarPlane.y - u_nearFarPlane.x) * float(${params.zSlices})));
+    int clusterIdx = x + y * ${params.xSlices} + z * ${params.xSlices} * ${params.ySlices};
+    int lightCount = int(ExtractFloat(u_clusterbuffer, clustersNum, componentsNum, clusterIdx, 0));
+
+    for (int i = 1; i <= ${params.numLights}; ++i) {
+      if (i > lightCount) {
+        break;
+      }
+
+      int lightIdx = int(ExtractFloat(u_clusterbuffer, clustersNum, componentsNum, clusterIdx, i));
+
+      Light light = UnpackLight(lightIdx);
       float lightDistance = distance(light.position, v_position);
       vec3 L = (light.position - v_position) / lightDistance;
 
@@ -90,6 +107,7 @@ export default function(params) {
       float lambertTerm = max(dot(L, normal), 0.0);
 
       fragColor += albedo * lambertTerm * light.color * vec3(lightIntensity);
+
     }
 
     const vec3 ambientLight = vec3(0.025);
