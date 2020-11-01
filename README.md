@@ -10,15 +10,13 @@ WebGL Forward+ and Clustered Deferred Shading
 
 ### Demo Video/GIF
 
-[![](img/video.png)](TODO)
+![](img/demogif.gif)
 
-### (TODO: Your README)
-
-*DO NOT* leave the README to the last minute! It is a crucial part of the
-project, and we will not be able to grade you without a good README.
-
-This assignment has a considerable amount of performance analysis compared
-to implementation work. Complete the implementation early to leave time!
+### Features
+  * Forward+ Shading
+  * Clustered Deferred Shading
+  * Blinn Phong Shading
+  * Optimize G-Buffer Format - 2-component normal
 
 
 ### Credits
