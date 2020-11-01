@@ -4,6 +4,8 @@ import ForwardPlusRenderer from './renderers/forwardPlus';
 import ClusteredDeferredRenderer from './renderers/clusteredDeferred';
 import Scene from './scene';
 import Wireframe from './wireframe';
+import * as THREE from 'three';
+import { mat4, vec4 } from 'gl-matrix';
 
 const FORWARD = 'Forward';
 const FORWARD_PLUS = 'Forward+';
@@ -22,10 +24,10 @@ function setRenderer(renderer) {
       params._renderer = new ForwardRenderer();
       break;
     case FORWARD_PLUS:
-      params._renderer = new ForwardPlusRenderer(15, 15, 15);
+      params._renderer = new ForwardPlusRenderer(5, 5, 5);
       break;
     case CLUSTERED:
-      params._renderer = new ClusteredDeferredRenderer(15, 15, 15);
+      params._renderer = new ClusteredDeferredRenderer(5, 5, 5);
       break;
   }
 }
@@ -51,17 +53,25 @@ camera.position.set(-10, 8, 0);
 cameraControls.target.set(0, 2, 0);
 gl.enable(gl.DEPTH_TEST);
 
+var a = 0;
+
+
+
 function render() {
   scene.update();  
-  params._renderer.render(camera, scene);
+  params._renderer.render(camera, scene, wireframe, a);
+  a++;
 
   // LOOK: Render wireframe "in front" of everything else.
   // If you would like the wireframe to render behind and in front
   // of objects based on relative depths in the scene, comment out /
   //the gl.disable(gl.DEPTH_TEST) and gl.enable(gl.DEPTH_TEST) lines.
-  gl.disable(gl.DEPTH_TEST);
-  wireframe.render(camera);
-  gl.enable(gl.DEPTH_TEST);
+
+  // gl.disable(gl.DEPTH_TEST);
+  // wireframe.render(camera);
+  // gl.enable(gl.DEPTH_TEST);
+
+  // debugger;
 }
 
 makeRenderLoop(render)();

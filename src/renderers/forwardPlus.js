@@ -6,6 +6,7 @@ import vsSource from '../shaders/forwardPlus.vert.glsl';
 import fsSource from '../shaders/forwardPlus.frag.glsl.js';
 import TextureBuffer from './textureBuffer';
 import BaseRenderer from './base';
+import { MAX_LIGHTS_PER_CLUSTER } from './base.js';
 
 export default class ForwardPlusRenderer extends BaseRenderer {
   constructor(xSlices, ySlices, zSlices) {
@@ -16,8 +17,13 @@ export default class ForwardPlusRenderer extends BaseRenderer {
     
     this._shaderProgram = loadShaderProgram(vsSource, fsSource({
       numLights: NUM_LIGHTS,
+      xSlices: xSlices,
+      ySlices: ySlices,
+      zSlices: zSlices,
+      componentNum: Math.ceil((MAX_LIGHTS_PER_CLUSTER + 1) / 4)
     }), {
-      uniforms: ['u_viewProjectionMatrix', 'u_colmap', 'u_normap', 'u_lightbuffer', 'u_clusterbuffer'],
+      uniforms: ['u_viewProjectionMatrix', 'u_colmap', 'u_normap', 'u_lightbuffer', 'u_clusterbuffer',
+                  'u_camfar', 'u_camnear', 'u_screenwidth', 'u_screenheight', 'u_viewMatrix'],
       attribs: ['a_position', 'a_normal', 'a_uv'],
     });
 
@@ -26,17 +32,18 @@ export default class ForwardPlusRenderer extends BaseRenderer {
     this._viewProjectionMatrix = mat4.create();
   }
 
-  render(camera, scene) {
-    // Update the camera matrices
+  render(camera, scene, wireframe, a) {
+
+    // Update the camera matrices -
     camera.updateMatrixWorld();
     mat4.invert(this._viewMatrix, camera.matrixWorld.elements);
     mat4.copy(this._projectionMatrix, camera.projectionMatrix.elements);
     mat4.multiply(this._viewProjectionMatrix, this._projectionMatrix, this._viewMatrix);
 
-    // Update cluster texture which maps from cluster index to light list
-    this.updateClusters(camera, this._viewMatrix, scene);
+    // Update cluster texture which maps from cluster index to light list-
+    this.updateClusters(camera, this._viewMatrix, scene, wireframe, a);
     
-    // Update the buffer used to populate the texture packed with light data
+    // Update the buffer used to populate the texture packed with light data-
     for (let i = 0; i < NUM_LIGHTS; ++i) {
       this._lightTexture.buffer[this._lightTexture.bufferIndex(i, 0) + 0] = scene.lights[i].position[0];
       this._lightTexture.buffer[this._lightTexture.bufferIndex(i, 0) + 1] = scene.lights[i].position[1];
@@ -47,22 +54,25 @@ export default class ForwardPlusRenderer extends BaseRenderer {
       this._lightTexture.buffer[this._lightTexture.bufferIndex(i, 1) + 1] = scene.lights[i].color[1];
       this._lightTexture.buffer[this._lightTexture.bufferIndex(i, 1) + 2] = scene.lights[i].color[2];
     }
-    // Update the light texture
+    // Update the light texture-
     this._lightTexture.update();
 
-    // Bind the default null framebuffer which is the screen
+    // Bind the default null framebuffer which is the screen- 
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
 
-    // Render to the whole screen
+    // Render to the whole screen -
     gl.viewport(0, 0, canvas.width, canvas.height);
 
-    // Clear the frame
+    // Clear the frame-
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-    // Use this shader program
+    // Use this shader program-
     gl.useProgram(this._shaderProgram.glShaderProgram);
 
-    // Upload the camera matrix
+
+
+
+    // Upload the camera matrix-
     gl.uniformMatrix4fv(this._shaderProgram.u_viewProjectionMatrix, false, this._viewProjectionMatrix);
 
     // Set the light texture as a uniform input to the shader
@@ -76,8 +86,20 @@ export default class ForwardPlusRenderer extends BaseRenderer {
     gl.uniform1i(this._shaderProgram.u_clusterbuffer, 3);
 
     // TODO: Bind any other shader inputs
+    gl.uniform1i(this._shaderProgram.u_camfar, camera.far);
+    gl.uniform1i(this._shaderProgram.u_camnear, camera.near);
+
+    var screenheight = canvas.height;
+    var screenwidth = canvas.width;
+    // debugger;
+    gl.uniform1f(this._shaderProgram.u_screenwidth, screenwidth);
+    gl.uniform1f(this._shaderProgram.u_screenheight, screenheight);
+    gl.uniformMatrix4fv(this._shaderProgram.u_viewMatrix, false, this._viewMatrix);
+
 
     // Draw the scene. This function takes the shader program so that the model's textures can be bound to the right inputs
     scene.draw(this._shaderProgram);
+
+    
   }
 };

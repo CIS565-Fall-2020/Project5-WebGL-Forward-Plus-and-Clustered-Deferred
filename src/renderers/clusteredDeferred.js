@@ -8,8 +8,9 @@ import QuadVertSource from '../shaders/quad.vert.glsl';
 import fsSource from '../shaders/deferred.frag.glsl.js';
 import TextureBuffer from './textureBuffer';
 import BaseRenderer from './base';
+import { MAX_LIGHTS_PER_CLUSTER } from './base.js';
 
-export const NUM_GBUFFERS = 4;
+export const NUM_GBUFFERS = 3;
 
 export default class ClusteredDeferredRenderer extends BaseRenderer {
   constructor(xSlices, ySlices, zSlices) {
@@ -28,8 +29,14 @@ export default class ClusteredDeferredRenderer extends BaseRenderer {
     this._progShade = loadShaderProgram(QuadVertSource, fsSource({
       numLights: NUM_LIGHTS,
       numGBuffers: NUM_GBUFFERS,
+      xSlices: xSlices,
+      ySlices: ySlices,
+      zSlices: zSlices,
+      componentNum: Math.ceil((MAX_LIGHTS_PER_CLUSTER + 1) / 4)
     }), {
-      uniforms: ['u_gbuffers[0]', 'u_gbuffers[1]', 'u_gbuffers[2]', 'u_gbuffers[3]'],
+      uniforms: ['u_gbuffers[0]', 'u_gbuffers[1]', 'u_gbuffers[2]', 'u_normap',
+                'u_lightbuffer', 'u_clusterbuffer', 'u_camfar', 'u_camnear', 
+                'u_screenwidth', 'u_screenheight', 'u_viewMatrix', 'u_camPos'],
       attribs: ['a_uv'],
     });
 
@@ -98,7 +105,7 @@ export default class ClusteredDeferredRenderer extends BaseRenderer {
     gl.bindTexture(gl.TEXTURE_2D, null);
   }
 
-  render(camera, scene) {
+  render(camera, scene, wireframe, a) {
     if (canvas.width != this._width || canvas.height != this._height) {
       this.resize(canvas.width, canvas.height);
     }
@@ -126,6 +133,10 @@ export default class ClusteredDeferredRenderer extends BaseRenderer {
 
     // Draw the scene. This function takes the shader program so that the model's textures can be bound to the right inputs
     scene.draw(this._progCopy);
+
+
+    // Update the clusters for the frame
+    this.updateClusters(camera, this._viewMatrix, scene, wireframe, a);
     
     // Update the buffer used to populate the texture packed with light data
     for (let i = 0; i < NUM_LIGHTS; ++i) {
@@ -141,11 +152,11 @@ export default class ClusteredDeferredRenderer extends BaseRenderer {
     // Update the light texture
     this._lightTexture.update();
 
-    // Update the clusters for the frame
-    this.updateClusters(camera, this._viewMatrix, scene);
-
     // Bind the default null framebuffer which is the screen
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+
+    // // Render to the whole screen -
+    // gl.viewport(0, 0, canvas.width, canvas.height);
 
     // Clear the frame
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
@@ -155,8 +166,33 @@ export default class ClusteredDeferredRenderer extends BaseRenderer {
 
     // TODO: Bind any other shader inputs
 
+    // -------------
+    // Set the light texture as a uniform input to the shader
+    gl.activeTexture(gl.TEXTURE2);
+    gl.bindTexture(gl.TEXTURE_2D, this._lightTexture.glTexture);
+    gl.uniform1i(this._progShade.u_lightbuffer, 2);
+
+    // Set the cluster texture as a uniform input to the shader
+    gl.activeTexture(gl.TEXTURE3);
+    gl.bindTexture(gl.TEXTURE_2D, this._clusterTexture.glTexture);
+    gl.uniform1i(this._progShade.u_clusterbuffer, 3);
+
+    // TODO: Bind any other shader inputs
+    gl.uniform1i(this._progShade.u_camfar, camera.far);
+    gl.uniform1i(this._progShade.u_camnear, camera.near);
+    gl.uniform3f(this._progShade.u_camPos, camera.position.x, camera.position.y, camera.position.z);
+
+    var screenheight = canvas.height;
+    var screenwidth = canvas.width;
+    gl.uniform1f(this._progShade.u_screenwidth, screenwidth);
+    gl.uniform1f(this._progShade.u_screenheight, screenheight);
+    gl.uniformMatrix4fv(this._progShade.u_viewMatrix, false, this._viewMatrix);
+    // -------------
+
+
+
     // Bind g-buffers
-    const firstGBufferBinding = 0; // You may have to change this if you use other texture slots
+    const firstGBufferBinding = 4; // You may have to change this if you use other texture slots
     for (let i = 0; i < NUM_GBUFFERS; i++) {
       gl.activeTexture(gl[`TEXTURE${i + firstGBufferBinding}`]);
       gl.bindTexture(gl.TEXTURE_2D, this._gbuffers[i]);
