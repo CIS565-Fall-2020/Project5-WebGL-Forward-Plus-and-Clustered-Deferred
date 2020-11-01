@@ -10,8 +10,6 @@ WebGL Forward+ and Clustered Deferred Shading
 
 ### Demo Video/GIF
 
-![](img/demogif.gif)
-
 <img src="img/demogif.gif" width="700">
 
 ### Features
