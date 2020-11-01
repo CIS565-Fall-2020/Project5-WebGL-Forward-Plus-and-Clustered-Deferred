@@ -12,6 +12,8 @@ WebGL Forward+ and Clustered Deferred Shading
 
 ![](img/demogif.gif)
 
+<img src="img/demogif.gif" width="800">
+
 ### Features
   * Forward+ Shading
   * Clustered Deferred Shading
