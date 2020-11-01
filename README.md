@@ -6,9 +6,7 @@ WebGL Forward+ and Clustered Deferred Shading
 * [LinkedIn](https://www.linkedin.com/in/haorong-henry-yang/)
 * Tested on: Windows 10 Home, i7-10750H @ 2.60GHz 16GB, GTX 2070 Super Max-Q (Personal)
 
-### Live Online
-
-[![](img/thumb.png)](http://TODO.github.io/Project5-WebGL-Forward-Plus-and-Clustered-Deferred)
+[Online Live Demo](https://yangh34.github.io/Project5-WebGL-Forward-Plus-and-Clustered-Deferred/)
 
 ### Demo Video/GIF
 
