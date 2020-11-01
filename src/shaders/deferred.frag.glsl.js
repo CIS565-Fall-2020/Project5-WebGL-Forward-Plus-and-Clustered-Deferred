@@ -143,7 +143,7 @@ export default function(params) {
       vec4 h = vec4(normalize((view + normalize(L)) / 2.0), 1);
       vec4 w = vec4(normalize(normal), 1);
       float specularIntensity = max(pow(dot(h, w), exp), 0.0);
-      fragColor += albedo * light.color * lightIntensity * clamp(specularIntensity, 0.0, 1.0);
+      fragColor += albedo * light.color * vec3(lightIntensity) * clamp(specularIntensity, 0.0, 1.0);
 #endif
 
     }
