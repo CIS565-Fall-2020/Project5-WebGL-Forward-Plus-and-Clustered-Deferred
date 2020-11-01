@@ -8,6 +8,7 @@ import QuadVertSource from '../shaders/quad.vert.glsl';
 import fsSource from '../shaders/deferred.frag.glsl.js';
 import TextureBuffer from './textureBuffer';
 import BaseRenderer from './base';
+import { MAX_LIGHTS_PER_CLUSTER } from './base.js';
 
 export const NUM_GBUFFERS = 3;
 
@@ -28,6 +29,7 @@ export default class ClusteredDeferredRenderer extends BaseRenderer {
     this._progShade = loadShaderProgram(QuadVertSource, fsSource({
       numLights: NUM_LIGHTS,
       numGBuffers: NUM_GBUFFERS,
+      numLightsMax: MAX_LIGHTS_PER_CLUSTER,
       xSlices: xSlices,
       ySlices: ySlices,
       zSlices: zSlices,

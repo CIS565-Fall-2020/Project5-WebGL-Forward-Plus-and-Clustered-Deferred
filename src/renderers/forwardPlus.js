@@ -17,6 +17,7 @@ export default class ForwardPlusRenderer extends BaseRenderer {
     
     this._shaderProgram = loadShaderProgram(vsSource, fsSource({
       numLights: NUM_LIGHTS,
+      numLightsMax: MAX_LIGHTS_PER_CLUSTER,
       xSlices: xSlices,
       ySlices: ySlices,
       zSlices: zSlices,

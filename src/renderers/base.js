@@ -2,7 +2,7 @@ import TextureBuffer from './textureBuffer';
 import { NUM_LIGHTS } from '../scene.js';
 import { vec3, vec4, mat4 } from 'gl-matrix';
 
-export const MAX_LIGHTS_PER_CLUSTER = 200;
+export const MAX_LIGHTS_PER_CLUSTER = 300;
 
 export default class BaseRenderer {
   constructor(xSlices, ySlices, zSlices) {
@@ -46,12 +46,14 @@ export default class BaseRenderer {
       let lightPos = vec4.create();
       vec4.transformMat4(lightPos, lightPosTmp, viewMatrix);
 
-      let xMax = lightPos[0] + radius;
-      let xMin = lightPos[0] - radius;
-      let yMax = lightPos[1] + radius;
-      let yMin = lightPos[1] - radius;
-      let zMax = lightPos[2] + radius;
-      let zMin = lightPos[2] - radius;
+      let offset = radius * 0.25;
+
+      let xMax = lightPos[0] + radius + offset;
+      let xMin = lightPos[0] - radius - offset;
+      let yMax = lightPos[1] + radius + offset;
+      let yMin = lightPos[1] - radius - offset;
+      let zMax = lightPos[2] + radius + offset;
+      let zMin = lightPos[2] - radius - offset;
 
       let depth = Math.max(zMin, camera.near);
       let height = 2 * depth * Math.tan(camera.fov * 0.5 * Math.PI / 180);

@@ -84,7 +84,7 @@ export default function(params) {
     vec3 fragColor = vec3(0.0);
 
     int clustersNum = ${params.xSlices} * ${params.ySlices} * ${params.zSlices};
-    int componentsNum = int(ceil(float(${params.numLights} + 1) / 4.0));
+    int componentsNum = int(ceil(float(${params.numLightsMax} + 1) / 4.0));
 
     int x = int(floor(gl_FragCoord.x / float(u_canvasSize.x ) * float(${params.xSlices})));
     int y = int(floor(gl_FragCoord.y / float(u_canvasSize.y) * float(${params.ySlices})));
