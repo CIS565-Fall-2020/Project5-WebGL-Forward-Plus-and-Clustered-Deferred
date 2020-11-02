@@ -13,7 +13,7 @@ WebGL Forward+ and Clustered Deferred Shading
 <img src="img/demogif.gif" width="700">
 
 ### About this Project
-This is a WebGL project that implements Forward+ and Clustered Deferred Shading models that optimizes for a scene with many lights to calculate. The project starts from a simple Forward Shading model, in which each object iterates through all lights to find out which lights affect them. Both of the optimization methods rely on a clustering logic, in which we divide the scene up into frustums, formed by rays shooting out from the camera.  
+This is a WebGL project that implements Forward+ and Clustered Deferred Shading models that optimizes for a scene with many lights to calculate. The project starts from a simple Forward Shading model, in which each object iterates through all lights to find out which lights affect them. Both of the optimization methods rely on a clustering logic, in which we divide the scene up into frustums, formed by rays shooting out from the camera.
 
 ### Features
   * Forward+ Shading
@@ -23,7 +23,7 @@ This is a WebGL project that implements Forward+ and Clustered Deferred Shading 
   
   
 ### Forward+
-Forward+ Shading renders the scene by finding out which lights overlap with each cluster and storing those lights' indices first, and then only shade with those lights for the points in the corresponding clusters.
+Forward+ Shading renders the scene by finding out which lights overlap with each cluster and storing those lights' indices first, and then only shade with those lights for the points in the corresponding clusters. Below is a visualization of the frustum.
 
 <img src="img/Screenshot (65).png" width="500">
   
