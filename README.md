@@ -28,14 +28,30 @@ Position          |   Normal
 :-------------------------:|:-------------------------:
 <img src="img/Screenshot (73).png" width="500">| <img src="img/Screenshot (75).png" width="500"> |
 
+
+
+### Optimization
+<img src="img/chart4.PNG" width="500">
+
+
 ### Performance Analysis
-Position          |   Normal
+
+<img src="img/chart1.PNG" width="500">
+
+It could be generally observed that the performance slows down with increase in light number.
+When testing with a cluster size of 5*5*5, forward+ shading performs the best, followed by deferred shading. 
+This is probably because deferred shading needs one more step of prepassing to generate gBuffers. However, this result is observed using a fixed cluster size. There could be differences when cluster size is changed.
+
+FPS vs Cluster Size with 600 lights        |   FPS vs Cluster Size with 2000 lights
 :-------------------------:|:-------------------------:
-<img src="img/chart1.PNG" width="500">| <img src="img/chart2.PNG" width="500"> |
+<img src="img/chart2.PNG" width="500"> | <img src="img/chart3.PNG" width="500"> |
+
+I took two more ses of results. It could be observed that around 3*3*3 is a optimum cluster size for deferred shading. 
+
 
 
 ### Bloopers and Debug Images
-<img src="img/blooper1.png" width="250">| <img src="img/blooper2.png" width="250"> | <img src="img/blooper3.png" width="250">
+<img src="img/blooper1.png" width="280"> <img src="img/blooper2.png" width="280"> <img src="img/blooper3.png" width="280">
 
 ### Credits
 
