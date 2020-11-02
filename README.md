@@ -50,14 +50,14 @@ The performance comparison above shows that the increase in performance is not s
 <img src="img/chart1.PNG" width="500">
 
 It could be generally observed that the performance slows down with increase in light number.
-When testing with a cluster size of 5*5*5, forward+ shading performs the best, followed by deferred shading. 
+When testing with a cluster size of 5x5x5, forward+ shading performs the best, followed by deferred shading. 
 This is probably because deferred shading needs one more step of prepassing to generate gBuffers. However, this result is observed using a fixed cluster size. There could be differences when cluster size is changed.
 
 FPS vs Cluster Size with 600 lights        |   FPS vs Cluster Size with 2000 lights
 :-------------------------:|:-------------------------:
 <img src="img/chart2.PNG" width="500"> | <img src="img/chart3.PNG" width="500"> |
 
-I took two more ses of results. It could be observed that around 3*3*3 is a optimum cluster size for deferred shading, and below 5*5*5 cluster size, deferred shading performs better than forward+ shading. It could also be observed that a cluster size smaller than 5*5*5 is better for both methods, and performance decreases as cluster size increase./
+I took two more ses of results. It could be observed that around 3x3x3 is a optimum cluster size for deferred shading, and below 5x5x5 cluster size, deferred shading performs better than forward+ shading. It could also be observed that a cluster size smaller than 5x5x5 is better for both methods, and performance decreases as cluster size increase./
 
 
 
