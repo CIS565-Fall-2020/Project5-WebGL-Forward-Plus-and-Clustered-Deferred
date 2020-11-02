@@ -62,7 +62,7 @@ I took two more ses of results. It could be observed that around 3*3*3 is a opti
 
 
 ### Bloopers and Debug Images
-<img src="img/blooper1.png" width="270"> <img src="img/blooper2.png" width="270"> <img src="img/blooper3.png" width="280">
+<img src="img/blooper1.png" width="280"> <img src="img/blooper2.png" width="280"> <img src="img/blooper3.png" width="290">
 
 ### Credits
 
