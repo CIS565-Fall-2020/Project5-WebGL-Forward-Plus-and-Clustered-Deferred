@@ -11,6 +11,11 @@ export default function(params) {
 
   // TODO: Read this buffer to determine the lights influencing a cluster
   uniform sampler2D u_clusterbuffer;
+  uniform int u_camfar;
+  uniform int u_camnear;
+  uniform float u_screenwidth;
+  uniform float u_screenheight;
+  uniform mat4 u_viewMatrix;
 
   varying vec3 v_position;
   varying vec3 v_normal;
@@ -81,9 +86,36 @@ export default function(params) {
 
     vec3 fragColor = vec3(0.0);
 
-    for (int i = 0; i < ${params.numLights}; ++i) {
-      Light light = UnpackLight(i);
-      float lightDistance = distance(light.position, v_position);
+    vec4 camSpacePos = u_viewMatrix * vec4(v_position, 1.0);
+
+    
+
+    float xstep, ystep, zstep;
+    int clustx, clusty, clustz;
+    xstep = u_screenwidth /  float(${params.xSlices});
+    ystep = u_screenheight / float(${params.ySlices});
+    zstep = float(u_camfar - u_camnear) / float(${params.zSlices}); // zstep is positive
+    float actualz = -1.0 * float(camSpacePos.z);
+    float diffz = actualz - float(u_camnear);
+    clustz = int(floor(diffz / zstep));
+
+    clustx = int(floor(gl_FragCoord.x / xstep));
+    clusty = (${params.ySlices} - 1) - int(floor(gl_FragCoord.y / ystep));
+    
+
+    int clustid = clustx + clusty * ${params.xSlices} + clustz * ${params.xSlices} * ${params.ySlices};
+    int clustnum = ${params.xSlices} * ${params.ySlices} * ${params.zSlices};
+    int lightcount = int(ExtractFloat(u_clusterbuffer, clustnum, ${params.componentNum}, clustid, 0));
+
+
+    for (int i = 1; i <= ${params.numLights}; ++i) {
+      if (i > lightcount) {
+        break;
+      }
+      int lightIdx = int(ExtractFloat(u_clusterbuffer, clustnum, ${params.componentNum}, clustid, i));
+      Light light = UnpackLight(lightIdx);
+      // Light light = UnpackLight(i);
+      float lightDistance = distance(light.position, v_position); // below this is good. all we have to do is loop through the correct lights
       vec3 L = (light.position - v_position) / lightDistance;
 
       float lightIntensity = cubicGaussian(2.0 * lightDistance / light.radius);
@@ -96,6 +128,7 @@ export default function(params) {
     fragColor += albedo * ambientLight;
 
     gl_FragColor = vec4(fragColor, 1.0);
+
   }
   `;
 }
