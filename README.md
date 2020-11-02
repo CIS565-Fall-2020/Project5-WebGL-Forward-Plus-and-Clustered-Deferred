@@ -3,25 +3,35 @@ WebGL Forward+ and Clustered Deferred Shading
 
 **University of Pennsylvania, CIS 565: GPU Programming and Architecture, Project 5**
 
-* (TODO) YOUR NAME HERE
-* Tested on: (TODO) **Google Chrome 222.2** on
-  Windows 22, i7-2222 @ 2.22GHz 22GB, GTX 222 222MB (Moore 2222 Lab)
+* Haoyu Sui
+  	* [LinkedIn](http://linkedin.com/in/haoyu-sui-721284192)
+* Tested on: Windows 10, i5-9600K @ 3.70GHz 16GB, RTX 2070 SUPER 8GB 
+* SM：7.5
+
+| Forward+ | Clustered Deferred and Blinn-Phong |
+| ------------------------ | ----------------------- |
+| ![](img/forwardplus.png) | ![](img/deferred.png) |
+
 
 ### Live Online
 
 [![](img/thumb.png)](http://TODO.github.io/Project5-WebGL-Forward-Plus-and-Clustered-Deferred)
 
-### Demo Video/GIF
+### Demo GIF
 
-[![](img/video.png)](TODO)
+![](img/demo.gif)
 
-### (TODO: Your README)
+### Performance Analysis
 
-*DO NOT* leave the README to the last minute! It is a crucial part of the
-project, and we will not be able to grade you without a good README.
+![](img/A1.jpg)
 
-This assignment has a considerable amount of performance analysis compared
-to implementation work. Complete the implementation early to leave time!
+From the figure we can see that forward+ and clustered deferred can improve performance, and as the total number of lights increases, the performance improvement becomes more obvious
+
+**2-component normals**
+
+![](img/A2.jpg)
+
+According to the chart, 2-component normal does not improve performance to a large extent. I think the reason may be that although 2-component normal optimizes the use of G-Buffer and reduces its space, it also adds additional computational overhead.
 
 
 ### Credits
