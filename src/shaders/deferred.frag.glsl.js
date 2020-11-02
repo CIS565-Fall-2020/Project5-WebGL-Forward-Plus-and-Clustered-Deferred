@@ -17,7 +17,7 @@ export default function(params) {
   
   varying vec2 v_uv;
   
-  #define BLINN 1
+  #define BLINN 0
 
 
   struct Light {
@@ -84,7 +84,7 @@ export default function(params) {
     // TODO: extract data from g buffers and do lighting
     vec4 gb0 = texture2D(u_gbuffers[0], v_uv);
     vec4 gb1 = texture2D(u_gbuffers[1], v_uv);
-    vec4 gb2 = texture2D(u_gbuffers[2], v_uv);
+    // vec4 gb2 = texture2D(u_gbuffers[2], v_uv);
     vec3 v_position = gb0.xyz;
     vec3 albedo = gb1.rgb;
     
@@ -96,9 +96,9 @@ export default function(params) {
     vec3 n;
     n.xy = fenc*g;
     n.z = 1.0 - f/2.0;
-    // vec3 normal = clamp(n, -1.0, 1.0);
+    vec3 normal = clamp(n, -1.0, 1.0);
 
-    vec3 normal = gb2.xyz;
+    // vec3 normal = gb2.xyz;
 
 
     vec4 camSpacePos = u_viewMatrix * vec4(gb0.xyz, 1);

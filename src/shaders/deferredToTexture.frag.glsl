@@ -25,10 +25,12 @@ void main() {
     vec3 n = normalize(norm);
     float f = sqrt(8.0*n.z+8.0);
     vec2 nxy =  n.xy / f + 0.5;
-
-    // TODO: populate your gbuffer
     gl_FragData[0] = vec4(v_position, nxy.x);
     gl_FragData[1] = vec4(col, nxy.y);
-    gl_FragData[2] = vec4(norm, 1);
+    // TODO: populate your gbuffer
+    
+    // gl_FragData[0] = vec4(v_position, 1);
+    // gl_FragData[1] = vec4(col, 1);
+    // gl_FragData[2] = vec4(norm, 1);
     
 }
