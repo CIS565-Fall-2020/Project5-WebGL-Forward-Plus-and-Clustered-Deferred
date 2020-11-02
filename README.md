@@ -33,8 +33,8 @@ Position          |   Normal
 ### Optimization
 <img src="img/chart4.PNG" width="500">
 A 2-component normal was implemented to reduce the GBuffer number from 3 to 2 by storing the 2 components of the normal into the 4th components of the position and normal GBuffers. The method used to encode the 2-component normal references the
-[Lambert Azimuthal Equal-Area projection](https://aras-p.info/texts/CompactNormalStorage.html#method04spheremap)
 
+[Lambert Azimuthal Equal-Area projection](https://aras-p.info/texts/CompactNormalStorage.html#method04spheremap)
 
 ### Performance Analysis
 
