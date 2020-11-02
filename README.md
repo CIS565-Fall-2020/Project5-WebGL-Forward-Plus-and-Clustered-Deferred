@@ -12,6 +12,9 @@ WebGL Forward+ and Clustered Deferred Shading
 
 <img src="img/demogif.gif" width="700">
 
+### About this Project
+This is a WebGL project that implements Forward+ and Clustered Deferred Shading models that optimizes for a scene with many lights to calculate. The project starts from a simple Forward Shading model, in which each object iterates through all lights to find out which lights affect them. Both of the optimization methods rely on a clustering logic, in which we divide the scene up into frustums, formed by rays shooting out from the camera.  
+
 ### Features
   * Forward+ Shading
   * Clustered Deferred Shading
@@ -20,10 +23,14 @@ WebGL Forward+ and Clustered Deferred Shading
   
   
 ### Forward+
+Forward+ Shading renders the scene by finding out which lights overlap with each cluster and storing those lights' indices first, and then only shade with those lights for the points in the corresponding clusters.
+
 <img src="img/Screenshot (65).png" width="500">
   
   
 ###  Clustered Deferred
+Deferred Shading has an additional process of pre-passing the depths to form GBuffers that stores albedo color, world position, and normal of the closest fragments, and then only shade on those fragments.
+
 Position          |   Normal
 :-------------------------:|:-------------------------:
 <img src="img/Screenshot (73).png" width="500">| <img src="img/Screenshot (75).png" width="500"> |
@@ -31,10 +38,12 @@ Position          |   Normal
 
 
 ### Optimization
-<img src="img/chart4.PNG" width="500">
-A 2-component normal was implemented to reduce the GBuffer number from 3 to 2 by storing the 2 components of the normal into the 4th components of the position and normal GBuffers. The method used to encode the 2-component normal references the
+A 2-component normal was implemented to reduce the GBuffer number from 3 to 2 by storing the 2 components of the normal into the 4th components of the position and normal GBuffers. The method used to encode the 2-component normal references the Lambert Azimuthal Equal-Area projection method from this source:
 
-[Lambert Azimuthal Equal-Area projection](https://aras-p.info/texts/CompactNormalStorage.html#method04spheremap)
+[Compact Normal Storage for small G-Buffers](https://aras-p.info/texts/CompactNormalStorage.html#method04spheremap)
+
+<img src="img/chart4.PNG" width="500">
+The performance comparison above shows that the increase in performance is not significant. This could be because the method that I chose is quite expensive, and the computation time covered up the boost in reducing a GBuffer.
 
 ### Performance Analysis
 
@@ -48,12 +57,12 @@ FPS vs Cluster Size with 600 lights        |   FPS vs Cluster Size with 2000 lig
 :-------------------------:|:-------------------------:
 <img src="img/chart2.PNG" width="500"> | <img src="img/chart3.PNG" width="500"> |
 
-I took two more ses of results. It could be observed that around 3*3*3 is a optimum cluster size for deferred shading. 
+I took two more ses of results. It could be observed that around 3*3*3 is a optimum cluster size for deferred shading, and below 5*5*5 cluster size, deferred shading performs better than forward+ shading. It could also be observed that a cluster size smaller than 5*5*5 is better for both methods, and performance decreases as cluster size increase./
 
 
 
 ### Bloopers and Debug Images
-<img src="img/blooper1.png" width="280"> <img src="img/blooper2.png" width="280"> <img src="img/blooper3.png" width="280">
+<img src="img/blooper1.png" width="270"> <img src="img/blooper2.png" width="270"> <img src="img/blooper3.png" width="280">
 
 ### Credits
 
