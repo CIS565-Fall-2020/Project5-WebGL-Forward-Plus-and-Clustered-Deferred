@@ -18,18 +18,10 @@ export default class BaseRenderer {
     this._firstCall = true;
   }
 
-  clampSlice(sliceValue, numSlices) {
-    return Math.min(Math.max(sliceValue, 0), numSlices - 1);
-  }
-
   clampSliceSpace(sliceSpace) {
-    sliceSpace[0] = this.clampSlice(sliceSpace[0], this._xSlices);
-    sliceSpace[1] = this.clampSlice(sliceSpace[1], this._ySlices);
-    sliceSpace[2] = this.clampSlice(sliceSpace[2], this._zSlices);
-  }
-
-  floorSliceSpace(sliceSpace) {
-    return vec3.fromValues(Math.floor(sliceSpace[0]), Math.floor(sliceSpace[1]), Math.floor(sliceSpace[2]))
+    sliceSpace[0] = Math.floor(Math.min(Math.max(sliceSpace[0], 0), this._xSlices - 1));
+    sliceSpace[1] = Math.floor(Math.min(Math.max(sliceSpace[1], 0), this._ySlices - 1));
+    sliceSpace[2] = Math.floor(Math.min(Math.max(sliceSpace[2], 0), this._zSlices - 1));
   }
 
   getSliceSpaceFromWorldSpace(pos_worldSpace, cameraNear, inverseCameraFar , viewMatrix, projectionMatrix, dz) {
@@ -38,9 +30,8 @@ export default class BaseRenderer {
 
     var pos_screenSpace = vec4.create();
     vec4.transformMat4(pos_screenSpace, pos_camSpace, projectionMatrix); // unhomogenized screen space 
-    //vec4.scale(pos_screenSpace, pos_screenSpace, inverseCameraFar); // homogenized screen space (NDC)
 
-    // NDC ranges from [-1, -1] to [1, 1] for both x and y direction
+    // Ranges from [-1, -1] to [1, 1] for both x and y direction
     // Want to normalize the space from [0, 0] to [1.1] by shifting the value by +1.0 then divide the value range (which is 2.0)
     // then find the slice that this is in by multiplying with the number of slices
     var pos_sliceSpace = vec3.fromValues(
@@ -59,13 +50,12 @@ export default class BaseRenderer {
     }
   }
 
-  updateClusters(camera, viewMatrix, scene) {
+  updateClusters(camera, viewMatrix, projectionMatrix, scene) {
 
     // DDEBUG ONLY TODO: DELETE
     // camera.far = 30.0;
     // camera.updateMatrixWorld();
     // camera.updateProjectionMatrix();
-    var clusters = [];
 
     for (let z = 0; z < this._zSlices; ++z) {
       for (let y = 0; y < this._ySlices; ++y) {
@@ -73,13 +63,10 @@ export default class BaseRenderer {
           let i = x + y * this._xSlices + z * this._xSlices * this._ySlices;
           // Reset the light count to 0 for every cluster
           this._clusterTexture.buffer[this._clusterTexture.bufferIndex(i, 0)] = 0;
-          clusters.push([]);
         }
       }
     }
 
-    var projectionMatrix = mat4.create();
-    mat4.copy(projectionMatrix, camera.projectionMatrix.elements);
     var dz = (camera.far - camera.near) / this._zSlices;  
     var inverseCameraFar = 1.0 / camera.far;
 
@@ -89,15 +76,13 @@ export default class BaseRenderer {
       var li_r = li.radius * 2;
       var li_posMinWorld = vec4.fromValues(li.position[0] - li_r, li.position[1] - li_r, li.position[2] - li_r, 1.0);
       var li_posMinSlice = this.getSliceSpaceFromWorldSpace(li_posMinWorld, camera.near, inverseCameraFar, viewMatrix, projectionMatrix, dz);
-      li_posMinSlice = this.floorSliceSpace(li_posMinSlice);
 
       var li_posMaxWorld = vec4.fromValues(li.position[0] + li_r, li.position[1] + li_r, li.position[2] + li_r, 1.0);
       var li_posMaxSlice = this.getSliceSpaceFromWorldSpace(li_posMaxWorld, camera.near, inverseCameraFar, viewMatrix, projectionMatrix, dz);
-      li_posMaxSlice = this.floorSliceSpace(li_posMaxSlice);
 
-      // this.swapMinMaxVec3Component(0, li_posMinSlice, li_posMaxSlice);
-      // this.swapMinMaxVec3Component(1, li_posMinSlice, li_posMaxSlice);
-      // this.swapMinMaxVec3Component(2, li_posMinSlice, li_posMaxSlice);
+      this.swapMinMaxVec3Component(0, li_posMinSlice, li_posMaxSlice);
+      this.swapMinMaxVec3Component(1, li_posMinSlice, li_posMaxSlice);
+      this.swapMinMaxVec3Component(2, li_posMinSlice, li_posMaxSlice);
       
       this.clampSliceSpace(li_posMinSlice);
       this.clampSliceSpace(li_posMaxSlice);
