@@ -29,10 +29,13 @@ Position          |   Normal
 <img src="img/Screenshot (73).png" width="500">| <img src="img/Screenshot (75).png" width="500"> |
 
 ### Performance Analysis
+Position          |   Normal
+:-------------------------:|:-------------------------:
+<img src="img/chart1.PNG" width="500">| <img src="img/chart2.PNG" width="500"> |
 
 
 ### Bloopers and Debug Images
-<img src="img/Screenshot (63).png" width="300">| <img src="img/Screenshot (66).png" width="300"> | <img src="img/Screenshot (68).png" width="300">
+<img src="img/blooper1.png" width="250">| <img src="img/blooper2.png" width="250"> | <img src="img/blooper3.png" width="250">
 
 ### Credits
 
