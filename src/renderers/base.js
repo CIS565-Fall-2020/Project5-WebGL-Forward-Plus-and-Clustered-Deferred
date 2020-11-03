@@ -39,8 +39,8 @@ export default class BaseRenderer {
       // find the min and max coordinate of the light
       var light = scene.lights[i];
       var light_pos = vec3.fromValues(light.position[0], light.position[1], light.position[2]);
-      let factor = 2.0;
-      var light_radius = vec3.fromValues(light.radius + factor, light.radius + factor, light.radius + factor);
+      var size_factor = 1.5;
+      var light_radius = vec3.fromValues(light.radius * size_factor, light.radius * size_factor, light.radius * size_factor);
       var min_light_world = vec3.create();
       var max_light_world = vec3.create();
       vec3.subtract(min_light_world, light_pos, light_radius);
@@ -56,24 +56,23 @@ export default class BaseRenderer {
 
       // find z slice
       let dist_per_slice = ((camera.far - camera.near) / this._zSlices);
-      let z_slice_min = Math.floor(min_light_camera[2] / dist_per_slice) - 1.0;
-      let z_slice_max = Math.ceil(max_light_camera[2] / dist_per_slice) + 1.0;
+      let z_slice_min = Math.floor(min_light_camera[2] / dist_per_slice);
+      let z_slice_max = Math.ceil(max_light_camera[2] / dist_per_slice);
 
       // find x and y slices
       let radians = (camera.fov / 2.0) * (Math.PI / 180.0);
       let tan = Math.tan(radians);
-      //let half_height_min = Math.abs(min_light_camera[2]) * tan;
       let half_height_min = tan;
       let half_width_min = camera.aspect * half_height_min;
-      //let half_height_max = Math.abs(max_light_camera[2]) * tan;
       let half_height_max = tan;
       let half_width_max = camera.aspect * half_height_max;
 
-      let x_slice_min = Math.floor((min_light_camera[0] + half_width_min)  / ((half_width_min * 2.0) / this._xSlices)) - 1.0;
-      let x_slice_max = Math.ceil((max_light_camera[0] + half_width_max) / ((half_width_max * 2.0) / this._xSlices)) + 1.0;
-      let y_slice_min = Math.floor((min_light_camera[1] + half_height_min) / ((half_height_min * 2.0) / this._ySlices)) - 1.0;
-      let y_slice_max = Math.ceil((max_light_camera[1] + half_height_max) / ((half_height_max * 2.0) / this._ySlices)) + 1.0;
+      let x_slice_min = Math.floor((min_light_camera[0] + half_width_min)  / ((half_width_min * 2.0) / this._xSlices));
+      let x_slice_max = Math.ceil((max_light_camera[0] + half_width_max) / ((half_width_max * 2.0) / this._xSlices));
+      let y_slice_min = Math.floor((min_light_camera[1] + half_height_min) / ((half_height_min * 2.0) / this._ySlices));
+      let y_slice_max = Math.ceil((max_light_camera[1] + half_height_max) / ((half_height_max * 2.0) / this._ySlices));
 
+      // clamp slices
       z_slice_min = clamp(z_slice_min, 0, this._zSlices - 1);
       z_slice_max = clamp(z_slice_max, 0, this._zSlices - 1);
       y_slice_min = clamp(y_slice_min, 0, this._ySlices - 1);
@@ -96,7 +95,6 @@ export default class BaseRenderer {
           }
         }
       }
-
     }
 
     this.firstTime = false;

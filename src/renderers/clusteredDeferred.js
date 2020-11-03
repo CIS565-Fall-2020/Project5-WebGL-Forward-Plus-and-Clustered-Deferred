@@ -9,7 +9,8 @@ import fsSource from '../shaders/deferred.frag.glsl.js';
 import TextureBuffer from './textureBuffer';
 import BaseRenderer, { MAX_LIGHTS_PER_CLUSTER } from './base';
 
-export const NUM_GBUFFERS = 3;
+export const OPTIMIZED = true;
+export const NUM_GBUFFERS = OPTIMIZED ? 2 : 3;
 
 export default class ClusteredDeferredRenderer extends BaseRenderer {
   constructor(xSlices, ySlices, zSlices) {
@@ -33,7 +34,7 @@ export default class ClusteredDeferredRenderer extends BaseRenderer {
       zSlices: zSlices
     }), {
       uniforms: ['u_gbuffers[0]', 'u_gbuffers[1]', 'u_gbuffers[2]', 'u_gbuffers[3]',
-      'u_viewProjectionMatrix', 'u_viewMatrix', 'u_colmap', 'u_normap', 'u_lightbuffer', 'u_clusterbuffer', 
+                  'u_viewMatrix', 'u_colmap', 'u_normap', 'u_lightbuffer', 'u_clusterbuffer', 
                   'u_width', 'u_height', 'u_near_clip', 'u_far_clip', 'u_numClusters', 'u_max_lights'],
       attribs: ['a_position', 'a_normal', 'a_uv'],
     });
@@ -128,6 +129,9 @@ export default class ClusteredDeferredRenderer extends BaseRenderer {
 
     // Upload the camera matrix
     gl.uniformMatrix4fv(this._progCopy.u_viewProjectionMatrix, false, this._viewProjectionMatrix);
+    gl.uniformMatrix4fv(this._progCopy.u_viewMatrix, false, this._viewMatrix);
+    gl.uniform1f(this._progCopy.u_far_clip, camera.far);
+    gl.uniform1f(this._progCopy.u_near_clip, camera.near);
 
     // Draw the scene. This function takes the shader program so that the model's textures can be bound to the right inputs
     scene.draw(this._progCopy);
@@ -159,8 +163,7 @@ export default class ClusteredDeferredRenderer extends BaseRenderer {
     gl.useProgram(this._progShade.glShaderProgram);
 
     // Upload the camera matrix
-    gl.uniformMatrix4fv(this._progShade.u_viewProjectionMatrix, false, this._viewProjectionMatrix);
-
+    gl.uniformMatrix4fv(this._progShade.u_viewMatrix, false, this._viewMatrix);
 
     // Set the light texture as a uniform input to the shader
     gl.activeTexture(gl.TEXTURE0);
@@ -177,10 +180,8 @@ export default class ClusteredDeferredRenderer extends BaseRenderer {
     gl.uniform1f(this._progShade.u_height, canvas.height);
     gl.uniform1f(this._progShade.u_far_clip, camera.far);
     gl.uniform1f(this._progShade.u_near_clip, camera.near);
-    gl.uniform1i(this._progShade.u_num_clusters, this.xSlices * this.ySlices * this.zSlices);
     gl.uniform1i(this._progShade.u_max_lights, MAX_LIGHTS_PER_CLUSTER);
-    gl.uniformMatrix4fv(this._progShade.u_viewMatrix, false, this._viewMatrix);
-
+    
     // Bind g-buffers
     const firstGBufferBinding = 2; // You may have to change this if you use other texture slots
     for (let i = 0; i < NUM_GBUFFERS; i++) {

@@ -1,6 +1,5 @@
 export default function(params) {
   return `
-  // TODO: This is pretty much just a clone of forward.frag.glsl.js
 
   #version 100
   precision highp float;
@@ -16,7 +15,6 @@ export default function(params) {
   uniform float u_height;
   uniform float u_far_clip;
   uniform float u_near_clip;
-  uniform int u_num_clusters;
   uniform int u_max_lights;
   uniform mat4 u_viewProjectionMatrix;
   uniform mat4 u_viewMatrix;
@@ -96,9 +94,9 @@ export default function(params) {
     int y = int(gl_FragCoord.y / (float(u_height) / float(${params.ySlices}))); 
 
     // get the z
-    vec4 world_pt = u_viewMatrix * vec4(v_position, 1.0); // to camera space
+    vec4 camera_pt = u_viewMatrix * vec4(v_position, 1.0); // to camera space
     float dist = float(u_far_clip) - float(u_near_clip);
-    float z_ratio = (float(int(abs(world_pt[2]))) - float(u_near_clip)) / dist;
+    float z_ratio = (abs(camera_pt[2]) - float(u_near_clip)) / dist;
     int z = int(float(${params.zSlices}) * z_ratio);
 
     // get cluster index
