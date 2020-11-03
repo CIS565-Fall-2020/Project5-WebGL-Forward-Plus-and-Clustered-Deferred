@@ -111,7 +111,7 @@ export default function(params) {
     fragColor += albedo * ambientLight;
 
     gl_FragColor = vec4(fragColor, 1.0);
-    //gl_FragColor = vec4(float(frustumY) / 15.0, float(frustumY) / 15.0, float(frustumY) / 15.0, 1.0);
+    // gl_FragColor = vec4(float(frustumY) / 15.0, float(frustumY) / 15.0, float(frustumY) / 15.0, 1.0);
     // gl_FragColor = vec4((v_positionNonNDC.z - u_nearClip) / (u_farClip - u_nearClip) * float(${params.numZSlices}), 0.0, 0.0, 1.0);
     // gl_FragColor = vec4(float(numLightsInfluenceFrustum), float(numLightsInfluenceFrustum), float(numLightsInfluenceFrustum), 1.0);
   }

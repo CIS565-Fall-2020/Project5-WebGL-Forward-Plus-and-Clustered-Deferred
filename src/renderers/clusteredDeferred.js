@@ -142,7 +142,7 @@ export default class ClusteredDeferredRenderer extends BaseRenderer {
     this._lightTexture.update();
 
     // Update the clusters for the frame
-    this.updateClusters(camera, this._viewMatrix, scene);
+    this.updateClusters(camera, this._viewMatrix, this._projectionMatrix, scene);
 
     // Bind the default null framebuffer which is the screen
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
