@@ -1,10 +1,12 @@
 import TextureBuffer from './textureBuffer';
-import { mat4, vec4, vec3 } from 'gl-matrix';
-import { canvas } from '../init';
+import { vec4, vec3 } from 'gl-matrix';
 import { NUM_LIGHTS } from '../scene';
-import { Frustum, Plane, Sphere, Vector3 } from 'three';
 
 export const MAX_LIGHTS_PER_CLUSTER = 100;
+
+function clamp(value, min, max) {
+  return Math.min(Math.max(value, min), max);
+}
 
 export default class BaseRenderer {
   constructor(xSlices, ySlices, zSlices) {
@@ -17,79 +19,7 @@ export default class BaseRenderer {
     this.renderWireframe = false;
   }
 
-
-  screenToWorld(invertedProjView, x, y, z, xSlices, ySlices, zSlices, farClip) {
-    // get pixels
-    var px = x * (canvas.width / xSlices);
-    var py = y * (canvas.height / ySlices);
-
-    // pixels to ndc
-    var ndc = vec4.create();
-    ndc[0] = ((px / canvas.width) * 2.0) - 1.0;
-    ndc[1] = 1.0 - ((py / canvas.height) * 2.0);
-    ndc[2] = 1.0;
-    ndc[3] = 1.0;
-    vec4.scale(ndc, ndc, farClip)
-    
-    var camera_space = vec4.create();
-    vec4.transformMat4(camera_space, ndc, invertedProjView);
-
-    var world = vec4.create();
-    vec4.set(world, camera_space[0], camera_space[1], camera_space[2], 1.0);
-
-    return world
-  }
-
-  subFrustumPoint(invertedProjView, x, y, z, xSlices, ySlices, zSlices, near_clip_pt, far_clip_pt, farClip) {
-    var between_near_far_pt = vec4.create();
-    vec4.subtract(between_near_far_pt, far_clip_pt, near_clip_pt);
-    
-    var z_scale = z / zSlices;
-    var world_z_scaled = vec4.create();
-    vec4.set(world_z_scaled, between_near_far_pt[0] * z_scale, between_near_far_pt[1] * z_scale, between_near_far_pt[2] * z_scale, 1.0);
-    
-    vec4.add(world_z_scaled, world_z_scaled, near_clip_pt);
-    var as_vec3 = vec3.fromValues(world_z_scaled[0], world_z_scaled[1], world_z_scaled[2]);
-    return as_vec3;
-  }
-
-  addToWireframe(p1, p2, wireframe) {
-    var segmentStart = [p1[0], p1[1], p1[2]];
-    var segmentEnd = [p2[0], p2[1], p2[2]];
-    var segmentColor = [1.0, 0.0, 0.0];
-    wireframe.addLineSegment(segmentStart, segmentEnd, segmentColor);
-  }
-
-  normal(p1, p2, p3) {
-    var v1 = vec3.create();
-    vec3.subtract(v1, p2, p1);
-    var v2 = vec3.create();
-    vec3.subtract(v2, p3, p1);
-    var n = vec3.create();
-    vec3.cross(n, v1, v2);
-    vec3.normalize(n, n);
-    var vec3_n = new Vector3(n[0], n[1], n[2]);
-    return vec3_n;
-  }
-
-  createSubFrustum(pt_n_b_l, pt_n_b_r, pt_n_u_l, pt_n_u_r, pt_f_b_l, pt_f_b_r, pt_f_u_l, pt_f_u_r) {
-    var n0 = this.normal(pt_n_b_l, pt_n_b_r, pt_n_u_l); // back plane
-    var n1 = this.normal(pt_f_b_l, pt_f_u_l, pt_f_b_r); // front plane
-    var n2 = this.normal(pt_f_u_l, pt_f_u_r, pt_n_u_l); // top plane
-    var n3 = this.normal(pt_n_b_r, pt_f_b_r, pt_n_b_l); // bottom plane
-    var n4 = this.normal(pt_n_b_r, pt_n_u_r, pt_f_b_r); // right plane
-    var n5 = this.normal(pt_n_b_l, pt_f_b_l, pt_n_u_l); // left plane
-    var p0 = new Plane(n0);
-    var p1 = new Plane(n1);
-    var p2 = new Plane(n2);
-    var p3 = new Plane(n3);
-    var p4 = new Plane(n4);
-    var p5 = new Plane(n5);
-    let f = new Frustum(p0, p1, p2, p3, p4, p5);
-    return f;
-  }
-
-  updateClusters(camera, viewMatrix, scene, wireframe) {
+  updateClusters(camera, viewMatrix, scene, wireframe, viewProj) {
     // TODO: Update the cluster texture with the count and indices of the lights in each cluster
     // This will take some time. The math is nontrivial...
 
@@ -100,71 +30,75 @@ export default class BaseRenderer {
           // Reset the light count to 0 for every cluster
           this._clusterTexture.buffer[this._clusterTexture.bufferIndex(i, 0)] = 0;
 
-          // create inverse proj view matrix
-          var invertedProjView = mat4.create();
-          var invertedView = mat4.create();
-          mat4.invert(invertedView, viewMatrix);
-          var invertedProj = mat4.create();
-          mat4.invert(invertedProj, camera.projectionMatrix.elements);
-          var invertedProjView = mat4.create();
-          mat4.multiply(invertedProjView, invertedView, invertedProj);
-
-          var near_l_d = this.screenToWorld(invertedProjView, x, y, z, this._xSlices, this._ySlices, this._zSlices, camera.near);
-          var far_l_d = this.screenToWorld(invertedProjView, x, y, z+1, this._xSlices, this._ySlices, this._zSlices, camera.far);
-          var near_l_u  = this.screenToWorld(invertedProjView, x, y+1, z, this._xSlices, this._ySlices, this._zSlices, camera.near);
-          var far_l_u = this.screenToWorld(invertedProjView, x, y+1, z+1, this._xSlices, this._ySlices, this._zSlices, camera.far);
-          var near_r_d  = this.screenToWorld(invertedProjView, x+1, y, z, this._xSlices, this._ySlices, this._zSlices, camera.near);
-          var far_r_d = this.screenToWorld(invertedProjView, x+1, y, z+1, this._xSlices, this._ySlices, this._zSlices, camera.far);
-          var near_r_u  = this.screenToWorld(invertedProjView, x+1, y+1, z, this._xSlices, this._ySlices, this._zSlices, camera.near);
-          var far_r_u = this.screenToWorld(invertedProjView, x+1, y+1, z+1, this._xSlices, this._ySlices, this._zSlices, camera.far);
-
-          var s_near_l_d = this.subFrustumPoint(invertedProjView, x, y, z, this._xSlices, this._ySlices, this._zSlices, near_l_d, far_l_d, camera.far);
-          var s_far_l_d  = this.subFrustumPoint(invertedProjView, x, y, z+1, this._xSlices, this._ySlices, this._zSlices, near_l_d, far_l_d, camera.far);
-          var s_near_l_u = this.subFrustumPoint(invertedProjView, x, y+1, z, this._xSlices, this._ySlices, this._zSlices, near_l_u, far_l_u, camera.far);
-          var s_far_l_u  = this.subFrustumPoint(invertedProjView, x, y+1, z+1, this._xSlices, this._ySlices, this._zSlices, near_l_u, far_l_u, camera.far);
-          var s_near_r_d = this.subFrustumPoint(invertedProjView, x+1, y, z, this._xSlices, this._ySlices, this._zSlices, near_r_d, far_r_d, camera.far);
-          var s_far_r_d  = this.subFrustumPoint(invertedProjView, x+1, y, z+1, this._xSlices, this._ySlices, this._zSlices, near_r_d, far_r_d, camera.far);
-          var s_near_r_u = this.subFrustumPoint(invertedProjView, x+1, y+1, z, this._xSlices, this._ySlices, this._zSlices, near_r_u, far_r_u, camera.far);
-          var s_far_r_u  = this.subFrustumPoint(invertedProjView, x+1, y+1, z+1, this._xSlices, this._ySlices, this._zSlices, near_r_u, far_r_u, camera.far);
-
-          // show wireframe of the frustums
-          if (this.firstTime && this.renderWireframe) {
-            // back plane
-            this.addToWireframe(s_near_l_d, s_near_l_u, wireframe);
-            this.addToWireframe(s_near_l_u, s_near_r_u, wireframe);
-            this.addToWireframe(s_near_r_u, s_near_r_d, wireframe);
-            this.addToWireframe(s_near_r_d, s_near_l_d, wireframe);
-
-            // front plane
-            this.addToWireframe(s_far_l_d, s_far_l_u, wireframe);
-            this.addToWireframe(s_far_l_u, s_far_r_u, wireframe);
-            this.addToWireframe(s_far_r_u, s_far_r_d, wireframe);
-            this.addToWireframe(s_far_r_d, s_far_l_d, wireframe);
-
-            // side planes
-            this.addToWireframe(s_near_l_d, s_far_l_d, wireframe);
-            this.addToWireframe(s_near_l_u, s_far_l_u, wireframe);
-            this.addToWireframe(s_near_r_d, s_far_r_d, wireframe);
-            this.addToWireframe(s_near_r_u, s_far_r_u, wireframe);
-          }
-
-          // find which lights are within each clusters
-          var subFrustum = this.createSubFrustum(s_near_l_d, s_near_r_d, s_near_l_u, s_near_r_u, s_far_l_d, s_far_r_d, s_far_l_u, s_far_r_u);
-          let lightIndex = 1;
-          for (var j = 0; j < NUM_LIGHTS; j++) {
-            var light = scene.lights[j];
-            let light_pos = new Vector3(light.position[0], light.position[1], light.position[2]);
-            let light_radius = light.radius;
-            var sphere = new Sphere(light_pos, light_radius);
-            if (subFrustum.intersectsSphere(sphere)) {
-              this._clusterTexture.buffer[this._clusterTexture.bufferIndex(i, lightIndex)] = j;
-              lightIndex++;
-            }
-          }
-          this._clusterTexture.buffer[this._clusterTexture.bufferIndex(i, 0)] = lightIndex - 1;
         }
       }
     }
+
+    for (var i = 0; i < NUM_LIGHTS; i++) {
+
+      // find the min and max coordinate of the light
+      var light = scene.lights[i];
+      var light_pos = vec3.fromValues(light.position[0], light.position[1], light.position[2]);
+      let factor = 2.0;
+      var light_radius = vec3.fromValues(light.radius + factor, light.radius + factor, light.radius + factor);
+      var min_light_world = vec3.create();
+      var max_light_world = vec3.create();
+      vec3.subtract(min_light_world, light_pos, light_radius);
+      vec3.add(max_light_world, light_pos, light_radius);
+
+      // convert bounding points from world to camera space
+      var min_light_camera = vec4.fromValues(min_light_world[0], min_light_world[1], min_light_world[2], 1.0);
+      var max_light_camera = vec4.fromValues(max_light_world[0], max_light_world[1], max_light_world[2], 1.0);
+      vec4.transformMat4(min_light_camera, min_light_camera, viewMatrix);
+      vec4.transformMat4(max_light_camera, max_light_camera, viewMatrix);
+      min_light_camera[2] = -1.0 * min_light_camera[2];
+      max_light_camera[2] = -1.0 * max_light_camera[2];
+
+      // find z slice
+      let dist_per_slice = ((camera.far - camera.near) / this._zSlices);
+      let z_slice_min = Math.floor(min_light_camera[2] / dist_per_slice) - 1.0;
+      let z_slice_max = Math.ceil(max_light_camera[2] / dist_per_slice) + 1.0;
+
+      // find x and y slices
+      let radians = (camera.fov / 2.0) * (Math.PI / 180.0);
+      let tan = Math.tan(radians);
+      //let half_height_min = Math.abs(min_light_camera[2]) * tan;
+      let half_height_min = tan;
+      let half_width_min = camera.aspect * half_height_min;
+      //let half_height_max = Math.abs(max_light_camera[2]) * tan;
+      let half_height_max = tan;
+      let half_width_max = camera.aspect * half_height_max;
+
+      let x_slice_min = Math.floor((min_light_camera[0] + half_width_min)  / ((half_width_min * 2.0) / this._xSlices)) - 1.0;
+      let x_slice_max = Math.ceil((max_light_camera[0] + half_width_max) / ((half_width_max * 2.0) / this._xSlices)) + 1.0;
+      let y_slice_min = Math.floor((min_light_camera[1] + half_height_min) / ((half_height_min * 2.0) / this._ySlices)) - 1.0;
+      let y_slice_max = Math.ceil((max_light_camera[1] + half_height_max) / ((half_height_max * 2.0) / this._ySlices)) + 1.0;
+
+      z_slice_min = clamp(z_slice_min, 0, this._zSlices - 1);
+      z_slice_max = clamp(z_slice_max, 0, this._zSlices - 1);
+      y_slice_min = clamp(y_slice_min, 0, this._ySlices - 1);
+      y_slice_max = clamp(y_slice_max, 0, this._ySlices - 1);
+      x_slice_min = clamp(x_slice_min, 0, this._xSlices - 1);
+      x_slice_max = clamp(x_slice_max, 0, this._xSlices - 1);
+      
+      for (let z = z_slice_min; z <= z_slice_max; ++z) {
+        for (let y = y_slice_min; y <= y_slice_max; ++y) {
+          for (let x = x_slice_min; x <= x_slice_max; ++x) {
+            let index = x + y * this._xSlices + z * this._xSlices * this._ySlices;
+            let num_lights = this._clusterTexture.buffer[this._clusterTexture.bufferIndex(index, 0)] + 1;
+            if (num_lights < MAX_LIGHTS_PER_CLUSTER) {
+              let row = Math.floor(num_lights * 0.25);
+              let col = num_lights % 4;
+              
+              this._clusterTexture.buffer[this._clusterTexture.bufferIndex(index, row) + col] = i;
+              this._clusterTexture.buffer[this._clusterTexture.bufferIndex(index, 0)] = num_lights;
+            }
+          }
+        }
+      }
+
+    }
+
     this.firstTime = false;
     this._clusterTexture.update();
   }
