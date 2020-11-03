@@ -29,7 +29,7 @@ export default class BaseRenderer {
     vec4.transformMat4(pos_camSpace, pos_worldSpace, viewMatrix);
 
     var pos_screenSpace = vec4.create();
-    vec4.transformMat4(pos_screenSpace, pos_camSpace, projectionMatrix); // unhomogenized screen space 
+    vec4.transformMat4(pos_screenSpace, pos_camSpace, projectionMatrix); 
 
     // Ranges from [-1, -1] to [1, 1] for both x and y direction
     // Want to normalize the space from [0, 0] to [1.1] by shifting the value by +1.0 then divide the value range (which is 2.0)
@@ -51,6 +51,10 @@ export default class BaseRenderer {
   }
 
   updateClusters(camera, viewMatrix, projectionMatrix, scene) {
+    this.updateClusters1(camera, viewMatrix, projectionMatrix, scene);
+  }
+
+  updateClusters2(camera, viewMatrix, projectionMatrix, scene) {
 
     for (let z = 0; z < this._zSlices; ++z) {
       for (let y = 0; y < this._ySlices; ++y) {
@@ -116,7 +120,7 @@ export default class BaseRenderer {
     this._clusterTexture.update();
   }
 
-  updateClustersSlow(camera, viewMatrix, projectionMatrix, scene) {
+  updateClusters1(camera, viewMatrix, projectionMatrix, scene) {
     for (let z = 0; z < this._zSlices; ++z) {
       for (let y = 0; y < this._ySlices; ++y) {
         for (let x = 0; x < this._xSlices; ++x) {
