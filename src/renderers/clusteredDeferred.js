@@ -10,7 +10,8 @@ import TextureBuffer from './textureBuffer';
 import BaseRenderer from './base';
 import { MAX_LIGHTS_PER_CLUSTER } from './base';
 
-export const NUM_GBUFFERS = 4;
+export const NUM_GBUFFERS = 3;
+export const NUM_COMBINED_GBUFFERS = 1;
 
 export default class ClusteredDeferredRenderer extends BaseRenderer {
   constructor(xSlices, ySlices, zSlices) {
@@ -48,6 +49,8 @@ export default class ClusteredDeferredRenderer extends BaseRenderer {
   setupDrawBuffers(width, height) {
     this._width = width;
     this._height = height;
+    this._bufferwidth = width * NUM_GBUFFERS;
+    this._bufferheight = height;
 
     this._fbo = gl.createFramebuffer();
     
@@ -58,7 +61,7 @@ export default class ClusteredDeferredRenderer extends BaseRenderer {
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.DEPTH_COMPONENT, width, height, 0, gl.DEPTH_COMPONENT, gl.UNSIGNED_SHORT, null);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.DEPTH_COMPONENT, this._bufferwidth, this._bufferheight, 0, gl.DEPTH_COMPONENT, gl.UNSIGNED_SHORT, null);
     gl.bindTexture(gl.TEXTURE_2D, null);
 
     gl.bindFramebuffer(gl.FRAMEBUFFER, this._fbo);
@@ -75,7 +78,7 @@ export default class ClusteredDeferredRenderer extends BaseRenderer {
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, width, height, 0, gl.RGBA, gl.FLOAT, null);
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, this._bufferwidth, this._bufferheight, 0, gl.RGBA, gl.FLOAT, null);
       gl.bindTexture(gl.TEXTURE_2D, null);
 
       gl.framebufferTexture2D(gl.FRAMEBUFFER, attachments[i], gl.TEXTURE_2D, this._gbuffers[i], 0);      
@@ -173,7 +176,7 @@ export default class ClusteredDeferredRenderer extends BaseRenderer {
     // TODO: Bind any other shader inputs
     gl.uniform1f(this._progShade.u_farClip, camera.far);
     gl.uniform1f(this._progShade.u_nearClip, camera.near);
-    gl.uniform2f(this._progShade.u_resolution, canvas.width, canvas.height);
+    gl.uniform2f(this._progShade.u_resolution, this._width, this._height);
     gl.uniformMatrix4fv(this._progShade.u_viewProjectionMatrix, false, this._viewProjectionMatrix);
 
     // Bind g-buffers

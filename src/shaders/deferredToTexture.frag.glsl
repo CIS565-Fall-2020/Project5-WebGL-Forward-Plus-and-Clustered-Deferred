@@ -20,7 +20,8 @@ vec3 applyNormalMap(vec3 geomnor, vec3 normap) {
 void main() {
     vec3 norm = applyNormalMap(v_normal, vec3(texture2D(u_normap, v_uv)));
     vec3 col = vec3(texture2D(u_colmap, v_uv));
-
+    
+    
     // TODO: populate your g buffer
     gl_FragData[0] = vec4(col, 1.0); 
     gl_FragData[1] = vec4(norm, 1.0);
