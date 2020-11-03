@@ -4,7 +4,6 @@ precision highp float;
 
 uniform sampler2D u_colmap;
 uniform sampler2D u_normap;
-uniform mat4 u_viewProjectionMatrix;
 
 varying vec3 v_position;
 varying vec3 v_normal;
@@ -26,5 +25,4 @@ void main() {
     gl_FragData[0] = vec4(col, 1.0); 
     gl_FragData[1] = vec4(norm, 1.0);
     gl_FragData[2] = vec4(v_position, 1.0);
-    gl_FragData[3] = u_viewProjectionMatrix * gl_FragData[2];
 }

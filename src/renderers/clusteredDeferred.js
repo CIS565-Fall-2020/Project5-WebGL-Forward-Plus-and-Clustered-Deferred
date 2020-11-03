@@ -36,7 +36,7 @@ export default class ClusteredDeferredRenderer extends BaseRenderer {
       clusterBufferTextureHeight: Math.ceil((MAX_LIGHTS_PER_CLUSTER + 1.0) / 4.0)
     }), {
       uniforms: ['u_gbuffers[0]', 'u_gbuffers[1]', 'u_gbuffers[2]', 'u_gbuffers[3]',
-        'u_farClip', 'u_nearClip', 'u_resolution', 'u_lightbuffer'],
+        'u_farClip', 'u_nearClip', 'u_resolution', 'u_viewProjectionMatrix', 'u_lightbuffer', ],
       attribs: ['a_uv'],
     });
 
@@ -174,6 +174,7 @@ export default class ClusteredDeferredRenderer extends BaseRenderer {
     gl.uniform1f(this._progShade.u_farClip, camera.far);
     gl.uniform1f(this._progShade.u_nearClip, camera.near);
     gl.uniform2f(this._progShade.u_resolution, canvas.width, canvas.height);
+    gl.uniformMatrix4fv(this._progShade.u_viewProjectionMatrix, false, this._viewProjectionMatrix);
 
     // Bind g-buffers
     const firstGBufferBinding = 2; // You may have to change this if you use other texture slots

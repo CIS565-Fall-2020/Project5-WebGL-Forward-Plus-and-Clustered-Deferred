@@ -10,6 +10,7 @@ export default function(params) {
   uniform float u_farClip;
   uniform float u_nearClip;
   uniform vec2 u_resolution;
+  uniform mat4 u_viewProjectionMatrix;
 
   varying vec2 v_uv;
 
@@ -76,8 +77,10 @@ export default function(params) {
     // TODO: extract data from g buffers and do lighting
     vec3 albedo = (texture2D(u_gbuffers[0], v_uv)).xyz;
     vec3 normal = (texture2D(u_gbuffers[1], v_uv)).xyz;
-    vec3 v_position = (texture2D(u_gbuffers[2], v_uv)).xyz;
-    vec3 v_positionNonNDC = (texture2D(u_gbuffers[3], v_uv)).xyz;
+
+    vec4 v_positionV4 = texture2D(u_gbuffers[2], v_uv);
+    vec3 v_position = v_positionV4.xyz;
+    vec3 v_positionNonNDC = (u_viewProjectionMatrix * v_positionV4).xyz;
     vec3 fragColor = vec3(0.0);
 
     int frustumX = int(gl_FragCoord.x / u_resolution[0] * float(${params.numXSlices}));
