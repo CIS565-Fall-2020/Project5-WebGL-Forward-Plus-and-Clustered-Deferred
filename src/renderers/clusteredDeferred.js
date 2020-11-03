@@ -10,7 +10,7 @@ import TextureBuffer from './textureBuffer';
 import BaseRenderer from './base';
 import { MAX_LIGHTS_PER_CLUSTER } from './base';
 
-export const NUM_GBUFFERS = 3;
+export const NUM_GBUFFERS = 2;
 export const NUM_COMBINED_GBUFFERS = 1;
 
 export default class ClusteredDeferredRenderer extends BaseRenderer {
@@ -49,7 +49,7 @@ export default class ClusteredDeferredRenderer extends BaseRenderer {
   setupDrawBuffers(width, height) {
     this._width = width;
     this._height = height;
-    this._bufferwidth = width * NUM_GBUFFERS;
+    this._bufferwidth = width;
     this._bufferheight = height;
 
     this._fbo = gl.createFramebuffer();
@@ -98,6 +98,9 @@ export default class ClusteredDeferredRenderer extends BaseRenderer {
   resize(width, height) {
     this._width = width;
     this._height = height;
+
+    this._bufferwidth = width;
+    this._bufferheight = height;
 
     gl.bindTexture(gl.TEXTURE_2D, this._depthTex);
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.DEPTH_COMPONENT, width, height, 0, gl.DEPTH_COMPONENT, gl.UNSIGNED_SHORT, null);

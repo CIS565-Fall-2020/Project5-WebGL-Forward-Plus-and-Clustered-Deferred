@@ -75,11 +75,18 @@ export default function(params) {
 
   void main() {
     // TODO: extract data from g buffers and do lighting
-    vec2 v_uvAdjusted = vec2((gl_FragCoord.x + 1.0) / (u_resolution[0] * 3.0 + 1.0), v_uv.y);
-    vec3 albedo = (texture2D(u_gbuffers[0], v_uvAdjusted)).xyz;
-    vec3 normal = (texture2D(u_gbuffers[1], v_uvAdjusted)).xyz;
+    vec4 gb0 = texture2D(u_gbuffers[0], v_uv);
+    vec4 gb1 = texture2D(u_gbuffers[1], v_uv);
 
-    vec4 v_positionV4 = texture2D(u_gbuffers[2], v_uvAdjusted);
+    vec3 albedo = (gb0).xyz;
+
+    vec3 normal = vec3(0.0);
+    normal.x = gb0.w;
+    normal.y = gb1.w;
+    normal.z = sqrt(1.0 - normal.x * normal.x - normal.y * normal.y);
+
+    vec4 v_positionV4 = vec4(gb1.xyz, 1.0);
+
     vec3 v_position = v_positionV4.xyz;
     vec3 v_positionNonNDC = (u_viewProjectionMatrix * v_positionV4).xyz;
     vec3 fragColor = vec3(0.0);
