@@ -7,13 +7,10 @@ WebGL Forward+ and Clustered Deferred Shading
   * [LinkedIn](https://www.linkedin.com/in/sydney-miller-upenn/)
 * Tested on: GTX 222 222MB (CETS Virtual Lab)
 
-### Live Online
+### Demo Video and Live Online link (click the gif)
 
 [![](img/deferredBlinnGif.gif)](https://millersy.github.io/Project5-WebGL-Forward-Plus-and-Clustered-Deferred/)
 
-### Demo Video/GIF
-
-![](img/deferredBlinnGif.gif) 
 
 ### README
 
