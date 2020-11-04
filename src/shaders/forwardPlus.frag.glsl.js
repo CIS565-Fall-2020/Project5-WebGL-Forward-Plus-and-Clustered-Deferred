@@ -1,6 +1,5 @@
 export default function(params) {
   return `
-  // TODO: This is pretty much just a clone of forward.frag.glsl.js
 
   #version 100
   precision highp float;
@@ -11,6 +10,14 @@ export default function(params) {
 
   // TODO: Read this buffer to determine the lights influencing a cluster
   uniform sampler2D u_clusterbuffer;
+
+  uniform float u_width;
+  uniform float u_height;
+  uniform float u_far_clip;
+  uniform float u_near_clip;
+  uniform int u_max_lights;
+  uniform mat4 u_viewProjectionMatrix;
+  uniform mat4 u_viewMatrix;
 
   varying vec3 v_position;
   varying vec3 v_normal;
@@ -81,8 +88,43 @@ export default function(params) {
 
     vec3 fragColor = vec3(0.0);
 
+    // ***** get the cluster ******
+    // get the x and y
+    int x = int(gl_FragCoord.x / (float(u_width) / float(${params.xSlices}))); 
+    int y = int(gl_FragCoord.y / (float(u_height) / float(${params.ySlices}))); 
+
+    // get the z
+    vec4 camera_pt = u_viewMatrix * vec4(v_position, 1.0); // to camera space
+    float dist = float(u_far_clip) - float(u_near_clip);
+    float z_ratio = (abs(camera_pt[2]) - float(u_near_clip)) / dist;
+    int z = int(float(${params.zSlices}) * z_ratio);
+
+    // get cluster index
+    int cluster_index = x + (y * ${params.xSlices}) + (z * ${params.xSlices} * ${params.ySlices});
+    float cluster_u = float(cluster_index + 1) / float(${params.xSlices} * ${params.ySlices} * ${params.zSlices} + 1);
+    int numLightsInCluster = int(texture2D(u_clusterbuffer, vec2(cluster_u, 0.0))[0]);
+    float cluster_v_step = 1.0 / (floor((float(u_max_lights) + 1.0) * 0.25) + 1.0);
+    int offset = 1;
+
     for (int i = 0; i < ${params.numLights}; ++i) {
-      Light light = UnpackLight(i);
+      if (i >= numLightsInCluster) {
+        break;
+      }
+
+      // get index of light
+      float cluster_v = (floor(float(i + 1) * 0.25) + 1.0) * cluster_v_step;
+      int lightIndex = 0;
+      if (offset == 0) {lightIndex = int(texture2D(u_clusterbuffer, vec2(cluster_u, cluster_v))[0]);}
+      else if (offset == 1) {lightIndex = int(texture2D(u_clusterbuffer, vec2(cluster_u, cluster_v))[1]);}
+      else if (offset == 2) {lightIndex = int(texture2D(u_clusterbuffer, vec2(cluster_u, cluster_v))[2]);}
+      else if (offset == 3) {lightIndex = int(texture2D(u_clusterbuffer, vec2(cluster_u, cluster_v))[3]);}
+      
+      offset++;
+      if (offset >= 4) {
+        offset = 0;
+      }
+
+      Light light = UnpackLight(lightIndex);
       float lightDistance = distance(light.position, v_position);
       vec3 L = (light.position - v_position) / lightDistance;
 
@@ -91,7 +133,6 @@ export default function(params) {
 
       fragColor += albedo * lambertTerm * light.color * vec3(lightIntensity);
     }
-
     const vec3 ambientLight = vec3(0.025);
     fragColor += albedo * ambientLight;
 
