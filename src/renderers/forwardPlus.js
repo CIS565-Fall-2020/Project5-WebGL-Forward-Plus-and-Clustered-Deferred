@@ -15,7 +15,11 @@ export default class ForwardPlusRenderer extends BaseRenderer {
     this._lightTexture = new TextureBuffer(NUM_LIGHTS, 8);
     
     this._shaderProgram = loadShaderProgram(vsSource, fsSource({
-      numLights: NUM_LIGHTS, xSlices: xSlices, ySlices: ySlices, zSlices: zSlices, maxLightsPerCluster: MAX_LIGHTS_PER_CLUSTER,
+      numLights: NUM_LIGHTS, 
+      xSlices: xSlices, 
+      ySlices: ySlices, 
+      zSlices: zSlices, 
+      maxLightsPerCluster: MAX_LIGHTS_PER_CLUSTER,
     }), {
       uniforms: ['u_viewProjectionMatrix', 'u_colmap', 'u_normap', 'u_lightbuffer', 'u_clusterbuffer',
                  'u_near', 'u_far', 'u_width', 'u_height', 'u_viewMat'],

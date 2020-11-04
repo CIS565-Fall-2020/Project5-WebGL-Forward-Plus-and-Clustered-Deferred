@@ -7,7 +7,7 @@ import toTextureFrag from '../shaders/deferredToTexture.frag.glsl';
 import QuadVertSource from '../shaders/quad.vert.glsl';
 import fsSource from '../shaders/deferred.frag.glsl.js';
 import TextureBuffer from './textureBuffer';
-import BaseRenderer from './base';
+import BaseRenderer, { MAX_LIGHTS_PER_CLUSTER } from './base';
 
 export const NUM_GBUFFERS = 4;
 
@@ -28,14 +28,21 @@ export default class ClusteredDeferredRenderer extends BaseRenderer {
     this._progShade = loadShaderProgram(QuadVertSource, fsSource({
       numLights: NUM_LIGHTS,
       numGBuffers: NUM_GBUFFERS,
+      xSlices: xSlices, 
+      ySlices: ySlices, 
+      zSlices: zSlices, 
+      maxLightsPerCluster: MAX_LIGHTS_PER_CLUSTER,
     }), {
-      uniforms: ['u_gbuffers[0]', 'u_gbuffers[1]', 'u_gbuffers[2]', 'u_gbuffers[3]'],
+      uniforms: ['u_gbuffers[0]', 'u_gbuffers[1]', 'u_gbuffers[2]', 'u_gbuffers[3]',
+                 'u_lightbuffer', 'u_clusterbuffer', 'u_near', 'u_far', 'u_viewMat',
+                 'u_viewProjectionInvMat', 'u_eye', 'u_width', 'u_height'],
       attribs: ['a_uv'],
     });
 
     this._projectionMatrix = mat4.create();
     this._viewMatrix = mat4.create();
     this._viewProjectionMatrix = mat4.create();
+    this._viewProjectionInverseMatrix = mat4.create();
   }
 
   setupDrawBuffers(width, height) {
@@ -108,6 +115,7 @@ export default class ClusteredDeferredRenderer extends BaseRenderer {
     mat4.invert(this._viewMatrix, camera.matrixWorld.elements);
     mat4.copy(this._projectionMatrix, camera.projectionMatrix.elements);
     mat4.multiply(this._viewProjectionMatrix, this._projectionMatrix, this._viewMatrix);
+    mat4.invert(this._viewProjectionInverseMatrix, this._viewProjectionMatrix);
 
     // Render to the whole screen
     gl.viewport(0, 0, canvas.width, canvas.height);
@@ -153,10 +161,29 @@ export default class ClusteredDeferredRenderer extends BaseRenderer {
     // Use this shader program
     gl.useProgram(this._progShade.glShaderProgram);
 
-    // TODO: Bind any other shader inputs
+    // Bind any other shader inputs
+    // Set the light texture as a uniform input to the shader
+    gl.activeTexture(gl.TEXTURE2);
+    gl.bindTexture(gl.TEXTURE_2D, this._lightTexture.glTexture);
+    gl.uniform1i(this._progShade.u_lightbuffer, 2);
+ 
+    // Set the cluster texture as a uniform input to the shader
+    gl.activeTexture(gl.TEXTURE3);
+    gl.bindTexture(gl.TEXTURE_2D, this._clusterTexture.glTexture);
+    gl.uniform1i(this._progShade.u_clusterbuffer, 3);
+
+    gl.uniform1f(this._progShade.u_near, camera.near);
+    gl.uniform1f(this._progShade.u_far, camera.far);
+    gl.uniform1f(this._progShade.u_width, canvas.width);
+    gl.uniform1f(this._progShade.u_height, canvas.height);
+
+    gl.uniformMatrix4fv(this._progShade.u_viewMat, false, this._viewMatrix);
+    gl.uniformMatrix4fv(this._progShade.u_viewProjectionInvMat, false, this._viewProjectionInverseMatrix);
+
+    gl.uniform3f(this._progShade.u_eye, camera.position.x, camera.position.y, camera.position.z);
 
     // Bind g-buffers
-    const firstGBufferBinding = 0; // You may have to change this if you use other texture slots
+    const firstGBufferBinding = NUM_GBUFFERS; // You may have to change this if you use other texture slots
     for (let i = 0; i < NUM_GBUFFERS; i++) {
       gl.activeTexture(gl[`TEXTURE${i + firstGBufferBinding}`]);
       gl.bindTexture(gl.TEXTURE_2D, this._gbuffers[i]);

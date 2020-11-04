@@ -21,10 +21,15 @@ void main() {
     vec3 norm = applyNormalMap(v_normal, vec3(texture2D(u_normap, v_uv)));
     vec3 col = vec3(texture2D(u_colmap, v_uv));
 
-    // Populate your g buffer
-    norm.xy = normalize(norm.xy) * (sqrt(-norm.z * 0.5 + 0.5));
-    norm.xy = norm.xy * 0.5 + 0.5;
+    // Populate your g-buffer
+    norm = normalize(norm);
 
-    gl_FragData[0] = vec4(norm.xy, v_position.z, 0.0);
-    gl_FragData[1] = vec4(col, 0.0);
+    // color
+    gl_FragData[0] = vec4(col.x, col.y, col.z, 0.0);
+
+    // normal
+    gl_FragData[1] = vec4(norm.x, norm.y, norm.z, 0.0);
+
+    // position
+    gl_FragData[2] = vec4(v_position.x, v_position.y, v_position.z, 0.0);
 }
