@@ -6,7 +6,6 @@ export default function(params) {
   uniform sampler2D u_colmap;
   uniform sampler2D u_normap;
   uniform sampler2D u_lightbuffer;
-  uniform vec3 u_cam_pos;
 
   varying vec3 v_position;
   varying vec3 v_normal;
@@ -84,19 +83,8 @@ export default function(params) {
 
       float lightIntensity = cubicGaussian(2.0 * lightDistance / light.radius);
       float lambertTerm = max(dot(L, normal), 0.0);
-
-      // blinn phong shading
-      bool blinn = true;
-      float specular = 1.0;
-
-      if (blinn) {
-        vec3 lightDir = normalize(light.position - v_position);
-        vec3 viewDir = normalize(u_cam_pos - v_position);
-        vec3 halfwayDir = normalize(lightDir + viewDir);
-        specular = pow(max(dot(normal, halfwayDir), 0.0), 500.0);
-      }
       
-      fragColor += albedo * (lambertTerm + specular) * light.color * vec3(lightIntensity);
+      fragColor += albedo * (lambertTerm) * light.color * vec3(lightIntensity);
     }
 
     const vec3 ambientLight = vec3(0.025);

@@ -22,12 +22,12 @@ void main() {
     vec3 col = vec3(texture2D(u_colmap, v_uv));
 
     // ** optimized code **
-    norm = normalize(norm);
+    /*norm = normalize(norm);
     gl_FragData[0] = vec4(col, norm.x);
-    gl_FragData[1] = vec4(v_position, norm.y);
+    gl_FragData[1] = vec4(v_position, norm.y);*/
 
     // ** un-optimized code **
-    /*gl_FragData[0] = vec4(norm, 1.0);
+    gl_FragData[0] = vec4(norm, 1.0);
     gl_FragData[1] = vec4(col, 1.0);
-    gl_FragData[2] = vec4(v_position, 1.0);*/
+    gl_FragData[2] = vec4(v_position, 1.0);
 }

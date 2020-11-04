@@ -13,6 +13,7 @@ export default function(params) {
   uniform float u_near_clip;
   uniform int u_max_lights;
   uniform mat4 u_viewMatrix;
+  uniform vec3 u_cam_pos;
   
   varying vec2 v_uv;
   
@@ -78,18 +79,18 @@ export default function(params) {
     vec3 fragColor = vec3(0.0);
 
     // ** optimized code **
-    vec4 gb_col = texture2D(u_gbuffers[0], v_uv).xyzw;
+    /*vec4 gb_col = texture2D(u_gbuffers[0], v_uv).xyzw;
     vec4 gb_pos = texture2D(u_gbuffers[1], v_uv).rgba;
 
     float nor_x = gb_col[3];
     float nor_y = gb_pos[3];
     float nor_z = sqrt(1.0 - (nor_x * nor_x) - (nor_y * nor_y));
-    vec4 gb_nor = vec4(nor_x, nor_y, nor_z, 1.0);
+    vec4 gb_nor = vec4(nor_x, nor_y, nor_z, 1.0);*/
 
     // ** un-optimized code **
-    /*vec4 gb_nor = texture2D(u_gbuffers[0], v_uv).xyzw;
+    vec4 gb_nor = texture2D(u_gbuffers[0], v_uv).xyzw;
     vec4 gb_col = texture2D(u_gbuffers[1], v_uv).rgba;
-    vec4 gb_pos = texture2D(u_gbuffers[2], v_uv);*/
+    vec4 gb_pos = texture2D(u_gbuffers[2], v_uv);
 
     vec3 albedo = vec3(gb_col);
     vec3 normal = vec3(gb_nor);
@@ -137,7 +138,18 @@ export default function(params) {
       float lightIntensity = cubicGaussian(2.0 * lightDistance / light.radius);
       float lambertTerm = max(dot(L, normal), 0.0);
 
-      fragColor += albedo * lambertTerm * light.color * vec3(lightIntensity);
+      // blinn phong shading
+      bool blinn = true;
+      float specular = 0.0;
+
+      if (blinn) {
+        vec3 lightDir = normalize(light.position - vec3(gb_pos));
+        vec3 viewDir = normalize(u_cam_pos - vec3(gb_pos));
+        vec3 halfwayDir = normalize(lightDir + viewDir);
+        specular = pow(max(dot(normal, halfwayDir), 0.0), 500.0);
+      }
+
+      fragColor += albedo * (lambertTerm + specular) * light.color * vec3(lightIntensity);
     }
     const vec3 ambientLight = vec3(0.025);
     fragColor += albedo * ambientLight;
