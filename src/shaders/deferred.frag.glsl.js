@@ -7,6 +7,7 @@ export default function(params) {
   uniform sampler2D u_lightbuffer;
   uniform sampler2D u_gbuffers[${params.numGBuffers}];
 
+  uniform vec3 u_cameraPos;
   uniform float u_farClip;
   uniform float u_nearClip;
   uniform vec2 u_resolution;
@@ -97,19 +98,27 @@ export default function(params) {
     int frustumIndex = frustumX + frustumY * ${params.numXSlices} + frustumZ * ${params.numXSlices} * ${params.numYSlices};
     int numLightsInfluenceFrustum = int(ExtractFloat(u_clusterbuffer, ${params.numFrustums}, ${params.clusterBufferTextureHeight}, frustumIndex, 0));
 
+    vec3 viewDir = normalize(u_cameraPos - v_position);
+
     for (int i = 1; i < ${params.numLights}; ++i) {
       if (i > numLightsInfluenceFrustum) {
         break;
       }
       int lightIndex = int(ExtractFloat(u_clusterbuffer, ${params.numFrustums}, ${params.clusterBufferTextureHeight}, frustumIndex, i));
       Light light = UnpackLight(lightIndex);
+      
+      vec3 lightDir = normalize(light.position - v_position);
+
       float lightDistance = distance(light.position, v_position);
       vec3 L = (light.position - v_position) / lightDistance;
 
       float lightIntensity = cubicGaussian(2.0 * lightDistance / light.radius);
       float lambertTerm = max(dot(L, normal), 0.0);
 
-      fragColor += albedo * lambertTerm * light.color * vec3(lightIntensity);
+      vec3 halfwayDir = normalize(lightDir + viewDir);
+      float spec = pow(max(dot(normal, halfwayDir), 0.0), 16.0);
+
+      fragColor += albedo * (lambertTerm + spec) * light.color * vec3(lightIntensity);
     }
     
     gl_FragColor = vec4(fragColor, 1.0);
