@@ -36,7 +36,7 @@ export default class ClusteredDeferredRenderer extends BaseRenderer {
       uniforms: ['u_gbuffers[0]', 'u_gbuffers[1]', 'u_gbuffers[2]', 'u_gbuffers[3]',
       'u_lightbuffer', 'u_clusterbuffer', 
       'u_MAX_LIGHTS_PER_CLUSTER', 'u_canvas_width', 'u_canvas_height',
-      'u_camera_near', 'u_camera_far', 'u_viewMatrix'],
+      'u_camera_near', 'u_camera_far', 'u_viewMatrix', 'u_camera_pos'],
       attribs: ['a_uv'],
     });
 
@@ -175,6 +175,8 @@ export default class ClusteredDeferredRenderer extends BaseRenderer {
     gl.uniform1f(this._progShade.u_camera_near, camera.near);
     gl.uniform1f(this._progShade.u_camera_far, camera.far);
     gl.uniformMatrix4fv(this._progShade.u_viewMatrix, false, this._viewMatrix);
+    //blinn phong
+    gl.uniform3f(this._progShade.u_camera_pos, camera.position.x, camera.position.y, camera.position.z);
 
     // Bind g-buffers
     const firstGBufferBinding = 2; // You may have to change this if you use other texture slots
