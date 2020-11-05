@@ -12,12 +12,11 @@ export default function(params) {
   uniform float u_width;
   uniform float u_height;
   uniform mat4 u_viewMat;
-  uniform mat4 u_viewProjectionInvMat;
   uniform vec3 u_eye;
   
   varying vec2 v_uv;
 
-  const float exp = 256.0;
+  const float exp = 128.0;
 
   struct Light {
     vec3 position;
@@ -68,19 +67,43 @@ export default function(params) {
       return 0.0;
     }
   }
+
+  vec3 decompressNormal(vec2 compressedNorm)
+  {
+    float temp = 2.0 / (1.0 + compressedNorm.x * compressedNorm.x + compressedNorm.y * compressedNorm.y);
+    vec3 normal = vec3(compressedNorm.x * temp, compressedNorm.y * temp, temp - 1.0);
+    return normalize(normal);
+  }
   
   void main() {
     vec3 fragColor = vec3(0.0);
+    vec3 albedo = vec3(0.0);
+    vec3 normal = vec3(0.0);
+    vec3 position = vec3(0.0);
 
     // Extract data from g-buffers and do lighting
-    vec4 albedo = texture2D(u_gbuffers[0], v_uv);
-    vec4 normal = texture2D(u_gbuffers[1], v_uv);
-    vec4 position = texture2D(u_gbuffers[2], v_uv);
+    // Optimized
+    vec4 gb0 = texture2D(u_gbuffers[0], v_uv);
+    albedo = gb0.xyz;
 
-    // vec4 gb3 = texture2D(u_gbuffers[3], v_uv);
+    vec4 gb1 = texture2D(u_gbuffers[1], v_uv);
+    vec2 compressedNorm = gb1.xy;
 
+    // Optimize by decomressing data from g-buffer
+    normal = decompressNormal(compressedNorm);
+    position = vec3(gb1.z, gb1.w, gb0.w);
+
+    // Unoptimized
+    // vec4 gb0  = texture2D(u_gbuffers[0], v_uv);
+    // albedo = gb0.xyz;
+
+    // vec4 gb1 = texture2D(u_gbuffers[1], v_uv);
+    // normal = gb1.xyz;
+
+    // vec4 gb2 = texture2D(u_gbuffers[2], v_uv);
+    // position = gb2.xyz;
+   
     vec4 viewPos = u_viewMat * vec4(position.x, position.y, position.z, 1.0);
-
     const int xSlices = ${params.xSlices};
     const int ySlices = ${params.ySlices};
     const int zSlices = ${params.zSlices};
@@ -100,20 +123,20 @@ export default function(params) {
         
       int lightIdx = int(ExtractFloat(u_clusterbuffer, clusterTextureWidth, clusterTextureHeight, clusterIdx, i + 1));;
       Light light = UnpackLight(lightIdx);
-      float lightDistance = distance(light.position, position.xyz);
-      vec3 L = (light.position - position.xyz) / lightDistance;
-      vec3 V = normalize(light.position - u_eye);
+      float lightDistance = distance(light.position, position);
+      vec3 L = (light.position - position) / lightDistance;
+      vec3 V = normalize(u_eye - light.position);
       vec3 H = normalize(V + L);
 
       float lightIntensity = cubicGaussian(2.0 * lightDistance / light.radius);
-      float lambertTerm = max(dot(L, normal.xyz), 0.0);
-      float specularIntensity = pow(max(dot(H, normal.xyz), 0.0), exp); 
+      float lambertTerm = max(dot(L, normal), 0.0);
+      float specularIntensity = pow(max(dot(H, normal), 0.0), exp); 
 
-      fragColor += (albedo.xyz * lambertTerm + specularIntensity) * light.color * vec3(lightIntensity);
+      fragColor += (albedo * lambertTerm + specularIntensity) * light.color * vec3(lightIntensity);
     }
 
     const vec3 ambientLight = vec3(0.025);
-    fragColor += albedo.xyz * ambientLight;
+    fragColor += albedo * ambientLight;
 
     gl_FragColor = vec4(fragColor, 1.0);
   }
