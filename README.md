@@ -8,20 +8,43 @@ WebGL Forward+ and Clustered Deferred Shading
 
 ### Live Online
 
-[![](img/thumb.png)](http://TODO.github.io/Project5-WebGL-Forward-Plus-and-Clustered-Deferred)
+<img src="https://github.com/WeiyuDu/Project5-WebGL-Forward-Plus-and-Clustered-Deferred/blob/master/img/proj5_capture.png" width=600/>
 
 ### Demo Video
 
 Demo Video Link: https://youtu.be/3YsZx6-DenI
 
-### (TODO: Your README)
+### Description
 
-*DO NOT* leave the README to the last minute! It is a crucial part of the
-project, and we will not be able to grade you without a good README.
+#### Forward+
+#### Clustered Deferred
+#### Blinn-Phong Shading
+#### g-buffer optimization with 2-component normals
 
-This assignment has a considerable amount of performance analysis compared
-to implementation work. Complete the implementation early to leave time!
+### Performance Analysis
+1) Please see below for FPS versus Number of Lights for the three methods with **max number of lights per cluster = 100**.
 
+| Number of Lights | Forward | Forward+ | Clustered Deferred|
+| --- | --- | --- | --- |
+| 100 | 14        |  9          | 16|
+| 200 | 7        |  9          | 16|
+| 500 | 3        |  9          | 16|
+| 1000 | 1        |  9          | 16|
+
+When number of lights is relatively large, Forward+ is faster than Forward, while Clustered Deferred is faster than Forward+. We see there's no obvious decrease in FPS when number of lights increases for Forward+ and Clustered Deferred.
+
+2) Please see below for FPS versus Number of Lights for the three methods with **max number of lights per cluster = number of lights**.
+
+| Number of Lights | Forward | Forward+ | Clustered Deferred|
+| --- | --- | --- | --- |
+| 100 | 14        |  9          | 16|
+| 150 | 9        |  6          | 12|
+| 200 | 7        |  5          | 9|
+| 250 | 6        |  4          | 7|
+
+In this case, Forward+ is slightly worse than Forward, while Clustered Deferred is slightly better than Forward.
+
+3) g-buffer optimization with 2-component normals
 
 ### Credits
 
