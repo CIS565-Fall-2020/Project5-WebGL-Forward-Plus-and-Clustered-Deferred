@@ -43,7 +43,7 @@ WebGL Forward+ and Clustered Deferred Shading
 
 - Performance Comparison between Unoptimized and Optimized Clustered Deferred Rendering
 
-  ![Performance_Comparison_Optimized and Unoptimized_ClusteredDeferredRendering Pic](/img/Performance_Comparison_Optimized and Unoptimized_ClusteredDeferredRendering.png)
+  ![Performance_Comparison_Optimized and Unoptimized_ClusteredDeferredRendering Pic](/img/Performance_Comparison_Optimized_and_ Unoptimized_ClusteredDeferredRendering.png)
 
   I compressed the 3D normals into 2D (only passing normal.x and normal.y into G-Buffer), and packed values together into vec4s, so that after optimization, only 2 G-Buffers were used in the final result.
 
