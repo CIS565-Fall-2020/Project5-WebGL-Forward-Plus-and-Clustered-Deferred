@@ -61,6 +61,12 @@ Deferred shading (ground truth) | Deferred shading (z-reconstructed)|
 
 ![](img/renderersRuntime.png)
 
+* Why is clustered deferred faster than forward plus, and forward plus faster than forward?
+    - Clustered deferred is better than forward plus because of the lighting calculation in the final shader. If a scene is complex, having all polygons in a fragment shader and also calculating the lighting per fragment would be an expensive combination (the fragment shader has to do a lot of work.) By using g-buffers in deferred shading, we break down the tasks and hence make it lighter per fragment to calculate lighting. The reason that clustered deferred and forward plus faster than forward is that in the fragment shader, forward would consider all lights in the scene and the lighting calculation hence is expensive. However, the clustering method in both clustered deferred and forward plus makes sure that each fragment only calculates lighting term with lights that actually has impacts on the fragment. 
+
+* Tradeoffs between forward+ and clustered deferred?
+    - Clustered deferred requires many g-buffers to store data, and packing/reducing data often requires some additional calculation and potentially loss in details (which happens with reconstructing the third component of the normal above.) Besides, having g-buffers mean requiring more memory usage. It might not be ideal if there are a lot of attributes to store and when the image is huge. However, as the analysis above, supported by the runtime graph comparing forward plus and clustered deferred, it is better to pick deferred when there are a lot of lights in the scene.
+
 ## Credits
 
 * [Three.js](https://github.com/mrdoob/three.js) by [@mrdoob](https://github.com/mrdoob) and contributors
