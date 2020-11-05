@@ -8,17 +8,17 @@ WebGL Forward+ and Clustered Deferred Shading
 
 ### Live Online
 
-[![](img/thumb.gif)](http://tatran5.github.io/Project5-WebGL-Forward-Plus-and-Clustered-Deferred)
+[![](img/thumb.png)](http://tatran5.github.io/Project5-WebGL-Forward-Plus-and-Clustered-Deferred)
 
 ### Demo Video/GIF
 
-[![](img/allRenders.gif)]
+![](img/allRenders.gif)
 
 ### Features
 
 **Forward plus**
 **Clustered deferred shading**
-  - Reuse clustering logic from  with optimizations
+  - *Reuse clustering logic from  with optimizations*
   - Store vertex attributes (position, albedo color and normal) in g-buffers
   - Red g-buffer in a shader to produce final output
 **Blinn-Phong shading for point lights** (deferred shading)
@@ -27,7 +27,7 @@ WebGL Forward+ and Clustered Deferred Shading
 
 ### Performance & Analysis 
 
-[![](img/renderersRuntime.png)]
+![](img/renderersRuntime.png)
 
 ### Credits
 
