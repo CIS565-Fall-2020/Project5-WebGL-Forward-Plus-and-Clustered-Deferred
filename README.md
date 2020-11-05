@@ -22,6 +22,8 @@ Features implemented:
 - g-buffer optimization with 2-component normals
 
 ### Performance Analysis
+(Apologies, I misread the instruction earlier and thought we ought to use fps instead of ms.)
+
 1) Please see below for FPS versus Number of Lights for the three methods with **max number of lights per cluster = 100**.
 
 | Number of Lights | Forward | Forward+ | Clustered Deferred|
@@ -53,7 +55,7 @@ In this case, Forward+ is slightly worse than Forward, while Clustered Deferred 
 | 200 | 9       |  12          |
 | 250 | 7        |  10          |
 
-Since we're saving the amount of memory we're passing around, we observe obvious improvement in terms of FPS with 2-component normals.
+Instead of using another vector for normal, we first normalize it, then squeeze the x and y component of the normal vector in vec4 for color and position (which are both vec3). Finally we compute the z component with sqrt(1 - x * x - y * y). Since we're saving the amount of memory we're passing around, we observe obvious improvement in terms of FPS with 2-component normals.
 
 ### Credits
 
