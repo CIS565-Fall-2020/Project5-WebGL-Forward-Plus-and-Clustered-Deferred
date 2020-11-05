@@ -17,12 +17,18 @@ WebGL Forward+ and Clustered Deferred Shading
 ### Features
 
 **Forward plus**
+* I tried implementing this parts in 3 different ways.
+  - The first way is 
+
 **Clustered deferred shading**
 * Reuse clustering logic from  with optimizations
 * Store vertex attributes in g-buffers (position, albedo color and normal)
 * Read g-buffer in a shader to produce final output
-- To make sure that I was inputting and getting the right data from the g-buffers, I output the data from g-buffers to the final shader.
+  - To make sure that I was inputting and getting the right data from the g-buffers, I output the data from g-buffers to the final shader.
 
+|Position | Color (albedo) | Normal |
+|---|---|---|
+|![](img/gbuffer_position.png|![](img/gbuffer_albedo.png|![](img/gbuffer_normal.png)|
 
 **Blinn-Phong shading for point lights** (deferred shading)
 - The effects makes the light reflection more intense at some places, while the original implementation  makes the light looking more diffuse (spreading out more uniformly)
