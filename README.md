@@ -2,27 +2,32 @@ WebGL Forward+ and Clustered Deferred Shading
 ======================
 
 **University of Pennsylvania, CIS 565: GPU Programming and Architecture, Project 5**
-
-* (TODO) YOUR NAME HERE
-* Tested on: (TODO) **Google Chrome 222.2** on
-  Windows 22, i7-2222 @ 2.22GHz 22GB, GTX 222 222MB (Moore 2222 Lab)
+* Thy (Tea) Tran 
+  * [LinkedIn](https://www.linkedin.com/in/thy-tran-97a30b148/), [personal website](https://tatran5.github.io/), [email](thytran316@outlook.com)
+* Tested on: Google Chrome, Version 86.0.4240.183 (Official Build) (64-bit) on Windows 10, i7-8750H @ 2.20GHz 22GB, GTX 1070
 
 ### Live Online
 
-[![](img/thumb.png)](http://TODO.github.io/Project5-WebGL-Forward-Plus-and-Clustered-Deferred)
+[![](img/thumb.gif)](http://tatran5.github.io/Project5-WebGL-Forward-Plus-and-Clustered-Deferred)
 
 ### Demo Video/GIF
 
-[![](img/video.png)](TODO)
+[![](img/allRenders.gif)]
 
-### (TODO: Your README)
+### Features
 
-*DO NOT* leave the README to the last minute! It is a crucial part of the
-project, and we will not be able to grade you without a good README.
+**Forward plus**
+**Clustered deferred shading**
+  - Reuse clustering logic from  with optimizations
+  - Store vertex attributes (position, albedo color and normal) in g-buffers
+  - Red g-buffer in a shader to produce final output
+**Blinn-Phong shading for point lights** (deferred shading)
+**Optimizations**
+  - Use 2-component normals
 
-This assignment has a considerable amount of performance analysis compared
-to implementation work. Complete the implementation early to leave time!
+### Performance & Analysis 
 
+[![](img/renderersRuntime.png)]
 
 ### Credits
 
