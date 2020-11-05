@@ -23,19 +23,19 @@ WebGL Forward+ and Clustered Deferred Shading
 * Read g-buffer in a shader to produce final output
 - To make sure that I was inputting and getting the right data from the g-buffers, I output the data from g-buffers to the final shader.
 
+
 **Blinn-Phong shading for point lights** (deferred shading)
 
 **Optimizations for g-buffers by using 2-component normals**
   - By storing 2-components of a normal, we can estimate the remaining component by 'normal.z = sqrt(1 - pow(normal.x, 2) - pow(normal.y, 2))' because the normals are normalized. However, this is clearly not perfect, since the third component can originally be positive or negative, but we can't have that exact info when re-constructing the third component. There are some details lost as a result. Another noticeable artifact is the occasional random black specs in the renders.
   
 |Normals (ground truth) | Normals (z reconstructed) | 
-|---|---|---|
-|![](img/normals_groundTruth.png)|![](img/normals_reconstructed.png)|
+|---|---|
+|![](img/normals_groundTruth.png)|![](img/normals_recontructed.png)|
 
-Deferred shading (ground truth) | Deferred shading (z-reconstructed)|Black specs|
-|---|---|---|
-|![](img/deferred.png)|![](img/deferred_reconstructedZ.png)|![](img/blackspecs.png)|
-
+Deferred shading (ground truth) | Deferred shading (z-reconstructed)|
+|---|---|
+|![](img/deferred.png)|![](img/deferred_reconstructedZ.png)|
 ### Performance & Analysis 
 
 ![](img/renderersRuntime.png)
