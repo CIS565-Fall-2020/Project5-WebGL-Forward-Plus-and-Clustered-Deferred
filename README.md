@@ -25,7 +25,7 @@ WebGL Forward+ and Clustered Deferred Shading
 
 |Cluster shader x | Cluster shader y | Cluster shader z |
 |---|---|---|
-|![](img/cluster_shader_x.png)|![](img/cluster_shader_y.png)|![](img/cluster_shader_z.png)|
+|![](img/cluster_shader_x.png =200x)|![](img/cluster_shader_y.png =200x)|![](img/cluster_shader_z.png =200x)|
 
 
 **Clustered deferred shading**
