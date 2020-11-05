@@ -20,7 +20,7 @@ Demo Video Link: https://youtu.be/3YsZx6-DenI
 Features implemented:
 - Forward+
 - Clustered Deferred
-- Blinn-Phong Shading
+- Blinn-Phong Shading (Please see Clustered Deferred in Demo Video)
 - g-buffer optimization with 2-component normals
 
 ### Performance Analysis
