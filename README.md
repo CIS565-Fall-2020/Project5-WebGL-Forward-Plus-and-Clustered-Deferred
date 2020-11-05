@@ -8,6 +8,8 @@ WebGL Forward+ and Clustered Deferred Shading
 
 ### Live Online
 
+https://weiyudu.github.io/Project5-WebGL-Forward-Plus-and-Clustered-Deferred/
+
 <img src="https://github.com/WeiyuDu/Project5-WebGL-Forward-Plus-and-Clustered-Deferred/blob/master/img/proj5_capture.png" width=600/>
 
 ### Demo Video
