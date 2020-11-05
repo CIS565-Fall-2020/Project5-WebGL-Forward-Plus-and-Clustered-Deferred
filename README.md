@@ -25,7 +25,7 @@ WebGL Forward+ and Clustered Deferred Shading
 
 |Cluster shader x | Cluster shader y | Cluster shader z |
 |---|---|---|
-|![](img/cluster_shader_x.png=200x)|![](img/cluster_shader_y.png=200x)|![](img/cluster_shader_z.png=200x)|
+|![](img/cluster_shader_x.png)|![](img/cluster_shader_y.png)|![](img/cluster_shader_z.png)|
 
 
 **Clustered deferred shading**
@@ -37,7 +37,7 @@ To make sure that I was inputting and getting the right data from the g-buffers,
 
 |Position | Color (albedo) | Normal |
 |---|---|---|
-|![](img/gbuffer_position.png=200x)|![](img/gbuffer_albedo.png=200x)|![](img/gbuffer_normal.png=200x)|
+|![](img/gbuffer_position.png)|![](img/gbuffer_albedo.png)|![](img/gbuffer_normal.png)|
 
 **Blinn-Phong shading for point lights** (deferred shading)
 * The effects makes the light reflection more intense at some places, while the original implementation  makes the light looking more diffuse (spreading out more uniformly)
