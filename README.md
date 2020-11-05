@@ -15,11 +15,11 @@ WebGL Forward+ and Clustered Deferred Shading
 Demo Video Link: https://youtu.be/3YsZx6-DenI
 
 ### Description
-
-#### Forward+
-#### Clustered Deferred
-#### Blinn-Phong Shading
-#### g-buffer optimization with 2-component normals
+Features implemented:
+- Forward+
+- Clustered Deferred
+- Blinn-Phong Shading
+- g-buffer optimization with 2-component normals
 
 ### Performance Analysis
 1) Please see below for FPS versus Number of Lights for the three methods with **max number of lights per cluster = 100**.
@@ -44,7 +44,16 @@ When number of lights is relatively large, Forward+ is faster than Forward, whil
 
 In this case, Forward+ is slightly worse than Forward, while Clustered Deferred is slightly better than Forward.
 
-3) g-buffer optimization with 2-component normals
+3) g-buffer optimization with 2-component normals on Clustered Deferred, **max number of lights per cluster = number of lights**.
+
+| Number of Lights | without optimization | with optimization |
+| --- | --- | --- |
+| 100 | 16        |    21        |
+| 150 | 12        |  15          |
+| 200 | 9       |  12          |
+| 250 | 7        |  10          |
+
+Since we're saving the amount of memory we're passing around, we observe obvious improvement in terms of FPS with 2-component normals.
 
 ### Credits
 
