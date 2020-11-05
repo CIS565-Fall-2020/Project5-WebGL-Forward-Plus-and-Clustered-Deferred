@@ -23,6 +23,7 @@ Demo Video Link: https://youtu.be/3YsZx6-DenI
 
 ### Performance Analysis
 1) Please see below for FPS versus Number of Lights for the three methods with **max number of lights per cluster = 100**.
+
 | Number of Lights | Forward | Forward+ | Clustered Deferred|
 | --- | --- | --- | --- |
 | 100 | 14        |  9          | 16|
@@ -33,6 +34,7 @@ Demo Video Link: https://youtu.be/3YsZx6-DenI
 When number of lights is relatively large, Forward+ is faster than Forward, while Clustered Deferred is faster than Forward+. We see there's no obvious decrease in FPS when number of lights increases for Forward+ and Clustered Deferred.
 
 2) Please see below for FPS versus Number of Lights for the three methods with **max number of lights per cluster = number of lights**.
+
 | Number of Lights | Forward | Forward+ | Clustered Deferred|
 | --- | --- | --- | --- |
 | 100 | 14        |  9          | 16|
