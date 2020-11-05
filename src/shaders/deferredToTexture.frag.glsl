@@ -40,5 +40,6 @@ void main() {
     // color 
     gl_FragData[0] = vec4(col.x, col.y, col.z, v_position.z);
     // normal + position
-    gl_FragData[1] = vec4(norm.x, norm.y, v_position.x, v_position.y);
+    vec2 compressedNorm = compressNormal(norm);
+    gl_FragData[1] = vec4(compressedNorm.x, compressedNorm.y, v_position.x, v_position.y);
 }
