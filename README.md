@@ -18,12 +18,23 @@ WebGL Forward+ and Clustered Deferred Shading
 
 **Forward plus**
 **Clustered deferred shading**
-  - *Reuse clustering logic from  with optimizations*
-  - Store vertex attributes (position, albedo color and normal) in g-buffers
+  - Reuse clustering logic from  with optimizations
+  - Store vertex attributes in g-buffers 
+     - Position, albedo color and normal
   - Red g-buffer in a shader to produce final output
+
 **Blinn-Phong shading for point lights** (deferred shading)
-**Optimizations**
-  - Use 2-component normals
+
+**Optimizations for g-buffers by using 2-component normals**
+  - By storing 2-components of a normal, we can estimate the remaining component by 'normal.z = sqrt(1 - pow(normal.x, 2) - pow(normal.y, 2))' because the normals are normalized. However, this is clearly not perfect, since the third component can originally be positive or negative, but we can't have that exact info when re-constructing the third component. 
+  
+|Normals (ground truth) | Normals (z reconstructed)|
+|---|---|
+|![](img/normal_groundTruth.PNG)|![](img/normal_reconstructed.PNG)|
+  - However, there barely are any difference between the renders using original normals and those with reconstructed-z normals. The main somewhat noticeable artifact is the occasional random black specs in the renders.
+|Black specs | 
+|---|
+|![](img/blackSpecs.PNG)|
 
 ### Performance & Analysis 
 
