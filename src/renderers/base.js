@@ -48,8 +48,8 @@ export default class BaseRenderer {
         var ratio = light_z / z_near;
         var light_x = light_in_camera[0] + x_near * ratio / 2.0;
         var light_y = light_in_camera[1] + y_near * ratio / 2.0;
-        var x_cell_len = light_z / z_near * x_near / this._xSlices;//x_cell_near * ratio;
-        var y_cell_len = light_z / z_near * x_near / this._ySlices;//y_cell_near * ratio;
+        var x_cell_len = x_cell_near * ratio;
+        var y_cell_len = y_cell_near * ratio;
         
         var x_max = Math.ceil((light_x + light.radius) / x_cell_len);
         var x_min = Math.floor((light_x - light.radius) / x_cell_len);

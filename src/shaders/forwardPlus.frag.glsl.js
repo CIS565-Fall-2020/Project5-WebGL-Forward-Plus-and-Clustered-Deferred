@@ -13,9 +13,6 @@ export default function(params) {
   uniform sampler2D u_clusterbuffer;
 
   uniform int u_MAX_LIGHTS_PER_CLUSTER;
-  uniform int u_xSlices;
-  uniform int u_ySlices;
-  uniform int u_zSlices;
   uniform int u_canvas_width;
   uniform int u_canvas_height;
   uniform float u_camera_near;
@@ -90,6 +87,9 @@ export default function(params) {
     vec3 normal = applyNormalMap(v_normal, normap);
 
     vec3 fragColor = vec3(0.0);
+    int u_xSlices = ${params.u_xSlices};
+    int u_ySlices = ${params.u_ySlices};
+    int u_zSlices = ${params.u_zSlices};
 
     int x_cell = int(floor(float(u_xSlices) * gl_FragCoord.x / float(u_canvas_width)));
     int y_cell = int(floor(float(u_ySlices) * gl_FragCoord.y / float(u_canvas_height)));

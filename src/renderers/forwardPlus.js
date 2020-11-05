@@ -17,9 +17,12 @@ export default class ForwardPlusRenderer extends BaseRenderer {
     
     this._shaderProgram = loadShaderProgram(vsSource, fsSource({
       numLights: NUM_LIGHTS,
+      u_xSlices: xSlices,
+      u_ySlices: ySlices,
+      u_zSlices: zSlices,
     }), {
       uniforms: ['u_viewProjectionMatrix', 'u_colmap', 'u_normap', 'u_lightbuffer', 'u_clusterbuffer', 
-      'u_MAX_LIGHTS_PER_CLUSTER', 'u_xSlices', 'u_ySlices', 'u_zSlices', 'u_canvas_width', 'u_canvas_height',
+      'u_MAX_LIGHTS_PER_CLUSTER', 'u_canvas_width', 'u_canvas_height',
       'u_camera_near', 'u_camera_far', 'u_viewMatrix'],
       attribs: ['a_position', 'a_normal', 'a_uv'],
     });
@@ -80,9 +83,6 @@ export default class ForwardPlusRenderer extends BaseRenderer {
 
     // TODO: Bind any other shader inputs
     gl.uniform1i(this._shaderProgram.u_MAX_LIGHTS_PER_CLUSTER, MAX_LIGHTS_PER_CLUSTER);
-    gl.uniform1i(this._shaderProgram.u_xSlices, this.xSlices);
-    gl.uniform1i(this._shaderProgram.u_ySlices, this.ySlices);
-    gl.uniform1i(this._shaderProgram.u_zSlices, this.zSlices);
     gl.uniform1i(this._shaderProgram.u_canvas_width, canvas.width);
     gl.uniform1i(this._shaderProgram.u_canvas_height, canvas.height);
     gl.uniform1f(this._shaderProgram.u_camera_near, camera.near);
