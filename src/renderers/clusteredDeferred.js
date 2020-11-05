@@ -10,7 +10,7 @@ import TextureBuffer from './textureBuffer';
 import BaseRenderer from './base';
 import {MAX_LIGHTS_PER_CLUSTER} from './base.js';
 
-export const NUM_GBUFFERS = 3;
+export const NUM_GBUFFERS = 2;
 
 export default class ClusteredDeferredRenderer extends BaseRenderer {
   constructor(xSlices, ySlices, zSlices) {
@@ -33,7 +33,7 @@ export default class ClusteredDeferredRenderer extends BaseRenderer {
       u_ySlices: ySlices,
       u_zSlices: zSlices,
     }), {
-      uniforms: ['u_gbuffers[0]', 'u_gbuffers[1]', 'u_gbuffers[2]', 'u_gbuffers[3]',
+      uniforms: ['u_gbuffers[0]', 'u_gbuffers[1]', //'u_gbuffers[2]', 'u_gbuffers[3]',
       'u_lightbuffer', 'u_clusterbuffer', 
       'u_MAX_LIGHTS_PER_CLUSTER', 'u_canvas_width', 'u_canvas_height',
       'u_camera_near', 'u_camera_far', 'u_viewMatrix', 'u_camera_pos'],

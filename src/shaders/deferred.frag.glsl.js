@@ -70,10 +70,16 @@ export default function(params) {
   }
 
   void main() {
-
+   
     vec3 v_position = texture2D(u_gbuffers[0], v_uv).xyz;
     vec3 albedo = texture2D(u_gbuffers[1], v_uv).xyz;
-    vec3 normal = texture2D(u_gbuffers[2], v_uv).xyz;
+    //vec3 normal = texture2D(u_gbuffers[2], v_uv).xyz;
+
+    vec3 normal = vec3(0.0);
+    normal[0] = texture2D(u_gbuffers[0], v_uv).w;
+    normal[1] = texture2D(u_gbuffers[1], v_uv).w;
+    normal[2] = sqrt(1.0 - normal[0] * normal[0] - normal[1] * normal[1]);
+    normal = normalize(normal);
 
     vec3 fragColor = vec3(0.0);
 
@@ -106,16 +112,17 @@ export default function(params) {
       vec3 L = (light.position - v_position) / lightDistance;
 
       //bling phong
-      
+      /*
       vec3 view = normalize(u_camera_pos - v_position);
       vec3 H = normalize((view + L) / 2.0);
       float exp = 25.0;
       float specularIntensity = max(pow(dot(H, normal), exp), 0.0);
-      
+      */
       float lightIntensity = cubicGaussian(2.0 * lightDistance / light.radius);
       float lambertTerm = max(dot(L, normal), 0.0);
 
-      fragColor += albedo * (lambertTerm + specularIntensity) * light.color * vec3(lightIntensity);
+      //fragColor += albedo * (lambertTerm + specularIntensity) * light.color * vec3(lightIntensity);
+      fragColor += albedo * lambertTerm * light.color * vec3(lightIntensity);
     }
 
     const vec3 ambientLight = vec3(0.025);
