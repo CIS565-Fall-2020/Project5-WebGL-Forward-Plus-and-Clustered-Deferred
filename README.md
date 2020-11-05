@@ -30,11 +30,11 @@ WebGL Forward+ and Clustered Deferred Shading
   
 |Normals (ground truth) | Normals (z reconstructed) | 
 |---|---|---|
-|![](img/normal_groundTruth.png)|![](img/normal_reconstructed.png)|
+|![](img/normals_groundTruth.png)|![](img/normals_reconstructed.png)|
 
 Deferred shading (ground truth) | Deferred shading (z-reconstructed)|Black specs|
 |---|---|---|
-|![](img/deferred.png)|![](img/deferred)reconstructedZ.png)|![](img/blackSpecs.png)|
+|![](img/deferred.png)|![](img/deferred_reconstructedZ.png)|![](img/blackspecs.png)|
 
 ### Performance & Analysis 
 
