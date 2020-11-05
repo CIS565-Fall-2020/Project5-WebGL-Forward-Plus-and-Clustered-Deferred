@@ -3,26 +3,61 @@ WebGL Forward+ and Clustered Deferred Shading
 
 **University of Pennsylvania, CIS 565: GPU Programming and Architecture, Project 5**
 
-* (TODO) YOUR NAME HERE
-* Tested on: (TODO) **Google Chrome 222.2** on
-  Windows 22, i7-2222 @ 2.22GHz 22GB, GTX 222 222MB (Moore 2222 Lab)
+* Weiyu Du
+* Tested on: Mac Laptop
 
 ### Live Online
 
-[![](img/thumb.png)](http://TODO.github.io/Project5-WebGL-Forward-Plus-and-Clustered-Deferred)
+https://weiyudu.github.io/Project5-WebGL-Forward-Plus-and-Clustered-Deferred/
 
-### Demo Video/GIF
+<img src="https://github.com/WeiyuDu/Project5-WebGL-Forward-Plus-and-Clustered-Deferred/blob/master/img/proj5_capture.png" width=600/>
 
-[![](img/video.png)](TODO)
+### Demo Video
 
-### (TODO: Your README)
+Demo Video Link: https://youtu.be/3YsZx6-DenI
 
-*DO NOT* leave the README to the last minute! It is a crucial part of the
-project, and we will not be able to grade you without a good README.
+### Description
+Features implemented:
+- Forward+
+- Clustered Deferred
+- Blinn-Phong Shading (Please see Clustered Deferred in Demo Video)
+- g-buffer optimization with 2-component normals
 
-This assignment has a considerable amount of performance analysis compared
-to implementation work. Complete the implementation early to leave time!
+### Performance Analysis
+(Apologies, I misread the instruction earlier and thought we ought to use fps instead of ms.)
 
+1) Please see below for FPS versus Number of Lights for the three methods with **max number of lights per cluster = 100**.
+
+| Number of Lights | Forward | Forward+ | Clustered Deferred|
+| --- | --- | --- | --- |
+| 100 | 14        |  9          | 16|
+| 200 | 7        |  9          | 16|
+| 500 | 3        |  9          | 16|
+| 1000 | 1        |  9          | 16|
+
+When number of lights is relatively large, Forward+ is faster than Forward, while Clustered Deferred is faster than Forward+. We see there's no obvious decrease in FPS when number of lights increases for Forward+ and Clustered Deferred.
+
+2) Please see below for FPS versus Number of Lights for the three methods with **max number of lights per cluster = number of lights**.
+
+| Number of Lights | Forward | Forward+ | Clustered Deferred|
+| --- | --- | --- | --- |
+| 100 | 14        |  9          | 16|
+| 150 | 9        |  6          | 12|
+| 200 | 7        |  5          | 9|
+| 250 | 6        |  4          | 7|
+
+In this case, Forward+ is slightly worse than Forward, while Clustered Deferred is slightly better than Forward.
+
+3) g-buffer optimization with 2-component normals on Clustered Deferred, **max number of lights per cluster = number of lights**.
+
+| Number of Lights | without optimization | with optimization |
+| --- | --- | --- |
+| 100 | 16        |    21        |
+| 150 | 12        |  15          |
+| 200 | 9       |  12          |
+| 250 | 7        |  10          |
+
+Instead of using another vector for normal, we first normalize it, then squeeze the x and y component of the normal vector in vec4 for color and position (which are both vec3). Finally we compute the z component with sqrt(1 - x * x - y * y). Since we're saving the amount of memory we're passing around, we observe obvious improvement in terms of FPS with 2-component normals.
 
 ### Credits
 
