@@ -18,10 +18,10 @@ WebGL Forward+ and Clustered Deferred Shading
 
 **Forward plus**
 **Clustered deferred shading**
-  - Reuse clustering logic from  with optimizations
-  - Store vertex attributes in g-buffers 
-     - Position, albedo color and normal
-  - Red g-buffer in a shader to produce final output
+* Reuse clustering logic from  with optimizations
+* Store vertex attributes in g-buffers (position, albedo color and normal)
+* Read g-buffer in a shader to produce final output
+- To make sure that I was inputting and getting the right data from the g-buffers, I output the data from g-buffers to the final shader.
 
 **Blinn-Phong shading for point lights** (deferred shading)
 
