@@ -8,9 +8,10 @@ import Wireframe from './wireframe';
 const FORWARD = 'Forward';
 const FORWARD_PLUS = 'Forward+';
 const CLUSTERED = 'Clustered Deferred';
+const NUM_SLICES = 15;
 
 const params = {
-  renderer: FORWARD_PLUS,
+  renderer: CLUSTERED,
   _renderer: null,
 };
 
@@ -22,10 +23,10 @@ function setRenderer(renderer) {
       params._renderer = new ForwardRenderer();
       break;
     case FORWARD_PLUS:
-      params._renderer = new ForwardPlusRenderer(15, 15, 15);
+      params._renderer = new ForwardPlusRenderer(NUM_SLICES, NUM_SLICES, NUM_SLICES);
       break;
     case CLUSTERED:
-      params._renderer = new ClusteredDeferredRenderer(15, 15, 15);
+      params._renderer = new ClusteredDeferredRenderer(NUM_SLICES, NUM_SLICES, NUM_SLICES);
       break;
   }
 }

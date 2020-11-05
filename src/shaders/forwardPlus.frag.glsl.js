@@ -1,7 +1,6 @@
 export default function(params) {
   return `
-  // TODO: This is pretty much just a clone of forward.frag.glsl.js
-
+  // This is pretty much just a clone of forward.frag.glsl.js
   #version 100
   precision highp float;
 
@@ -9,8 +8,14 @@ export default function(params) {
   uniform sampler2D u_normap;
   uniform sampler2D u_lightbuffer;
 
-  // TODO: Read this buffer to determine the lights influencing a cluster
+  // Read this buffer to determine the lights influencing a cluster
   uniform sampler2D u_clusterbuffer;
+
+  uniform float u_near;
+  uniform float u_far;
+  uniform float u_width;
+  uniform float u_height;
+  uniform mat4 u_viewMat;
 
   varying vec3 v_position;
   varying vec3 v_normal;
@@ -78,11 +83,29 @@ export default function(params) {
     vec3 albedo = texture2D(u_colmap, v_uv).rgb;
     vec3 normap = texture2D(u_normap, v_uv).xyz;
     vec3 normal = applyNormalMap(v_normal, normap);
-
     vec3 fragColor = vec3(0.0);
+    
+    vec4 viewPos = u_viewMat * vec4(v_position.x, v_position.y, v_position.z, 1.0);
+
+    const int xSlices = ${params.xSlices};
+    const int ySlices = ${params.ySlices};
+    const int zSlices = ${params.zSlices};
+            
+    int z = int((-viewPos.z - u_near) / ((u_far - u_near) / float(zSlices)));
+    int x = int(gl_FragCoord.x / (u_width / float(xSlices)));
+    int y = int(gl_FragCoord.y / (u_height / float(ySlices)));
+    int clusterIdx = x + y * xSlices + z * xSlices * ySlices;
+
+    const int clusterTextureWidth = xSlices * ySlices * zSlices;
+    const int clusterTextureHeight = int(ceil(float(${params.maxLightsPerCluster} + 1) / 4.0));
+    int realNumLights = int(ExtractFloat(u_clusterbuffer, clusterTextureWidth, clusterTextureHeight, clusterIdx, 0));
 
     for (int i = 0; i < ${params.numLights}; ++i) {
-      Light light = UnpackLight(i);
+      if (i >= realNumLights)
+        break;
+        
+      int lightIdx = int(ExtractFloat(u_clusterbuffer, clusterTextureWidth, clusterTextureHeight, clusterIdx, i + 1));;
+      Light light = UnpackLight(lightIdx);
       float lightDistance = distance(light.position, v_position);
       vec3 L = (light.position - v_position) / lightDistance;
 

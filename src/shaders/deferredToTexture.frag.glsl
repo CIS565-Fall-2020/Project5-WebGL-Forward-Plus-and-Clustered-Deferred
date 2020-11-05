@@ -1,7 +1,6 @@
 #version 100
 #extension GL_EXT_draw_buffers: enable
 precision highp float;
-
 uniform sampler2D u_colmap;
 uniform sampler2D u_normap;
 
@@ -17,13 +16,30 @@ vec3 applyNormalMap(vec3 geomnor, vec3 normap) {
     return normap.y * surftan + normap.x * surfbinor + normap.z * geomnor;
 }
 
+vec2 compressNormal(vec3 normal)
+{
+    return vec2(normal.x / (normal.z + 1.0), normal.y / (normal.z + 1.0));
+}
+
 void main() {
     vec3 norm = applyNormalMap(v_normal, vec3(texture2D(u_normap, v_uv)));
     vec3 col = vec3(texture2D(u_colmap, v_uv));
 
-    // TODO: populate your g buffer
-    // gl_FragData[0] = ??
-    // gl_FragData[1] = ??
-    // gl_FragData[2] = ??
-    // gl_FragData[3] = ??
+    // Populate your g-buffer
+    norm = normalize(norm);
+
+    // Unoptimized
+    // // color
+    // gl_FragData[0] = vec4(col.x, col.y, col.z, 0.0);
+    // // normal
+    // gl_FragData[1] = vec4(norm.x, norm.y, norm.z, 0.0);
+    // // position
+    // gl_FragData[2] = vec4(v_position.x, v_position.y, v_position.z, 0.0);
+
+    // Optimized
+    // color 
+    gl_FragData[0] = vec4(col.x, col.y, col.z, v_position.z);
+    // normal + position
+    vec2 compressedNorm = compressNormal(norm);
+    gl_FragData[1] = vec4(compressedNorm.x, compressedNorm.y, v_position.x, v_position.y);
 }
