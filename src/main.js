@@ -8,6 +8,7 @@ import Wireframe from './wireframe';
 const FORWARD = 'Forward';
 const FORWARD_PLUS = 'Forward+';
 const CLUSTERED = 'Clustered Deferred';
+const CLUSTERED_BLINN_PHONG = 'Clustered Deferred - Blinn Phong';
 
 const params = {
   renderer: FORWARD_PLUS,
@@ -27,10 +28,13 @@ function setRenderer(renderer) {
     case CLUSTERED:
       params._renderer = new ClusteredDeferredRenderer(15, 15, 15);
       break;
+    case CLUSTERED_BLINN_PHONG:
+      params._renderer = new ClusteredDeferredRenderer(15, 15, 15);
+      break;
   }
 }
 
-gui.add(params, 'renderer', [FORWARD, FORWARD_PLUS, CLUSTERED]).onChange(setRenderer);
+gui.add(params, 'renderer', [FORWARD, FORWARD_PLUS, CLUSTERED, CLUSTERED_BLINN_PHONG]).onChange(setRenderer);
 
 const scene = new Scene();
 scene.loadGLTF('models/sponza/sponza.gltf');
