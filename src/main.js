@@ -7,8 +7,9 @@ import Wireframe from './wireframe';
 
 const FORWARD = 'Forward';
 const FORWARD_PLUS = 'Forward+';
-const CLUSTERED = 'Clustered Deferred';
-const CLUSTERED_BLINN_PHONG = 'Clustered Deferred - Blinn Phong';
+export const CLUSTERED = 'Clustered Deferred';
+export const CLUSTERED_BLINN_PHONG = 'Clustered Deferred - Blinn-Phong';
+export const CLUSTERED_TOON = 'Clustered Deferred - Toon';
 
 const params = {
   renderer: FORWARD_PLUS,
@@ -18,23 +19,16 @@ const params = {
 setRenderer(params.renderer);
 
 function setRenderer(renderer) {
-  switch(renderer) {
-    case FORWARD:
-      params._renderer = new ForwardRenderer();
-      break;
-    case FORWARD_PLUS:
+  if (renderer == FORWARD) {
+    params._renderer = new ForwardRenderer();
+  } else if (renderer == FORWARD_PLUS) {
       params._renderer = new ForwardPlusRenderer(15, 15, 15);
-      break;
-    case CLUSTERED:
-      params._renderer = new ClusteredDeferredRenderer(15, 15, 15);
-      break;
-    case CLUSTERED_BLINN_PHONG:
-      params._renderer = new ClusteredDeferredRenderer(15, 15, 15);
-      break;
+  } else { // Variations of clustered
+    params._renderer = new ClusteredDeferredRenderer(15, 15, 15, renderer);   
   }
 }
 
-gui.add(params, 'renderer', [FORWARD, FORWARD_PLUS, CLUSTERED, CLUSTERED_BLINN_PHONG]).onChange(setRenderer);
+gui.add(params, 'renderer', [FORWARD, FORWARD_PLUS, CLUSTERED, CLUSTERED_BLINN_PHONG, CLUSTERED_TOON]).onChange(setRenderer);
 
 const scene = new Scene();
 scene.loadGLTF('models/sponza/sponza.gltf');

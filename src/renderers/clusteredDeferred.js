@@ -1,20 +1,23 @@
+import BaseRenderer from './base';
+import { MAX_LIGHTS_PER_CLUSTER } from './base';
 import { gl, WEBGL_draw_buffers, canvas } from '../init';
+import {CLUSTERED, CLUSTERED_BLINN_PHONG, CLUSTERED_TOON} from '../main.js';
 import { mat4, vec4 } from 'gl-matrix';
-import { loadShaderProgram, renderFullscreenQuad } from '../utils';
 import { NUM_LIGHTS } from '../scene';
 import toTextureVert from '../shaders/deferredToTexture.vert.glsl';
 import toTextureFrag from '../shaders/deferredToTexture.frag.glsl';
 import QuadVertSource from '../shaders/quad.vert.glsl';
 import fsSource from '../shaders/deferred.frag.glsl.js';
+import fsSourceBlinnPhong from '../shaders/deferred_blinn_phong.frag.glsl.js'
+import fsSourceToon from '../shaders/deferred_toon.frag.glsl.js'
 import TextureBuffer from './textureBuffer';
-import BaseRenderer from './base';
-import { MAX_LIGHTS_PER_CLUSTER } from './base';
+import { loadShaderProgram, renderFullscreenQuad } from '../utils';
 
 export const NUM_GBUFFERS = 2;
 export const NUM_COMBINED_GBUFFERS = 1;
 
 export default class ClusteredDeferredRenderer extends BaseRenderer {
-  constructor(xSlices, ySlices, zSlices) {
+  constructor(xSlices, ySlices, zSlices, effect) {
     super(xSlices, ySlices, zSlices);
     
     this.setupDrawBuffers(canvas.width, canvas.height);
@@ -27,19 +30,51 @@ export default class ClusteredDeferredRenderer extends BaseRenderer {
       attribs: ['a_position', 'a_normal', 'a_uv'],
     });
 
-    this._progShade = loadShaderProgram(QuadVertSource, fsSource({
-      numLights: NUM_LIGHTS,
-      numGBuffers: NUM_GBUFFERS,
-      numXSlices: xSlices,
-      numYSlices: ySlices,
-      numZSlices: zSlices,
-      numFrustums: xSlices * ySlices * zSlices,
-      clusterBufferTextureHeight: Math.ceil((MAX_LIGHTS_PER_CLUSTER + 1.0) / 4.0)
-    }), {
-      uniforms: ['u_gbuffers[0]', 'u_gbuffers[1]', 'u_gbuffers[2]', 'u_gbuffers[3]',
-        'u_farClip', 'u_nearClip', 'u_resolution', 'u_viewProjectionMatrix', 'u_lightbuffer', 'u_cameraPos'],
-      attribs: ['a_uv'],
-    });
+    if (effect == CLUSTERED) {
+      this._progShade = loadShaderProgram(QuadVertSource, fsSource({
+        numLights: NUM_LIGHTS,
+        numGBuffers: NUM_GBUFFERS,
+        numXSlices: xSlices,
+        numYSlices: ySlices,
+        numZSlices: zSlices,
+        numFrustums: xSlices * ySlices * zSlices,
+        clusterBufferTextureHeight: Math.ceil((MAX_LIGHTS_PER_CLUSTER + 1.0) / 4.0)
+      }), {
+        uniforms: ['u_gbuffers[0]', 'u_gbuffers[1]', 'u_gbuffers[2]', 'u_gbuffers[3]',
+          'u_farClip', 'u_nearClip', 'u_resolution', 'u_viewProjectionMatrix', 'u_lightbuffer', 'u_cameraPos'],
+        attribs: ['a_uv'],
+      });
+    } else if (effect == CLUSTERED_BLINN_PHONG) {
+      this._progShade = loadShaderProgram(QuadVertSource, fsSourceBlinnPhong({
+        numLights: NUM_LIGHTS,
+        numGBuffers: NUM_GBUFFERS,
+        numXSlices: xSlices,
+        numYSlices: ySlices,
+        numZSlices: zSlices,
+        numFrustums: xSlices * ySlices * zSlices,
+        clusterBufferTextureHeight: Math.ceil((MAX_LIGHTS_PER_CLUSTER + 1.0) / 4.0)
+      }), {
+        uniforms: ['u_gbuffers[0]', 'u_gbuffers[1]', 'u_gbuffers[2]', 'u_gbuffers[3]',
+          'u_farClip', 'u_nearClip', 'u_resolution', 'u_viewProjectionMatrix', 'u_lightbuffer', 'u_cameraPos'],
+        attribs: ['a_uv'],
+      });
+    } else if (effect == CLUSTERED_TOON) {
+        this._progShade = loadShaderProgram(QuadVertSource, fsSourceToon({
+        numLights: NUM_LIGHTS,
+        numGBuffers: NUM_GBUFFERS,
+        numXSlices: xSlices,
+        numYSlices: ySlices,
+        numZSlices: zSlices,
+        numFrustums: xSlices * ySlices * zSlices,
+        clusterBufferTextureHeight: Math.ceil((MAX_LIGHTS_PER_CLUSTER + 1.0) / 4.0)
+      }), {
+        uniforms: ['u_gbuffers[0]', 'u_gbuffers[1]', 'u_gbuffers[2]', 'u_gbuffers[3]',
+          'u_farClip', 'u_nearClip', 'u_resolution', 'u_viewProjectionMatrix', 'u_lightbuffer', 'u_cameraPos'],
+        attribs: ['a_uv'],
+      });
+    } else {
+      // Throw error for no matching type
+    }
 
     this._projectionMatrix = mat4.create();
     this._viewMatrix = mat4.create();
