@@ -1,14 +1,20 @@
 const MinimalGLTFLoader = require('../lib/minimal-gltf-loader');
 import { gl } from './init';
 
-// TODO: Edit if you want to change the light initial positions 
+// // TODO: Edit if you want to change the light initial positions 
 export const LIGHT_MIN = [-14, 0, -6];
 export const LIGHT_MAX = [14, 20, 6];
 export const LIGHT_RADIUS = 5.0;
 export const LIGHT_DT = -0.03;
 
+// Debug
+//export const LIGHT_MIN = [0, 4, 0];
+//export const LIGHT_MAX = [0.1, 4.1, 0.1];
+//export const LIGHT_RADIUS = 8.0;
+//export const LIGHT_DT = 0.0;
+
 // TODO: This controls the number of lights
-export const NUM_LIGHTS = 100;
+export const NUM_LIGHTS = 60;
 
 class Scene {
   constructor() {

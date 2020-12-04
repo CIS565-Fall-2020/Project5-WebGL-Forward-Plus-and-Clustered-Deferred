@@ -20,10 +20,17 @@ vec3 applyNormalMap(vec3 geomnor, vec3 normap) {
 void main() {
     vec3 norm = applyNormalMap(v_normal, vec3(texture2D(u_normap, v_uv)));
     vec3 col = vec3(texture2D(u_colmap, v_uv));
-
+	norm = normalize(norm);
+	float angle;
+	float PI = 3.1415926535898;
+	if (norm.z == 0.0) {
+	    angle = norm.x > 0.0 ? PI * 0.5 : -PI * 0.5;
+	}
+	else {
+	    angle = atan(norm.x / norm.z);
+	}
+	
     // TODO: populate your g buffer
-    // gl_FragData[0] = ??
-    // gl_FragData[1] = ??
-    // gl_FragData[2] = ??
-    // gl_FragData[3] = ??
+	gl_FragData[0] = vec4(col, angle);
+	gl_FragData[1] = vec4(v_position, norm.y);
 }
