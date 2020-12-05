@@ -7,7 +7,9 @@ import Wireframe from './wireframe';
 
 const FORWARD = 'Forward';
 const FORWARD_PLUS = 'Forward+';
-const CLUSTERED = 'Clustered Deferred';
+export const CLUSTERED = 'Clustered Deferred';
+export const CLUSTERED_BLINN_PHONG = 'Clustered Deferred - Blinn-Phong';
+export const CLUSTERED_TOON = 'Clustered Deferred - Toon';
 
 const params = {
   renderer: FORWARD_PLUS,
@@ -17,20 +19,16 @@ const params = {
 setRenderer(params.renderer);
 
 function setRenderer(renderer) {
-  switch(renderer) {
-    case FORWARD:
-      params._renderer = new ForwardRenderer();
-      break;
-    case FORWARD_PLUS:
+  if (renderer == FORWARD) {
+    params._renderer = new ForwardRenderer();
+  } else if (renderer == FORWARD_PLUS) {
       params._renderer = new ForwardPlusRenderer(15, 15, 15);
-      break;
-    case CLUSTERED:
-      params._renderer = new ClusteredDeferredRenderer(15, 15, 15);
-      break;
+  } else { // Variations of clustered
+    params._renderer = new ClusteredDeferredRenderer(15, 15, 15, renderer);   
   }
 }
 
-gui.add(params, 'renderer', [FORWARD, FORWARD_PLUS, CLUSTERED]).onChange(setRenderer);
+gui.add(params, 'renderer', [FORWARD, FORWARD_PLUS, CLUSTERED, CLUSTERED_BLINN_PHONG, CLUSTERED_TOON]).onChange(setRenderer);
 
 const scene = new Scene();
 scene.loadGLTF('models/sponza/sponza.gltf');
@@ -41,11 +39,11 @@ scene.loadGLTF('models/sponza/sponza.gltf');
 // sure that they are in the right place.
 const wireframe = new Wireframe();
 
-var segmentStart = [-14.0, 0.0, -6.0];
-var segmentEnd = [14.0, 20.0, 6.0];
-var segmentColor = [1.0, 0.0, 0.0];
-wireframe.addLineSegment(segmentStart, segmentEnd, segmentColor);
-wireframe.addLineSegment([-14.0, 1.0, -6.0], [14.0, 21.0, 6.0], [0.0, 1.0, 0.0]);
+// var segmentStart = [-14.0, 0.0, -6.0];
+// var segmentEnd = [14.0, 20.0, 6.0];
+// var segmentColor = [1.0, 0.0, 0.0];
+// wireframe.addLineSegment(segmentStart, segmentEnd, segmentColor);
+// wireframe.addLineSegment([-14.0, 1.0, -6.0], [14.0, 21.0, 6.0], [0.0, 1.0, 0.0]);
 
 camera.position.set(-10, 8, 0);
 cameraControls.target.set(0, 2, 0);
@@ -53,7 +51,13 @@ gl.enable(gl.DEPTH_TEST);
 
 function render() {
   scene.update();  
-  params._renderer.render(camera, scene);
+  var points = params._renderer.render(camera, scene);
+
+  // for (let i = 0; i < points.length; i++) {
+  //    wireframe.addLineSegment(points[i], points[i + 1], [1.0, 0.0, 0.0]);
+  //    i += 1;
+  // }
+ // wireframe.addLineSegment(points[0], points[1], [1.0, 0.0, 0.0]);
 
   // LOOK: Render wireframe "in front" of everything else.
   // If you would like the wireframe to render behind and in front

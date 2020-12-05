@@ -11,6 +11,9 @@ export default function(params) {
 
   // TODO: Read this buffer to determine the lights influencing a cluster
   uniform sampler2D u_clusterbuffer;
+  uniform mat4 u_viewProjectionMatrix;
+  uniform float u_farClip;
+  uniform float u_nearClip;
 
   varying vec3 v_position;
   varying vec3 v_normal;
@@ -78,11 +81,23 @@ export default function(params) {
     vec3 albedo = texture2D(u_colmap, v_uv).rgb;
     vec3 normap = texture2D(u_normap, v_uv).xyz;
     vec3 normal = applyNormalMap(v_normal, normap);
-
     vec3 fragColor = vec3(0.0);
 
-    for (int i = 0; i < ${params.numLights}; ++i) {
-      Light light = UnpackLight(i);
+    int frustumX = int(gl_FragCoord.x / float(${params.resolutionWidth}) * float(${params.numXSlices}));
+    int frustumY = int(gl_FragCoord.y / float(${params.resolutionHeight}) * float(${params.numYSlices}));
+
+    vec4 v_positionNonNDC = u_viewProjectionMatrix * vec4(v_position, 1.0);
+    int frustumZ = int((v_positionNonNDC.z - u_nearClip) / (u_farClip - u_nearClip) * float(${params.numZSlices}));
+
+    int frustumIndex = frustumX + frustumY * ${params.numXSlices} + frustumZ * ${params.numXSlices} * ${params.numYSlices};
+    int numLightsInfluenceFrustum = int(ExtractFloat(u_clusterbuffer, ${params.numFrustums}, ${params.clusterBufferTextureHeight}, frustumIndex, 0));
+
+    for (int i = 1; i < ${params.numLights}; ++i) {
+      if (i > numLightsInfluenceFrustum) {
+        break;
+      }
+      int lightIndex = int(ExtractFloat(u_clusterbuffer, ${params.numFrustums}, ${params.clusterBufferTextureHeight}, frustumIndex, i));
+      Light light = UnpackLight(lightIndex);
       float lightDistance = distance(light.position, v_position);
       vec3 L = (light.position - v_position) / lightDistance;
 
@@ -96,6 +111,9 @@ export default function(params) {
     fragColor += albedo * ambientLight;
 
     gl_FragColor = vec4(fragColor, 1.0);
+    // gl_FragColor = vec4(float(frustumY) / 15.0, float(frustumY) / 15.0, float(frustumY) / 15.0, 1.0);
+    // gl_FragColor = vec4((v_positionNonNDC.z - u_nearClip) / (u_farClip - u_nearClip) * float(${params.numZSlices}), 0.0, 0.0, 1.0);
+    // gl_FragColor = vec4(float(numLightsInfluenceFrustum), float(numLightsInfluenceFrustum), float(numLightsInfluenceFrustum), 1.0);
   }
   `;
 }

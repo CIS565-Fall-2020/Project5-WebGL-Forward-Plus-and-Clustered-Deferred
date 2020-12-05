@@ -1,18 +1,23 @@
+import BaseRenderer from './base';
+import { MAX_LIGHTS_PER_CLUSTER } from './base';
 import { gl, WEBGL_draw_buffers, canvas } from '../init';
+import {CLUSTERED, CLUSTERED_BLINN_PHONG, CLUSTERED_TOON} from '../main.js';
 import { mat4, vec4 } from 'gl-matrix';
-import { loadShaderProgram, renderFullscreenQuad } from '../utils';
 import { NUM_LIGHTS } from '../scene';
 import toTextureVert from '../shaders/deferredToTexture.vert.glsl';
 import toTextureFrag from '../shaders/deferredToTexture.frag.glsl';
 import QuadVertSource from '../shaders/quad.vert.glsl';
 import fsSource from '../shaders/deferred.frag.glsl.js';
+import fsSourceBlinnPhong from '../shaders/deferred_blinn_phong.frag.glsl.js'
+import fsSourceToon from '../shaders/deferred_toon.frag.glsl.js'
 import TextureBuffer from './textureBuffer';
-import BaseRenderer from './base';
+import { loadShaderProgram, renderFullscreenQuad } from '../utils';
 
-export const NUM_GBUFFERS = 4;
+export const NUM_GBUFFERS = 2;
+export const NUM_COMBINED_GBUFFERS = 1;
 
 export default class ClusteredDeferredRenderer extends BaseRenderer {
-  constructor(xSlices, ySlices, zSlices) {
+  constructor(xSlices, ySlices, zSlices, effect) {
     super(xSlices, ySlices, zSlices);
     
     this.setupDrawBuffers(canvas.width, canvas.height);
@@ -25,13 +30,51 @@ export default class ClusteredDeferredRenderer extends BaseRenderer {
       attribs: ['a_position', 'a_normal', 'a_uv'],
     });
 
-    this._progShade = loadShaderProgram(QuadVertSource, fsSource({
-      numLights: NUM_LIGHTS,
-      numGBuffers: NUM_GBUFFERS,
-    }), {
-      uniforms: ['u_gbuffers[0]', 'u_gbuffers[1]', 'u_gbuffers[2]', 'u_gbuffers[3]'],
-      attribs: ['a_uv'],
-    });
+    if (effect == CLUSTERED) {
+      this._progShade = loadShaderProgram(QuadVertSource, fsSource({
+        numLights: NUM_LIGHTS,
+        numGBuffers: NUM_GBUFFERS,
+        numXSlices: xSlices,
+        numYSlices: ySlices,
+        numZSlices: zSlices,
+        numFrustums: xSlices * ySlices * zSlices,
+        clusterBufferTextureHeight: Math.ceil((MAX_LIGHTS_PER_CLUSTER + 1.0) / 4.0)
+      }), {
+        uniforms: ['u_gbuffers[0]', 'u_gbuffers[1]', 'u_gbuffers[2]', 'u_gbuffers[3]',
+          'u_farClip', 'u_nearClip', 'u_resolution', 'u_viewProjectionMatrix', 'u_lightbuffer', 'u_cameraPos'],
+        attribs: ['a_uv'],
+      });
+    } else if (effect == CLUSTERED_BLINN_PHONG) {
+      this._progShade = loadShaderProgram(QuadVertSource, fsSourceBlinnPhong({
+        numLights: NUM_LIGHTS,
+        numGBuffers: NUM_GBUFFERS,
+        numXSlices: xSlices,
+        numYSlices: ySlices,
+        numZSlices: zSlices,
+        numFrustums: xSlices * ySlices * zSlices,
+        clusterBufferTextureHeight: Math.ceil((MAX_LIGHTS_PER_CLUSTER + 1.0) / 4.0)
+      }), {
+        uniforms: ['u_gbuffers[0]', 'u_gbuffers[1]', 'u_gbuffers[2]', 'u_gbuffers[3]',
+          'u_farClip', 'u_nearClip', 'u_resolution', 'u_viewProjectionMatrix', 'u_lightbuffer', 'u_cameraPos'],
+        attribs: ['a_uv'],
+      });
+    } else if (effect == CLUSTERED_TOON) {
+        this._progShade = loadShaderProgram(QuadVertSource, fsSourceToon({
+        numLights: NUM_LIGHTS,
+        numGBuffers: NUM_GBUFFERS,
+        numXSlices: xSlices,
+        numYSlices: ySlices,
+        numZSlices: zSlices,
+        numFrustums: xSlices * ySlices * zSlices,
+        clusterBufferTextureHeight: Math.ceil((MAX_LIGHTS_PER_CLUSTER + 1.0) / 4.0)
+      }), {
+        uniforms: ['u_gbuffers[0]', 'u_gbuffers[1]', 'u_gbuffers[2]', 'u_gbuffers[3]',
+          'u_farClip', 'u_nearClip', 'u_resolution', 'u_viewProjectionMatrix', 'u_lightbuffer', 'u_cameraPos'],
+        attribs: ['a_uv'],
+      });
+    } else {
+      // Throw error for no matching type
+    }
 
     this._projectionMatrix = mat4.create();
     this._viewMatrix = mat4.create();
@@ -41,6 +84,8 @@ export default class ClusteredDeferredRenderer extends BaseRenderer {
   setupDrawBuffers(width, height) {
     this._width = width;
     this._height = height;
+    this._bufferwidth = width;
+    this._bufferheight = height;
 
     this._fbo = gl.createFramebuffer();
     
@@ -51,7 +96,7 @@ export default class ClusteredDeferredRenderer extends BaseRenderer {
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.DEPTH_COMPONENT, width, height, 0, gl.DEPTH_COMPONENT, gl.UNSIGNED_SHORT, null);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.DEPTH_COMPONENT, this._bufferwidth, this._bufferheight, 0, gl.DEPTH_COMPONENT, gl.UNSIGNED_SHORT, null);
     gl.bindTexture(gl.TEXTURE_2D, null);
 
     gl.bindFramebuffer(gl.FRAMEBUFFER, this._fbo);
@@ -68,7 +113,7 @@ export default class ClusteredDeferredRenderer extends BaseRenderer {
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, width, height, 0, gl.RGBA, gl.FLOAT, null);
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, this._bufferwidth, this._bufferheight, 0, gl.RGBA, gl.FLOAT, null);
       gl.bindTexture(gl.TEXTURE_2D, null);
 
       gl.framebufferTexture2D(gl.FRAMEBUFFER, attachments[i], gl.TEXTURE_2D, this._gbuffers[i], 0);      
@@ -88,6 +133,9 @@ export default class ClusteredDeferredRenderer extends BaseRenderer {
   resize(width, height) {
     this._width = width;
     this._height = height;
+
+    this._bufferwidth = width;
+    this._bufferheight = height;
 
     gl.bindTexture(gl.TEXTURE_2D, this._depthTex);
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.DEPTH_COMPONENT, width, height, 0, gl.DEPTH_COMPONENT, gl.UNSIGNED_SHORT, null);
@@ -142,7 +190,7 @@ export default class ClusteredDeferredRenderer extends BaseRenderer {
     this._lightTexture.update();
 
     // Update the clusters for the frame
-    this.updateClusters(camera, this._viewMatrix, scene);
+    this.updateClusters(camera, this._viewMatrix, this._projectionMatrix, scene);
 
     // Bind the default null framebuffer which is the screen
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
@@ -153,10 +201,25 @@ export default class ClusteredDeferredRenderer extends BaseRenderer {
     // Use this shader program
     gl.useProgram(this._progShade.glShaderProgram);
 
+    // Set the cluster texture as a uniform input to the shader
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, this._clusterTexture.glTexture);
+    gl.uniform1i(this._progShade.u_clusterbuffer, 0);
+
+    // Set the light texture as a uniform input to the shader
+    gl.activeTexture(gl.TEXTURE1);
+    gl.bindTexture(gl.TEXTURE_2D, this._lightTexture.glTexture);
+    gl.uniform1i(this._progShade.u_lightbuffer, 1);
+
     // TODO: Bind any other shader inputs
+    gl.uniform1f(this._progShade.u_farClip, camera.far);
+    gl.uniform1f(this._progShade.u_nearClip, camera.near);
+    gl.uniform2f(this._progShade.u_resolution, this._width, this._height);
+    gl.uniform3f(this._progShade.u_cameraPos, camera.position.x, camera.position.y, camera.position.z);
+    gl.uniformMatrix4fv(this._progShade.u_viewProjectionMatrix, false, this._viewProjectionMatrix);
 
     // Bind g-buffers
-    const firstGBufferBinding = 0; // You may have to change this if you use other texture slots
+    const firstGBufferBinding = 2; // You may have to change this if you use other texture slots
     for (let i = 0; i < NUM_GBUFFERS; i++) {
       gl.activeTexture(gl[`TEXTURE${i + firstGBufferBinding}`]);
       gl.bindTexture(gl.TEXTURE_2D, this._gbuffers[i]);
