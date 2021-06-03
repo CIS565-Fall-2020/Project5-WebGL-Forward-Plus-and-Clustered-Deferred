@@ -5,11 +5,15 @@ export default function(params) {
   #version 100
   precision highp float;
 
+  uniform mat4 u_viewMatrix;
+  uniform mat4 u_viewProjectionMatrix;
+
   uniform sampler2D u_colmap;
   uniform sampler2D u_normap;
   uniform sampler2D u_lightbuffer;
 
-  // TODO: Read this buffer to determine the lights influencing a cluster
+  uniform float u_zDist;
+
   uniform sampler2D u_clusterbuffer;
 
   varying vec3 v_position;
@@ -81,20 +85,38 @@ export default function(params) {
 
     vec3 fragColor = vec3(0.0);
 
-    for (int i = 0; i < ${params.numLights}; ++i) {
-      Light light = UnpackLight(i);
-      float lightDistance = distance(light.position, v_position);
-      vec3 L = (light.position - v_position) / lightDistance;
+    // calculate frustum index
+    int fovX = int(gl_FragCoord.x / float(${params.width}) * float(${params.numXSlices}));
+    int fovY = int(gl_FragCoord.y / float(${params.height}) * float(${params.numYSlices}));
+    int fovZ = int((u_viewMatrix * vec4(v_position, 1)).z / u_zDist * float(${params.numZSlices}));
+    int gridIdx = fovX + fovY * ${params.numXSlices} + fovZ * ${params.numXSlices} * ${params.numYSlices};
 
-      float lightIntensity = cubicGaussian(2.0 * lightDistance / light.radius);
-      float lambertTerm = max(dot(L, normal), 0.0);
+    int texHeight = int(ceil(float(${params.numLights + 1}) / 4.0));
 
-      fragColor += albedo * lambertTerm * light.color * vec3(lightIntensity);
+    int numLights = int(ExtractFloat(u_clusterbuffer, ${params.numClusters}, texHeight, gridIdx, 0));
+
+    for(int i = 0; i < ${params.numLights}; i++) {
+      if(i >= numLights){
+		  break;
+	  }
+	  
+      int idx = int(ExtractFloat(u_clusterbuffer, ${params.numClusters}, texHeight, gridIdx, i + 1));
+
+      Light light = UnpackLight(idx);
+
+      float delta = distance(light.position, v_position);
+      vec3 proj = (light.position - v_position) / delta;
+
+      float lightIntensity = cubicGaussian(2.0 * delta / light.radius);
+      float lambertian = max(dot(proj, normal), 0.0);
+
+      fragColor += albedo * lambertian * light.color * vec3(lightIntensity);
     }
 
     const vec3 ambientLight = vec3(0.025);
     fragColor += albedo * ambientLight;
 
+    
     gl_FragColor = vec4(fragColor, 1.0);
   }
   `;

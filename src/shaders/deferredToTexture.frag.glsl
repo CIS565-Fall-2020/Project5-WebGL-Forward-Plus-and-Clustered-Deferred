@@ -17,13 +17,43 @@ vec3 applyNormalMap(vec3 geomnor, vec3 normap) {
     return normap.y * surftan + normap.x * surfbinor + normap.z * geomnor;
 }
 
+
+vec2 helper(vec2 v) {
+
+	if(v.x >= 0.0){
+		if(v.y >= 0.0){
+			return vec2(1.0, 1.0);
+		}else{
+			return vec2(1.0, -1.0);
+		}
+	}else{
+		if(v.y >= 0.0){
+			return vec2(-1.0, 1.0);
+		}else{
+			return vec2(-1.0, -1.0);
+		}
+	}
+}
+
+vec2 vec3ToNorm(vec3 v) {
+    vec2 p = v.xy * (1.0 / (abs(v.x) + abs(v.y) + abs(v.z)));
+	
+	if(v.z >= 0.0){
+		return p;
+	}else{
+		return (1.0 - abs(p.yx)) * helper(p);
+
+	}
+}
+
 void main() {
     vec3 norm = applyNormalMap(v_normal, vec3(texture2D(u_normap, v_uv)));
     vec3 col = vec3(texture2D(u_colmap, v_uv));
 
-    // TODO: populate your g buffer
-    // gl_FragData[0] = ??
-    // gl_FragData[1] = ??
-    // gl_FragData[2] = ??
-    // gl_FragData[3] = ??
+    vec2 Norm_2D = vec3ToNorm(norm);
+
+    // populate g-buffers
+    gl_FragData[0] = vec4(v_position, Norm_2D.x);
+    gl_FragData[1] = vec4(col, Norm_2D.y);
+
 }

@@ -9,20 +9,13 @@ WebGL Forward+ and Clustered Deferred Shading
 
 ### Live Online
 
-[![](img/thumb.png)](http://TODO.github.io/Project5-WebGL-Forward-Plus-and-Clustered-Deferred)
+https://github.com/tusadi/Project5-WebGL-Forward-Plus-and-Clustered-Deferred
 
 ### Demo Video/GIF
 
-[![](img/video.png)](TODO)
+https://youtu.be/KA5qEEx7dB0
 
-### (TODO: Your README)
-
-*DO NOT* leave the README to the last minute! It is a crucial part of the
-project, and we will not be able to grade you without a good README.
-
-This assignment has a considerable amount of performance analysis compared
-to implementation work. Complete the implementation early to leave time!
-
+![](demo/demo.gif)
 
 ### Credits
 
